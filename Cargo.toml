@@ -1,0 +1,21 @@
+[package]
+name = "kosmonaut"
+version = "0.1.0"
+authors = ["Tyler Wilcock <tyler.l.wilcock@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cssparser = "0.25.8"
+glib = "0.8"
+html5ever = "0.24.0"
+matches = "0.1.8"
+rand = "0.7.0"
+selectors = "0.21.0"
+
+[dependencies.gtk]
+version = "0.7"
+features = ["v3_16"]
+
+[dependencies.gio]
+version = ""
+features = ["v2_44"]

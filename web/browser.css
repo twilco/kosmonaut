@@ -1,0 +1,4 @@
+/* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
+body {
+  font-size: 12px;
+}

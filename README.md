@@ -1,4 +1,4 @@
-### Kosmonaut
+## Kosmonaut
 
 Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicle for your journey across the world wide web.
 
@@ -8,11 +8,10 @@ Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicl
 
 ### Build
 
-Kosmonaut is built on Rust with bindings to [GTK](https://www.gtk.org/) via [gtk-rs](https://gtk-rs.org/).  The UI is created with [Glade](https://glade.gnome.org/).
+Kosmonaut is built with Rust using bindings to [GTK](https://www.gtk.org/) via [gtk-rs](https://gtk-rs.org/).
 
 1. Install Rust: https://www.rust-lang.org/tools/install
 2. Install GTK: `brew install gtk+3` on MacOS, `sudo apt install libgtk-3-dev` on Linux
-3. Install Glade: `brew install glade` on MacOS
 3. Attempt a `cargo build`.  If presented with an error message about `libffi` not being found in the pkg-config search path, run:
  
  ```bash

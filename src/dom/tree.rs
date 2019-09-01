@@ -215,8 +215,8 @@ impl NodeRef {
     /// Create a new element node.
     #[inline]
     pub fn new_element<I>(name: QualName, attributes: I) -> NodeRef
-        where
-            I: IntoIterator<Item = (ExpandedName, Attribute)>,
+    where
+        I: IntoIterator<Item = (ExpandedName, Attribute)>,
     {
         NodeRef::new(NodeData::Element(ElementData {
             template_contents: if name.expanded() == expanded_name!(html "template") {
@@ -246,9 +246,9 @@ impl NodeRef {
     /// Create a new processing instruction node.
     #[inline]
     pub fn new_processing_instruction<T1, T2>(target: T1, data: T2) -> NodeRef
-        where
-            T1: Into<String>,
-            T2: Into<String>,
+    where
+        T1: Into<String>,
+        T2: Into<String>,
     {
         NodeRef::new(NodeData::ProcessingInstruction(RefCell::new((
             target.into(),
@@ -259,10 +259,10 @@ impl NodeRef {
     /// Create a new doctype node.
     #[inline]
     pub fn new_doctype<T1, T2, T3>(name: T1, public_id: T2, system_id: T3) -> NodeRef
-        where
-            T1: Into<String>,
-            T2: Into<String>,
-            T3: Into<String>,
+    where
+        T1: Into<String>,
+        T2: Into<String>,
+        T3: Into<String>,
     {
         NodeRef::new(NodeData::Doctype(Doctype {
             name: name.into(),

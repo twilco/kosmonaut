@@ -1,21 +1,21 @@
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/select.rs).
 /// Thanks to the authors of Kuchiki for their work.
-
 use crate::dom::attributes::ExpandedName;
-use crate::dom::iter::{NodeIterator};
+use crate::dom::iter::NodeIterator;
 use crate::dom::node_data_ref::NodeDataRef;
-use crate::style::StyleParseErrorKind;
 use crate::dom::tree::{ElementData, Node, NodeData, NodeRef};
+use crate::style::StyleParseErrorKind;
 
-use std::fmt;
 use cssparser::{self, CowRcStr, ParseError, SourceLocation, ToCss};
 use html5ever::{LocalName, Namespace};
 use selectors::attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint};
 use selectors::context::QuirksMode;
 use selectors::parser::{
-    NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList, SelectorParseErrorKind
+    NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList,
+    SelectorParseErrorKind,
 };
 use selectors::{self, matching, OpaqueElement};
+use std::fmt;
 
 /// The definition of whitespace per CSS Selectors Level 3 § 4.
 ///
@@ -51,7 +51,7 @@ impl<'i> Parser<'i> for KosmonautParser {
         &self,
         location: SourceLocation,
         name: CowRcStr<'i>,
-    ) -> Result<PseudoClass, ParseError<'i, StyleParseErrorKind<'i>>> {
+    ) -> Result<PseudoClass, ParseError<'i, Self::Error>> {
         use self::PseudoClass::*;
         if name.eq_ignore_ascii_case("any-link") {
             Ok(AnyLink)
@@ -296,108 +296,3 @@ impl selectors::Element for NodeDataRef<ElementData> {
         }
     }
 }
-
-//// A pre-compiled list of CSS Selectors.
-//pub struct Selectors(pub Vec<Selector>);
-
-//// A pre-compiled CSS Selector.
-//pub struct Selector(GenericSelector<KosmonautSelectors>);
-
-//// The specificity of a selector.
-////
-//// Opaque, but ordered.
-////
-//// Determines precedence in the cascading algorithm.
-//// When equal, a rule later in source order takes precedence.
-//#[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
-//pub struct Specificity(u32);
-
-//impl Selectors {
-//    /// Compile a list of selectors. This may fail on syntax errors or unsupported selectors.
-//    #[inline]
-//    pub fn compile(s: &str) -> Result<Selectors, ()> {
-//        let mut input = cssparser::ParserInput::new(s);
-//        match SelectorList::parse(&KosmonautParser, &mut cssparser::Parser::new(&mut input)) {
-//            Ok(list) => Ok(Selectors(list.0.into_iter().map(Selector).collect())),
-//            Err(_) => Err(()),
-//        }
-//    }
-//
-//    /// Returns whether the given element matches this list of selectors.
-//    #[inline]
-//    pub fn matches(&self, element: &NodeDataRef<ElementData>) -> bool {
-//        self.0.iter().any(|s| s.matches(element))
-//    }
-//
-//    /// Filter an element iterator, yielding those matching this list of selectors.
-//    #[inline]
-//    pub fn filter<I>(&self, iter: I) -> Select<I, &Selectors>
-//    where
-//        I: Iterator<Item = NodeDataRef<ElementData>>,
-//    {
-//        Select {
-//            iter,
-//            selectors: self,
-//        }
-//    }
-//}
-//
-//impl Selector {
-//    /// Returns whether the given element matches this selector.
-//    #[inline]
-//    pub fn matches(&self, element: &NodeDataRef<ElementData>) -> bool {
-//        let mut context = matching::MatchingContext::new(
-//            matching::MatchingMode::Normal,
-//            None,
-//            None,
-//            QuirksMode::NoQuirks,
-//        );
-//        matching::matches_selector(&self.0, 0, None, element, &mut context, &mut |_, _| {})
-//    }
-//
-//    /// Return the specificity of this selector.
-//    pub fn specificity(&self) -> Specificity {
-//        Specificity(self.0.specificity())
-//    }
-//}
-//
-//impl ::std::str::FromStr for Selectors {
-//    type Err = ();
-//    #[inline]
-//    fn from_str(s: &str) -> Result<Selectors, ()> {
-//        Selectors::compile(s)
-//    }
-//}
-//
-//impl fmt::Display for Selector {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        self.0.to_css(f)
-//    }
-//}
-//
-//impl fmt::Display for Selectors {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        let mut iter = self.0.iter();
-//        let first = iter
-//            .next()
-//            .expect("Empty Selectors, should contain at least one selector");
-//        first.0.to_css(f)?;
-//        for selector in iter {
-//            f.write_str(", ")?;
-//            selector.0.to_css(f)?;
-//        }
-//        Ok(())
-//    }
-//}
-//
-//impl fmt::Debug for Selector {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        fmt::Display::fmt(self, f)
-//    }
-//}
-//
-//impl fmt::Debug for Selectors {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        fmt::Display::fmt(self, f)
-//    }
-//}

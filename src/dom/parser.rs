@@ -1,6 +1,5 @@
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/parser.rs).
 /// Thanks to the authors of Kuchiki for their work.
-
 use html5ever::tendril::StrTendril;
 use html5ever::tree_builder::{ElementFlags, NodeOrText, QuirksMode, TreeSink};
 use html5ever::{self, Attribute, ExpandedName, QualName};

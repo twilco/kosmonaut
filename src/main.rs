@@ -1,14 +1,15 @@
-#[allow(unused_imports)]
-
-pub mod layout;
-pub mod frame;
-pub mod style;
 pub mod dom;
+pub mod frame;
+#[allow(unused_imports)]
+pub mod layout;
+pub mod style;
 
 #[macro_use]
 extern crate matches;
 #[macro_use]
 extern crate html5ever;
+#[macro_use]
+extern crate cssparser;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -16,9 +17,9 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 use std::fs::File;
 use std::io::Read;
 
-use crate::dom::traits::*;
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
+use crate::dom::traits::*;
 
 /// Algorithm:
 ///  1. Upon enter button of URL textbox, make request to URL (or local FS file)
@@ -51,8 +52,7 @@ fn main() {
         .unwrap();
 
     dbg!(dom);
-    dbg!(style::parse_stylesheet_to_rules("web/browser.css"));
-
+    style::parse_stylesheet_to_rules("web/browser.css");
 
     application.run(&[]);
 }

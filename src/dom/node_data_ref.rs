@@ -1,10 +1,9 @@
+use crate::dom::tree::{Doctype, DocumentData, ElementData, Node, NodeRef};
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/node_data_ref.rs).
 /// Thanks to the authors of Kuchiki for their work.
-
 use std::cell::RefCell;
 use std::fmt;
 use std::ops::Deref;
-use crate::dom::tree::{Doctype, DocumentData, ElementData, Node, NodeRef};
 
 impl NodeRef {
     /// If this node is an element, return a strong reference to element-specific data.

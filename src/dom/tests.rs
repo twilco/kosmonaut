@@ -1,12 +1,11 @@
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/tests.rs).
 /// Thanks to the authors of Kuchiki for their work.
-
 use html5ever::tree_builder::QuirksMode;
 use std::path::Path;
 
 use tempdir::TempDir;
 
-use crate::parser::parse_html;
+use crate::dom::parser::parse_html;
 use crate::dom::traits::*;
 
 #[test]

@@ -1,22 +1,23 @@
-pub mod select;
+#[macro_use]
+mod macros;
 
+pub mod properties;
+pub mod select;
+pub mod values;
+
+use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclarationParser};
 use crate::style::select::{KosmonautParser, KosmonautSelectors};
 
+use std::collections::HashSet;
 use std::convert::From;
 use std::fs::File;
+use std::io::prelude::*;
 use std::path::Path;
-use cssparser::{CowRcStr, ParseError, Parser, QualifiedRuleParser, SourceLocation};
-use cssparser::DeclarationParser;
-use selectors::parser::{
-    SelectorList,
-    SelectorParseError,
-    SelectorParseErrorKind
-};
 
-/// CSS can come from: <style> tags (embedded), (inline) style on node itself, (external) stylesheets
-pub struct NodeStyle {
-    pub display: Display,
-}
+use cssparser::{AtRuleParser, AtRuleType, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, QualifiedRuleParser, RuleListParser, SourceLocation};
+use selectors::parser::{SelectorList, SelectorParseError, SelectorParseErrorKind};
+use selectors::SelectorImpl;
+use smallbitvec::SmallBitVec;
 
 // https://www.w3schools.com/CSSref/pr_class_display.asp
 pub enum Display {
@@ -28,42 +29,21 @@ pub enum Display {
 }
 
 // TODO: Servo supports many different types of rules, but we won't support those yet.  https://github.com/servo/servo/blob/d2856ce8aeca11e543bc4d9f869400d73451374e/components/style/stylesheets/mod.rs#L236
+#[derive(Debug)]
 pub enum CssRule {
     Style(StyleRule),
-    None
+    None,
 }
 
 /// A style rule, with selectors and declarations.
 #[derive(Debug)]
 pub struct StyleRule {
     /// The list of selectors in this rule.
-//    pub selectors: Selectors,
+    pub selectors: SelectorList<KosmonautSelectors>,
     /// The declaration block with the properties it contains.
-    pub block: Declaration,
+    pub block: PropertyDeclarationBlock,
     /// The location in the sheet where it was found.
     pub source_location: SourceLocation,
-}
-
-/// Example: margin: auto;
-/// TODO: This should be statically typed, not stringly typed.
-#[derive(Debug)]
-pub struct Declaration {
-    name: String,
-    value: Value,
-}
-
-#[derive(Debug)]
-pub enum Value {
-    Keyword(String),
-    Length(f32, Unit),
-    ColorValue(Color),
-    // insert more values here
-}
-
-#[derive(Debug)]
-pub enum Unit {
-    Px,
-    // insert more units here
 }
 
 #[derive(Debug)]
@@ -76,14 +56,37 @@ pub struct Color {
 
 /// Parses stylesheet file into StyleRules.
 ///   * path_and_name - Path to and filename of the stylesheet
-pub fn parse_stylesheet_to_rules<P: AsRef<Path>>(path_and_name: P) -> Result<Vec<StyleRule>, std::io::Error> {
-    let stylesheet = File::open(path_and_name)?;
+pub fn parse_stylesheet_to_rules<P: AsRef<Path>>(
+    path_and_name: P,
+) -> Result<Vec<StyleRule>, std::io::Error> {
+    let mut stylesheet = File::open(path_and_name)?;
+    let mut contents = String::new();
+    stylesheet.read_to_string(&mut contents)?;
 
+    let input = &mut ParserInput::new(&contents);
+    let parser = &mut Parser::new(input);
+    let mut rule_parser = RuleListParser::new_for_stylesheet(
+        parser,
+        TopLevelRuleParser {},
+    );
+    let a = dbg!(rule_parser.next());
     Ok(Vec::new())
 }
 
 /// Parser for top-level CSS rules.
 pub struct TopLevelRuleParser {}
+
+// TODO: Support @ rules
+pub enum AtRuleNonBlockPrelude {}
+pub enum AtRuleBlockPrelude {}
+
+/// Kosmonaut currently does not support @rules, so fall back to the default @rule error impl.
+impl<'i> AtRuleParser<'i> for TopLevelRuleParser {
+    type PreludeNoBlock = AtRuleNonBlockPrelude;
+    type PreludeBlock = AtRuleBlockPrelude;
+    type AtRule = CssRule;
+    type Error = StyleParseErrorKind<'i>;
+}
 
 impl<'i> QualifiedRuleParser<'i> for TopLevelRuleParser {
     type Prelude = SelectorList<KosmonautSelectors>;
@@ -101,11 +104,15 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelRuleParser {
     #[inline]
     fn parse_block<'t>(
         &mut self,
-        prelude: Self::Prelude,
-        location: SourceLocation,
+        selectors: Self::Prelude,
+        source_location: SourceLocation,
         input: &mut Parser<'i, 't>,
     ) -> Result<CssRule, ParseError<'i, Self::Error>> {
-        Ok(CssRule::None)
+        Ok(CssRule::Style(StyleRule {
+            selectors,
+            block: parse_property_declaration_list(input),
+            source_location,
+        }))
     }
 }
 
@@ -148,10 +155,10 @@ pub enum StyleParseErrorKind<'i> {
     UnsupportedAtRule(CowRcStr<'i>),
     /// A placeholder for many sources of errors that require more specific variants.
     UnspecifiedError,
-//    /// An unexpected token was found within a namespace rule.
-//    UnexpectedTokenWithinNamespace(Token<'i>),
-//    /// An error was encountered while parsing a property value.
-//    ValueError(ValueParseErrorKind<'i>),
+    //    /// An unexpected token was found within a namespace rule.
+    //    UnexpectedTokenWithinNamespace(Token<'i>),
+    //    /// An error was encountered while parsing a property value.
+    //    ValueError(ValueParseErrorKind<'i>),
     /// An error was encountered while parsing a selector
     SelectorError(SelectorParseErrorKind<'i>),
 
@@ -159,10 +166,10 @@ pub enum StyleParseErrorKind<'i> {
     UnknownProperty(CowRcStr<'i>),
     /// The property declaration was for a disabled experimental property.
     ExperimentalProperty,
-//    /// The property declaration contained an invalid color value.
-//    InvalidColor(CowRcStr<'i>, Token<'i>),
-//    /// The property declaration contained an invalid filter value.
-//    InvalidFilter(CowRcStr<'i>, Token<'i>),
+    //    /// The property declaration contained an invalid color value.
+    //    InvalidColor(CowRcStr<'i>, Token<'i>),
+    //    /// The property declaration contained an invalid filter value.
+    //    InvalidFilter(CowRcStr<'i>, Token<'i>),
     /// The property declaration contained an invalid value.
     OtherInvalidValue(CowRcStr<'i>),
     /// The declaration contained an animation property, and we were parsing
@@ -180,4 +187,13 @@ impl<'i> From<selectors::parser::SelectorParseErrorKind<'i>> for StyleParseError
     }
 }
 
-
+/// Value computations common to all CSS properties.
+/// https://www.w3.org/TR/css3-values/#common-keywords
+pub enum CssWideKeywords {
+    /// Represents the value specified as the property’s initial value.
+    Initial,
+    /// Represents the computed value of the property on the element’s parent.
+    Inherit,
+    /// Acts as either inherit or initial, depending on whether the property is inherited or not.
+    Unset,
+}

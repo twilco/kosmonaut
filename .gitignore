@@ -1,3 +1,4 @@
 /target
 /.idea/
 **/*.rs.bk
+notes.md

@@ -11,6 +11,8 @@ html5ever = "0.24.0"
 matches = "0.1.8"
 rand = "0.7.0"
 selectors = "0.21.0"
+smallbitvec = "2.3.0"
+tempdir = "0.3.7"
 
 [dependencies.gtk]
 version = "0.7"

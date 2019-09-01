@@ -3,7 +3,6 @@
 /// Kuchiki doesn't expose some key structures, such as its implementation of `selectors::Parser`,
 /// that we need in Kosmonaut.  The authors of Kosmonaut will upstream any improvements back to
 /// Kuchiki where it makes sense.  Thanks to the authors of Kuchiki for their work.
-
 pub mod attributes;
 pub mod cell_extras;
 pub mod iter;
@@ -21,6 +20,6 @@ pub mod tree;
 /// use crate::dom::traits::*;
 /// ```
 pub mod traits {
-    pub use html5ever::tendril::TendrilSink;
     pub use crate::dom::iter::NodeIterator;
+    pub use html5ever::tendril::TendrilSink;
 }

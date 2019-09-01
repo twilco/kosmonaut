@@ -1,6 +1,5 @@
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/serializer.rs).
 /// Thanks to the authors of Kuchiki for their work.
-
 use html5ever::serialize::TraversalScope::*;
 use html5ever::serialize::{serialize, Serialize, SerializeOpts, Serializer, TraversalScope};
 use html5ever::QualName;

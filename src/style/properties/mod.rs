@@ -1,34 +1,39 @@
 pub mod id;
 pub mod longhands;
 
-use cssparser::{parse_important, CowRcStr, DeclarationParser, Delimiter, ParseError, Parser, DeclarationListParser, Token, AtRuleParser};
+use cssparser::{
+    parse_important, AtRuleParser, CowRcStr, DeclarationListParser, DeclarationParser, Delimiter,
+    ParseError, Parser, Token,
+};
 use smallbitvec::SmallBitVec;
 use std::collections::HashSet;
 
+use crate::dom::tree::NodeRef;
 use crate::style::properties::id::{LonghandId, PropertyId};
-use crate::style::StyleParseErrorKind;
+use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
 use crate::style::values::specified::FontSize;
-use crate::style::values::specified::length::{LengthPercentage, NoCalcLength, AbsoluteLength};
+use crate::style::StyleParseErrorKind;
 use std::borrow::BorrowMut;
 
+/// Parses raw parser input into a block of property declarations.
 pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclarationBlock {
     let mut block = PropertyDeclarationBlock::new();
     let mut prop_parser = PropertyDeclarationParser {
-        declarations: Vec::new()
+        declarations: Vec::new(),
     };
     let mut decl_iter = DeclarationListParser::new(input, prop_parser);
     while let Some(declaration) = decl_iter.next() {
         match declaration {
             Ok(importance) => {
-                let decls: Vec<PropertyDeclaration> = decl_iter.parser.declarations.drain(..).collect();
+                let decls: Vec<PropertyDeclaration> =
+                    decl_iter.parser.declarations.drain(..).collect();
                 for decl in decls.iter() {
                     block.declarations.push(decl.clone());
                     block.declarations_importance.push(match importance {
                         Importance::Important => true,
-                        Importance::Normal => false
+                        Importance::Normal => false,
                     })
                 }
-                dbg!(importance);
             }
             Err(parse_err) => {
                 dbg!(parse_err);
@@ -37,6 +42,8 @@ pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclaratio
     }
     block
 }
+
+//pub fn apply_styles(dom: NodeRef, )
 
 /// A struct to parse property declarations.
 pub struct PropertyDeclarationParser {
@@ -98,6 +105,14 @@ impl PropertyDeclarationBlock {
     pub fn new() -> PropertyDeclarationBlock {
         Self::default()
     }
+
+    pub fn declarations(&self) -> &[PropertyDeclaration] {
+        &self.declarations
+    }
+
+    pub fn declarations_importance(&self) -> &SmallBitVec {
+        &self.declarations_importance
+    }
 }
 
 impl PropertyDeclaration {
@@ -116,8 +131,6 @@ impl PropertyDeclaration {
             },
             PropertyId::Shorthand(short_id) => {}
         }
-
-        dbg!(id);
         Ok(())
     }
 }

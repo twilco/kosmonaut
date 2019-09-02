@@ -3,9 +3,12 @@ mod macros;
 
 pub mod properties;
 pub mod select;
+pub mod stylesheet;
 pub mod values;
 
-use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclarationParser};
+use crate::style::properties::{
+    parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclarationParser,
+};
 use crate::style::select::{KosmonautParser, KosmonautSelectors};
 
 use std::collections::HashSet;
@@ -14,7 +17,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use cssparser::{AtRuleParser, AtRuleType, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, QualifiedRuleParser, RuleListParser, SourceLocation};
+use cssparser::{
+    AtRuleParser, AtRuleType, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput,
+    QualifiedRuleParser, RuleListParser, SourceLocation,
+};
 use selectors::parser::{SelectorList, SelectorParseError, SelectorParseErrorKind};
 use selectors::SelectorImpl;
 use smallbitvec::SmallBitVec;
@@ -52,25 +58,6 @@ pub struct Color {
     g: u8,
     b: u8,
     a: u8,
-}
-
-/// Parses stylesheet file into StyleRules.
-///   * path_and_name - Path to and filename of the stylesheet
-pub fn parse_stylesheet_to_rules<P: AsRef<Path>>(
-    path_and_name: P,
-) -> Result<Vec<StyleRule>, std::io::Error> {
-    let mut stylesheet = File::open(path_and_name)?;
-    let mut contents = String::new();
-    stylesheet.read_to_string(&mut contents)?;
-
-    let input = &mut ParserInput::new(&contents);
-    let parser = &mut Parser::new(input);
-    let mut rule_parser = RuleListParser::new_for_stylesheet(
-        parser,
-        TopLevelRuleParser {},
-    );
-    let a = dbg!(rule_parser.next());
-    Ok(Vec::new())
 }
 
 /// Parser for top-level CSS rules.

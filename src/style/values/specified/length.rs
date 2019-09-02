@@ -1,6 +1,6 @@
 use crate::style::values::specified::CSSFloat;
-use cssparser::{Parser, ParseError, Token};
 use crate::style::StyleParseErrorKind;
+use cssparser::{ParseError, Parser, Token};
 
 /// A `<length-percentage>` value. This can be either a `<length>`, a
 /// `<percentage>`, or a combination of both via `calc()`.
@@ -12,7 +12,9 @@ pub enum LengthPercentage {
 }
 
 impl LengthPercentage {
-    pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
+    pub fn parse<'i, 't>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         let location = input.current_source_location();
         let token = input.next()?;
         match *token {
@@ -22,11 +24,11 @@ impl LengthPercentage {
                 return NoCalcLength::parse_dimension(value, unit)
                     .map(LengthPercentage::Length)
                     .map_err(|()| location.new_unexpected_token_error(token.clone()));
-            },
+            }
             _ => return Err(location.new_unexpected_token_error(token.clone())),
         }
 
-        return Err(location.new_unexpected_token_error(token.clone()))
+        return Err(location.new_unexpected_token_error(token.clone()));
     }
 }
 
@@ -43,10 +45,7 @@ pub enum NoCalcLength {
 
 impl NoCalcLength {
     /// Parse a given absolute or relative dimension.
-    pub fn parse_dimension(
-        value: CSSFloat,
-        unit: &str,
-    ) -> Result<Self, ()> {
+    pub fn parse_dimension(value: CSSFloat, unit: &str) -> Result<Self, ()> {
         Ok(match_ignore_ascii_case! { unit,
             "px" => NoCalcLength::Absolute(AbsoluteLength::Px(value)),
             "in" => NoCalcLength::Absolute(AbsoluteLength::In(value)),

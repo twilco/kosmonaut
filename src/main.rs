@@ -51,8 +51,9 @@ fn main() {
         .read_from(&mut File::open("web/basic.html").unwrap())
         .unwrap();
 
-    dbg!(dom);
-    style::parse_stylesheet_to_rules("web/browser.css");
+    dbg!(style::stylesheet::parse_str_to_stylesheet(
+        &mut std::fs::read_to_string("web/browser.css").expect("file fail")
+    ));
 
     application.run(&[]);
 }

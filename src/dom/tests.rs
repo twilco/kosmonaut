@@ -5,9 +5,9 @@ use std::path::Path;
 
 use tempdir::TempDir;
 
-use crate::style::select::*;
 use crate::dom::parser::parse_html;
 use crate::dom::traits::*;
+use crate::style::select::*;
 
 #[test]
 fn text_nodes() {

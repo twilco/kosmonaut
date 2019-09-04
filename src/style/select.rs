@@ -107,8 +107,8 @@ impl NonTSPseudoClass for PseudoClass {
 
 impl ToCss for PseudoClass {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-        where
-            W: fmt::Write,
+    where
+        W: fmt::Write,
     {
         dest.write_str(match *self {
             PseudoClass::AnyLink => ":any-link",
@@ -130,8 +130,8 @@ pub enum PseudoElement {}
 
 impl ToCss for PseudoElement {
     fn to_css<W>(&self, _dest: &mut W) -> fmt::Result
-        where
-            W: fmt::Write,
+    where
+        W: fmt::Write,
     {
         match *self {}
     }
@@ -214,10 +214,10 @@ impl selectors::Element for NodeDataRef<ElementData> {
                 local_name!("a") | local_name!("area") | local_name!("link")
             )
             && self
-            .attributes
-            .borrow()
-            .map
-            .contains_key(&ExpandedName::new(ns!(), local_name!("href")))
+                .attributes
+                .borrow()
+                .map
+                .contains_key(&ExpandedName::new(ns!(), local_name!("href")))
     }
 
     #[inline]
@@ -235,12 +235,12 @@ impl selectors::Element for NodeDataRef<ElementData> {
         let name = name.as_bytes();
         !name.is_empty()
             && if let Some(class_attr) = self.attributes.borrow().get(local_name!("class")) {
-            class_attr
-                .split(SELECTOR_WHITESPACE)
-                .any(|class| case_sensitivity.eq(class.as_bytes(), name))
-        } else {
-            false
-        }
+                class_attr
+                    .split(SELECTOR_WHITESPACE)
+                    .any(|class| case_sensitivity.eq(class.as_bytes(), name))
+            } else {
+                false
+            }
     }
 
     #[inline]
@@ -277,8 +277,8 @@ impl selectors::Element for NodeDataRef<ElementData> {
         _context: &mut matching::MatchingContext<KosmonautSelectors>,
         _flags_setter: &mut F,
     ) -> bool
-        where
-            F: FnMut(&Self, matching::ElementSelectorFlags),
+    where
+        F: FnMut(&Self, matching::ElementSelectorFlags),
     {
         use self::PseudoClass::*;
         match *pseudo {
@@ -332,8 +332,8 @@ impl Selectors {
     /// Filter an element iterator, yielding those matching this list of selectors.
     #[inline]
     pub fn filter<I>(&self, iter: I) -> Select<I, &Selectors>
-        where
-            I: Iterator<Item = NodeDataRef<ElementData>>,
+    where
+        I: Iterator<Item = NodeDataRef<ElementData>>,
     {
         Select {
             iter: iter,

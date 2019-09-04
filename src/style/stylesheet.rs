@@ -8,7 +8,9 @@ use crate::style::{CssRule, StyleParseErrorKind, StyleRule, TopLevelRuleParser};
 
 /// Parses stylesheet file into StyleRules.
 ///   * path_and_name - Path to and filename of the stylesheet
-pub fn parse_str_to_stylesheet(stylesheet_str: &mut str) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
+pub fn parse_str_to_stylesheet(
+    stylesheet_str: &mut str,
+) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
     let input = &mut ParserInput::new(stylesheet_str);
     let parser = &mut Parser::new(input);
     let mut rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
@@ -57,28 +59,28 @@ impl Stylesheet {
     /// Adds a new rule to the stylesheet, de-duplicating rules with the same selectors and
     /// conflicting `property: value`s.
     pub fn add_rule(&mut self, new_rule: CssRule) {
-//        match new_rule {
-//            CssRule::Style(new_style) => {
-//                for existing_rule in self.rules {
-//                    match existing_rule {
-//                        CssRule::Style(existing_style) => {
-//                            if existing_style.selectors.eq(new_style.selectors) {
-//                                for existing_prop in existing_style.block.declarations() {
-//                                    for new_prop in new_style.block.declarations() {
-//                                        if discriminant(new_prop) == discriminant(existing_prop) {
-//                                            // the props are the same "type", e.g. both `font-size, both `display`, etc
-//                                            // take the `new_prop`, since the latest/newest prop should always be taken
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                        CssRule::None => {}
-//                    }
-//                }
-//            }
-//            CssRule::None => {}
-//        }
+        //        match new_rule {
+        //            CssRule::Style(new_style) => {
+        //                for existing_rule in self.rules {
+        //                    match existing_rule {
+        //                        CssRule::Style(existing_style) => {
+        //                            if existing_style.selectors.eq(new_style.selectors) {
+        //                                for existing_prop in existing_style.block.declarations() {
+        //                                    for new_prop in new_style.block.declarations() {
+        //                                        if discriminant(new_prop) == discriminant(existing_prop) {
+        //                                            // the props are the same "type", e.g. both `font-size, both `display`, etc
+        //                                            // take the `new_prop`, since the latest/newest prop should always be taken
+        //                                        }
+        //                                    }
+        //                                }
+        //                            }
+        //                        }
+        //                        CssRule::None => {}
+        //                    }
+        //                }
+        //            }
+        //            CssRule::None => {}
+        //        }
         self.rules.push(new_rule);
     }
 }

@@ -189,21 +189,15 @@ mod tests {
     // TODO: Create E2E test that exercises this as well
     fn dedupes_and_takes_newest_prop() {
         let mut decl_block = PropertyDeclarationBlock::new();
-        decl_block.add_declaration(
-            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
-                NoCalcLength::Absolute(AbsoluteLength::Px(12.0))
-            )))
-        );
-        decl_block.add_declaration(
-            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
-                NoCalcLength::Absolute(AbsoluteLength::Px(16.0))
-            )))
-        );
-        decl_block.add_declaration(
-            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
-                NoCalcLength::Absolute(AbsoluteLength::Px(24.0))
-            )))
-        );
+        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
+            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(12.0))),
+        )));
+        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
+            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(16.0))),
+        )));
+        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
+            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(24.0))),
+        )));
         assert_eq!(decl_block.declarations.len(), 1);
 
         match &decl_block.declarations[0] {
@@ -213,13 +207,13 @@ mod tests {
                         NoCalcLength::Absolute(abs_len) => match abs_len {
                             // should take the latest font-size in the block, 24px
                             AbsoluteLength::Px(float_val) => assert_eq!(float_val, &24.0),
-                            _ => panic!("should always be `px` AbsoluteLength units")
-                        }
-                    }
+                            _ => panic!("should always be `px` AbsoluteLength units"),
+                        },
+                    },
                 },
-                _ => panic!("should always be a `Length`-style font-size (e.g. `16 px;`)")
+                _ => panic!("should always be a `Length`-style font-size (e.g. `16 px;`)"),
             },
-            _ => panic!("should always be `FontSize` property decl")
+            _ => panic!("should always be `FontSize` property decl"),
         }
     }
 
@@ -228,4 +222,4 @@ mod tests {
     }
 }
 
-// TODO: 1. Fix tests 2. Create test to dedupe props across blocks 3. Fix warnings 4. Cargo fmt
+// TODO: 1. Create test to dedupe props across blocks 3. Fix warnings 4. Cargo fmt

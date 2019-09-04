@@ -101,5 +101,3 @@ mod tests {
         assert!(true)
     }
 }
-
-// TODO: 1. Fix tests 2. Create test to dedupe props across blocks 3. Fix warnings 4. Cargo fmt

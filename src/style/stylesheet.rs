@@ -3,7 +3,7 @@ use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
 use crate::style::{CssRule, StyleParseErrorKind, StyleRule, TopLevelRuleParser};
 
 /// Parses string containing CSS into StyleRules.
-pub fn parse_str_to_stylesheet(
+pub fn parse_css_to_stylesheet(
     css_str: &mut str,
 ) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
     let input = &mut ParserInput::new(css_str);

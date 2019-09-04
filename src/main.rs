@@ -52,7 +52,7 @@ fn main() {
         .read_from(&mut File::open("web/basic.html").unwrap())
         .unwrap();
 
-    dbg!(style::stylesheet::parse_str_to_stylesheet(
+    dbg!(style::stylesheet::parse_css_to_stylesheet(
         &mut std::fs::read_to_string("web/browser.css").expect("file fail")
     ));
 

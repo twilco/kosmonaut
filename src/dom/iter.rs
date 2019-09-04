@@ -9,7 +9,7 @@ use std::iter::Rev;
 
 use crate::dom::node_data_ref::NodeDataRef;
 use crate::dom::tree::{ElementData, NodeRef};
-//use crate::style::select::Selectors;
+use crate::style::select::Selectors;
 
 impl NodeRef {
     /// Return an iterator of references to this node and its ancestors.
@@ -157,18 +157,18 @@ impl NodeRef {
         }
     }
 
-    //    /// Return an iterator of the inclusive descendants element that match the given selector list.
-    //    #[inline]
-    //    pub fn select(&self, selectors: &str) -> Result<Select<Elements<Descendants>>, ()> {
-    //        self.inclusive_descendants().select(selectors)
-    //    }
+    /// Return an iterator of the inclusive descendants element that match the given selector list.
+    #[inline]
+    pub fn select(&self, selectors: &str) -> Result<Select<Elements<Descendants>>, ()> {
+        self.inclusive_descendants().select(selectors)
+    }
 
-    //    /// Return the first inclusive descendants element that match the given selector list.
-    //    #[inline]
-    //    pub fn select_first(&self, selectors: &str) -> Result<NodeDataRef<ElementData>, ()> {
-    //        let mut elements = self.select(selectors)?;
-    //        elements.next().ok_or(())
-    //    }
+    /// Return the first inclusive descendants element that match the given selector list.
+    #[inline]
+    pub fn select_first(&self, selectors: &str) -> Result<NodeDataRef<ElementData>, ()> {
+        let mut elements = self.select(selectors)?;
+        elements.next().ok_or(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -366,51 +366,51 @@ filter_map_like_iterator! {
 }
 
 /// An element iterator adaptor that yields elements maching given selectors.
-//pub struct Select<I, S = Selectors>
-//where
-//    I: Iterator<Item = NodeDataRef<ElementData>>,
-//    S: Borrow<Selectors>,
-//{
-//    /// The underlying iterator.
-//    pub iter: I,
-//
-//    /// The selectors to be matched.
-//    pub selectors: S,
-//}
+pub struct Select<I, S = Selectors>
+where
+    I: Iterator<Item = NodeDataRef<ElementData>>,
+    S: Borrow<Selectors>,
+{
+    /// The underlying iterator.
+    pub iter: I,
 
-//impl<I, S> Iterator for Select<I, S>
-//where
-//    I: Iterator<Item = NodeDataRef<ElementData>>,
-//    S: Borrow<Selectors>,
-//{
-//    type Item = NodeDataRef<ElementData>;
-//
-//    #[inline]
-//    fn next(&mut self) -> Option<NodeDataRef<ElementData>> {
-//        for element in self.iter.by_ref() {
-//            if self.selectors.borrow().matches(&element) {
-//                return Some(element);
-//            }
-//        }
-//        None
-//    }
-//}
+    /// The selectors to be matched.
+    pub selectors: S,
+}
 
-//impl<I, S> DoubleEndedIterator for Select<I, S>
-//where
-//    I: DoubleEndedIterator<Item = NodeDataRef<ElementData>>,
-//    S: Borrow<Selectors>,
-//{
-//    #[inline]
-//    fn next_back(&mut self) -> Option<NodeDataRef<ElementData>> {
-//        for element in self.iter.by_ref().rev() {
-//            if self.selectors.borrow().matches(&element) {
-//                return Some(element);
-//            }
-//        }
-//        None
-//    }
-//}
+impl<I, S> Iterator for Select<I, S>
+where
+    I: Iterator<Item = NodeDataRef<ElementData>>,
+    S: Borrow<Selectors>,
+{
+    type Item = NodeDataRef<ElementData>;
+
+    #[inline]
+    fn next(&mut self) -> Option<NodeDataRef<ElementData>> {
+        for element in self.iter.by_ref() {
+            if self.selectors.borrow().matches(&element) {
+                return Some(element);
+            }
+        }
+        None
+    }
+}
+
+impl<I, S> DoubleEndedIterator for Select<I, S>
+where
+    I: DoubleEndedIterator<Item = NodeDataRef<ElementData>>,
+    S: Borrow<Selectors>,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<NodeDataRef<ElementData>> {
+        for element in self.iter.by_ref().rev() {
+            if self.selectors.borrow().matches(&element) {
+                return Some(element);
+            }
+        }
+        None
+    }
+}
 
 /// Convenience methods for node iterators.
 pub trait NodeIterator: Sized + Iterator<Item = NodeRef> {
@@ -432,24 +432,24 @@ pub trait NodeIterator: Sized + Iterator<Item = NodeRef> {
         Comments(self)
     }
 
-    //    /// Filter this node iterator to elements maching the given selectors.
-    //    #[inline]
-    //    fn select(self, selectors: &str) -> Result<Select<Elements<Self>>, ()> {
-    //        self.elements().select(selectors)
-    //    }
+    /// Filter this node iterator to elements maching the given selectors.
+    #[inline]
+    fn select(self, selectors: &str) -> Result<Select<Elements<Self>>, ()> {
+        self.elements().select(selectors)
+    }
 }
 
 /// Convenience methods for element iterators.
-//pub trait ElementIterator: Sized + Iterator<Item = NodeDataRef<ElementData>> {
-//    /// Filter this element iterator to elements maching the given selectors.
-//    #[inline]
-//    fn select(self, selectors: &str) -> Result<Select<Self>, ()> {
-//        Selectors::compile(selectors).map(|s| Select {
-//            iter: self,
-//            selectors: s,
-//        })
-//    }
-//}
+pub trait ElementIterator: Sized + Iterator<Item = NodeDataRef<ElementData>> {
+    /// Filter this element iterator to elements maching the given selectors.
+    #[inline]
+    fn select(self, selectors: &str) -> Result<Select<Self>, ()> {
+        Selectors::compile(selectors).map(|s| Select {
+            iter: self,
+            selectors: s,
+        })
+    }
+}
 
 impl<I> NodeIterator for I where I: Iterator<Item = NodeRef> {}
-//impl<I> ElementIterator for I where I: Iterator<Item = NodeDataRef<ElementData>> {}
+impl<I> ElementIterator for I where I: Iterator<Item = NodeDataRef<ElementData>> {}

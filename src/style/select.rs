@@ -1,7 +1,7 @@
 /// This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/select.rs).
 /// Thanks to the authors of Kuchiki for their work.
 use crate::dom::attributes::ExpandedName;
-use crate::dom::iter::NodeIterator;
+use crate::dom::iter::{NodeIterator, Select};
 use crate::dom::node_data_ref::NodeDataRef;
 use crate::dom::tree::{ElementData, Node, NodeData, NodeRef};
 use crate::style::StyleParseErrorKind;
@@ -107,8 +107,8 @@ impl NonTSPseudoClass for PseudoClass {
 
 impl ToCss for PseudoClass {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-    where
-        W: fmt::Write,
+        where
+            W: fmt::Write,
     {
         dest.write_str(match *self {
             PseudoClass::AnyLink => ":any-link",
@@ -130,8 +130,8 @@ pub enum PseudoElement {}
 
 impl ToCss for PseudoElement {
     fn to_css<W>(&self, _dest: &mut W) -> fmt::Result
-    where
-        W: fmt::Write,
+        where
+            W: fmt::Write,
     {
         match *self {}
     }
@@ -151,8 +151,8 @@ impl selectors::Element for NodeDataRef<ElementData> {
     }
 
     #[inline]
-    fn parent_element(&self) -> Option<Self> {
-        self.as_node().parent().and_then(NodeRef::into_element_ref)
+    fn is_html_slot_element(&self) -> bool {
+        false
     }
     #[inline]
     fn parent_node_is_shadow_root(&self) -> bool {
@@ -164,6 +164,10 @@ impl selectors::Element for NodeDataRef<ElementData> {
     }
 
     #[inline]
+    fn parent_element(&self) -> Option<Self> {
+        self.as_node().parent().and_then(NodeRef::into_element_ref)
+    }
+    #[inline]
     fn prev_sibling_element(&self) -> Option<Self> {
         self.as_node().preceding_siblings().elements().next()
     }
@@ -172,10 +176,27 @@ impl selectors::Element for NodeDataRef<ElementData> {
         self.as_node().following_siblings().elements().next()
     }
     #[inline]
+    fn is_empty(&self) -> bool {
+        self.as_node().children().all(|child| match *child.data() {
+            NodeData::Element(_) => false,
+            NodeData::Text(ref text) => text.borrow().is_empty(),
+            _ => true,
+        })
+    }
+    #[inline]
+    fn is_root(&self) -> bool {
+        match self.as_node().parent() {
+            None => false,
+            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
+        }
+    }
+
+    #[inline]
     fn is_html_element_in_html_document(&self) -> bool {
         // FIXME: Have a notion of HTML document v.s. XML document?
         self.name.ns == ns!(html)
     }
+
     #[inline]
     fn local_name<'a>(&'a self) -> &'a LocalName {
         &self.name.local
@@ -183,6 +204,43 @@ impl selectors::Element for NodeDataRef<ElementData> {
     #[inline]
     fn namespace<'a>(&'a self) -> &'a Namespace {
         &self.name.ns
+    }
+
+    #[inline]
+    fn is_link(&self) -> bool {
+        self.name.ns == ns!(html)
+            && matches!(
+                self.name.local,
+                local_name!("a") | local_name!("area") | local_name!("link")
+            )
+            && self
+            .attributes
+            .borrow()
+            .map
+            .contains_key(&ExpandedName::new(ns!(), local_name!("href")))
+    }
+
+    #[inline]
+    fn has_id(&self, id: &LocalName, case_sensitivity: CaseSensitivity) -> bool {
+        self.attributes
+            .borrow()
+            .get(local_name!("id"))
+            .map_or(false, |id_attr| {
+                case_sensitivity.eq(id.as_bytes(), id_attr.as_bytes())
+            })
+    }
+
+    #[inline]
+    fn has_class(&self, name: &LocalName, case_sensitivity: CaseSensitivity) -> bool {
+        let name = name.as_bytes();
+        !name.is_empty()
+            && if let Some(class_attr) = self.attributes.borrow().get(local_name!("class")) {
+            class_attr
+                .split(SELECTOR_WHITESPACE)
+                .any(|class| case_sensitivity.eq(class.as_bytes(), name))
+        } else {
+            false
+        }
     }
 
     #[inline]
@@ -205,14 +263,22 @@ impl selectors::Element for NodeDataRef<ElementData> {
         }
     }
 
+    fn match_pseudo_element(
+        &self,
+        pseudo: &PseudoElement,
+        _context: &mut matching::MatchingContext<KosmonautSelectors>,
+    ) -> bool {
+        match *pseudo {}
+    }
+
     fn match_non_ts_pseudo_class<F>(
         &self,
         pseudo: &PseudoClass,
         _context: &mut matching::MatchingContext<KosmonautSelectors>,
         _flags_setter: &mut F,
     ) -> bool
-    where
-        F: FnMut(&Self, matching::ElementSelectorFlags),
+        where
+            F: FnMut(&Self, matching::ElementSelectorFlags),
     {
         use self::PseudoClass::*;
         match *pseudo {
@@ -229,70 +295,109 @@ impl selectors::Element for NodeDataRef<ElementData> {
             }
         }
     }
-    fn match_pseudo_element(
-        &self,
-        pseudo: &PseudoElement,
-        _context: &mut matching::MatchingContext<KosmonautSelectors>,
-    ) -> bool {
-        match *pseudo {}
-    }
+}
 
-    #[inline]
-    fn is_link(&self) -> bool {
-        self.name.ns == ns!(html)
-            && matches!(
-                self.name.local,
-                local_name!("a") | local_name!("area") | local_name!("link")
-            )
-            && self
-                .attributes
-                .borrow()
-                .map
-                .contains_key(&ExpandedName::new(ns!(), local_name!("href")))
-    }
+/// A pre-compiled list of CSS Selectors.
+pub struct Selectors(pub Vec<Selector>);
 
-    #[inline]
-    fn is_html_slot_element(&self) -> bool {
-        false
-    }
+/// A pre-compiled CSS Selector.
+pub struct Selector(GenericSelector<KosmonautSelectors>);
 
-    #[inline]
-    fn has_id(&self, id: &LocalName, case_sensitivity: CaseSensitivity) -> bool {
-        self.attributes
-            .borrow()
-            .get(local_name!("id"))
-            .map_or(false, |id_attr| {
-                case_sensitivity.eq(id.as_bytes(), id_attr.as_bytes())
-            })
-    }
+/// The specificity of a selector.
+///
+/// Opaque, but ordered.
+///
+/// Determines precedence in the cascading algorithm.
+/// When equal, a rule later in source order takes precedence.
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Specificity(u32);
 
+impl Selectors {
+    /// Compile a list of selectors. This may fail on syntax errors or unsupported selectors.
     #[inline]
-    fn has_class(&self, name: &LocalName, case_sensitivity: CaseSensitivity) -> bool {
-        let name = name.as_bytes();
-        !name.is_empty()
-            && if let Some(class_attr) = self.attributes.borrow().get(local_name!("class")) {
-                class_attr
-                    .split(SELECTOR_WHITESPACE)
-                    .any(|class| case_sensitivity.eq(class.as_bytes(), name))
-            } else {
-                false
-            }
-    }
-
-    #[inline]
-    fn is_empty(&self) -> bool {
-        self.as_node().children().all(|child| match *child.data() {
-            NodeData::Element(_) => false,
-            NodeData::Text(ref text) => text.borrow().is_empty(),
-            _ => true,
-        })
-    }
-
-    #[inline]
-    fn is_root(&self) -> bool {
-        match self.as_node().parent() {
-            None => false,
-            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
+    pub fn compile(s: &str) -> Result<Selectors, ()> {
+        let mut input = cssparser::ParserInput::new(s);
+        match SelectorList::parse(&KosmonautParser, &mut cssparser::Parser::new(&mut input)) {
+            Ok(list) => Ok(Selectors(list.0.into_iter().map(Selector).collect())),
+            Err(_) => Err(()),
         }
+    }
+
+    /// Returns whether the given element matches this list of selectors.
+    #[inline]
+    pub fn matches(&self, element: &NodeDataRef<ElementData>) -> bool {
+        self.0.iter().any(|s| s.matches(element))
+    }
+
+    /// Filter an element iterator, yielding those matching this list of selectors.
+    #[inline]
+    pub fn filter<I>(&self, iter: I) -> Select<I, &Selectors>
+        where
+            I: Iterator<Item = NodeDataRef<ElementData>>,
+    {
+        Select {
+            iter: iter,
+            selectors: self,
+        }
+    }
+}
+
+impl Selector {
+    /// Returns whether the given element matches this selector.
+    #[inline]
+    pub fn matches(&self, element: &NodeDataRef<ElementData>) -> bool {
+        let mut context = matching::MatchingContext::new(
+            matching::MatchingMode::Normal,
+            None,
+            None,
+            QuirksMode::NoQuirks,
+        );
+        matching::matches_selector(&self.0, 0, None, element, &mut context, &mut |_, _| {})
+    }
+
+    /// Return the specificity of this selector.
+    pub fn specificity(&self) -> Specificity {
+        Specificity(self.0.specificity())
+    }
+}
+
+impl ::std::str::FromStr for Selectors {
+    type Err = ();
+    #[inline]
+    fn from_str(s: &str) -> Result<Selectors, ()> {
+        Selectors::compile(s)
+    }
+}
+
+impl fmt::Display for Selector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.to_css(f)
+    }
+}
+
+impl fmt::Display for Selectors {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut iter = self.0.iter();
+        let first = iter
+            .next()
+            .expect("Empty Selectors, should contain at least one selector");
+        first.0.to_css(f)?;
+        for selector in iter {
+            f.write_str(", ")?;
+            selector.0.to_css(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for Selector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Debug for Selectors {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }

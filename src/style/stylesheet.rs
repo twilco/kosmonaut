@@ -22,7 +22,7 @@ pub fn parse_str_to_stylesheet(stylesheet_str: &mut str) -> Result<Stylesheet, (
 #[derive(Debug)]
 pub enum StylesheetParseErr<'i> {
     Io(std::io::Error),
-    Parse(ParseError<'i, StyleParseErrorKind<'i>>)
+    Parse(ParseError<'i, StyleParseErrorKind<'i>>),
 }
 
 impl<'i> From<std::io::Error> for StylesheetParseErr<'i> {
@@ -45,6 +45,7 @@ impl<'i> From<ParseError<'i, StyleParseErrorKind<'i>>> for StylesheetParseErr<'i
 
 #[derive(Debug, Default)]
 pub struct Stylesheet {
+    /// These rules should be de-duplicated before being accepted into the Vec.
     rules: Vec<CssRule>,
 }
 
@@ -53,29 +54,31 @@ impl Stylesheet {
         Stylesheet::default()
     }
 
-    /// Adds a new rule to the stylesheet, de-depulicating rules with the same selectors and
+    /// Adds a new rule to the stylesheet, de-duplicating rules with the same selectors and
     /// conflicting `property: value`s.
     pub fn add_rule(&mut self, new_rule: CssRule) {
-        //        match new_rule {
-        //            CssRule::Style(new_style) => {
-        //                for existing_rule in self.rules {
-        //                    match existing_rule {
-        //                        CssRule::Style(existing_style) => {
-        //                            if existing_style.selectors.eq(new_style.selectors) {
-        //                                for existing_prop in existing_style.block.declarations() {
-        //                                    for new_prop in new_style.block.declarations() {
-        //                                        if new_prop
-        //                                    }
-        //                                }
-        //                            }
-        //                        },
-        //                        CssRule::None => {}
-        //                    }
-        //                }
-        //            },
-        //            CssRule::None => {}
-        //        }
-        //    }
+//        match new_rule {
+//            CssRule::Style(new_style) => {
+//                for existing_rule in self.rules {
+//                    match existing_rule {
+//                        CssRule::Style(existing_style) => {
+//                            if existing_style.selectors.eq(new_style.selectors) {
+//                                for existing_prop in existing_style.block.declarations() {
+//                                    for new_prop in new_style.block.declarations() {
+//                                        if discriminant(new_prop) == discriminant(existing_prop) {
+//                                            // the props are the same "type", e.g. both `font-size, both `display`, etc
+//                                            // take the `new_prop`, since the latest/newest prop should always be taken
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                        CssRule::None => {}
+//                    }
+//                }
+//            }
+//            CssRule::None => {}
+//        }
         self.rules.push(new_rule);
     }
 }
@@ -94,3 +97,18 @@ pub struct UserStylesheets {
 pub struct AuthorStylesheets {
     sheets: Vec<Stylesheet>,
 }
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+    use crate::style::properties::PropertyDeclaration;
+    use crate::style::values::specified;
+    use crate::style::values::specified::length::*;
+
+    fn selects_last_blocks_prop_in_dupes_across_blocks() {
+        assert!(true)
+    }
+}
+
+// TODO: 1. Fix tests 2. Create test to dedupe props across blocks 3. Fix warnings 4. Cargo fmt

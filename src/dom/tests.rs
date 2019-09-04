@@ -5,6 +5,7 @@ use std::path::Path;
 
 use tempdir::TempDir;
 
+use crate::style::select::*;
 use crate::dom::parser::parse_html;
 use crate::dom::traits::*;
 
@@ -59,7 +60,7 @@ fn parse_and_serialize() {
 #[test]
 fn parse_file() {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf();
-    path.push("test_data".to_string());
+    path.push("src/dom/test_data".to_string());
     path.push("foo.html");
 
     let html = r"<!DOCTYPE html><html><head>
@@ -88,32 +89,32 @@ fn serialize_and_read_file() {
     assert_eq!(document.to_string(), document2.to_string());
 }
 
-//#[test]
-//fn select() {
-//    let html = r"
-//<title>Test case</title>
-//<p class=foo>Foo
-//<p>Bar
-//<p class=foo>Foo
-//";
-//
-//    let document = parse_html().one(html);
-//    let matching = document.select("p.foo").unwrap().collect::<Vec<_>>();
-//    assert_eq!(matching.len(), 2);
-//    let child = matching[0].as_node().first_child().unwrap();
-//    assert_eq!(&**child.as_text().unwrap().borrow(), "Foo\n");
-//    assert_eq!(matching[0].attributes.borrow().get("class"), Some("foo"));
-//    assert_eq!(
-//        matching[0].attributes.borrow().get(local_name!("class")),
-//        Some("foo")
-//    );
-//
-//    let selectors = Selectors::compile("p.foo").unwrap();
-//    let matching2 = selectors
-//        .filter(document.descendants().elements())
-//        .collect::<Vec<_>>();
-//    assert_eq!(matching, matching2);
-//}
+#[test]
+fn select() {
+    let html = r"
+<title>Test case</title>
+<p class=foo>Foo
+<p>Bar
+<p class=foo>Foo
+";
+
+    let document = parse_html().one(html);
+    let matching = document.select("p.foo").unwrap().collect::<Vec<_>>();
+    assert_eq!(matching.len(), 2);
+    let child = matching[0].as_node().first_child().unwrap();
+    assert_eq!(&**child.as_text().unwrap().borrow(), "Foo\n");
+    assert_eq!(matching[0].attributes.borrow().get("class"), Some("foo"));
+    assert_eq!(
+        matching[0].attributes.borrow().get(local_name!("class")),
+        Some("foo")
+    );
+
+    let selectors = Selectors::compile("p.foo").unwrap();
+    let matching2 = selectors
+        .filter(document.descendants().elements())
+        .collect::<Vec<_>>();
+    assert_eq!(matching, matching2);
+}
 
 #[test]
 fn select_first() {
@@ -160,16 +161,16 @@ fn to_string() {
     );
 }
 
-//#[test]
-//fn specificity() {
-//    let selectors = Selectors::compile(".example, :first-child, div").unwrap();
-//    let specificities = selectors
-//        .0
-//        .iter()
-//        .map(|s| s.specificity())
-//        .collect::<Vec<_>>();
-//    assert_eq!(specificities.len(), 3);
-//    assert!(specificities[0] == specificities[1]);
-//    assert!(specificities[0] > specificities[2]);
-//    assert!(specificities[1] > specificities[2]);
-//}
+#[test]
+fn specificity() {
+    let selectors = Selectors::compile(".example, :first-child, div").unwrap();
+    let specificities = selectors
+        .0
+        .iter()
+        .map(|s| s.specificity())
+        .collect::<Vec<_>>();
+    assert_eq!(specificities.len(), 3);
+    assert!(specificities[0] == specificities[1]);
+    assert!(specificities[0] > specificities[2]);
+    assert!(specificities[1] > specificities[2]);
+}

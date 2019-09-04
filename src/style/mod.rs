@@ -1,3 +1,11 @@
+use std::convert::From;
+
+use cssparser::{AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser, SourceLocation};
+use selectors::parser::{SelectorList, SelectorParseErrorKind};
+
+use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
+use crate::style::select::{KosmonautParser, KosmonautSelectors};
+
 #[macro_use]
 mod macros;
 
@@ -5,25 +13,6 @@ pub mod properties;
 pub mod select;
 pub mod stylesheet;
 pub mod values;
-
-use crate::style::properties::{
-    parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclarationParser,
-};
-use crate::style::select::{KosmonautParser, KosmonautSelectors};
-
-use std::collections::HashSet;
-use std::convert::From;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
-
-use cssparser::{
-    AtRuleParser, AtRuleType, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput,
-    QualifiedRuleParser, RuleListParser, SourceLocation,
-};
-use selectors::parser::{SelectorList, SelectorParseError, SelectorParseErrorKind};
-use selectors::SelectorImpl;
-use smallbitvec::SmallBitVec;
 
 // https://www.w3schools.com/CSSref/pr_class_display.asp
 pub enum Display {

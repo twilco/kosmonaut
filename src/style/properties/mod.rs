@@ -1,25 +1,24 @@
-pub mod id;
-pub mod longhands;
+use std::collections::HashSet;
+use std::mem;
 
 use cssparser::{
     parse_important, AtRuleParser, CowRcStr, DeclarationListParser, DeclarationParser, Delimiter,
-    ParseError, Parser, Token,
+    ParseError, Parser,
 };
 use smallbitvec::SmallBitVec;
-use std::collections::HashSet;
 
 use crate::dom::tree::NodeRef;
 use crate::style::properties::id::{LonghandId, PropertyId};
-use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
 use crate::style::values::specified::FontSize;
 use crate::style::StyleParseErrorKind;
-use std::borrow::BorrowMut;
-use std::mem;
+
+pub mod id;
+pub mod longhands;
 
 /// Parses raw parser input into a block of property declarations.
 pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclarationBlock {
     let mut block = PropertyDeclarationBlock::new();
-    let mut prop_parser = PropertyDeclarationParser {
+    let prop_parser = PropertyDeclarationParser {
         declarations: Vec::new(),
     };
     let mut decl_iter = DeclarationListParser::new(input, prop_parser);
@@ -151,7 +150,7 @@ impl PropertyDeclaration {
                 }
                 _ => {}
             },
-            PropertyId::Shorthand(short_id) => {}
+            PropertyId::Shorthand(_short_id) => {}
         }
         Ok(())
     }
@@ -179,11 +178,12 @@ pub enum Importance {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
     use crate::style::properties::PropertyDeclaration;
     use crate::style::values::specified;
     use crate::style::values::specified::length::*;
+
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
 
     #[test]
     // TODO: Create E2E test that exercises this as well
@@ -222,4 +222,4 @@ mod tests {
     }
 }
 
-// TODO: 1. Create test to dedupe props across blocks 3. Fix warnings 4. Cargo fmt
+// TODO: 1. Create test to dedupe props across blocks

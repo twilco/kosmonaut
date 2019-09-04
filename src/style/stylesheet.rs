@@ -1,17 +1,12 @@
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-
 use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
 
 use crate::style::{CssRule, StyleParseErrorKind, StyleRule, TopLevelRuleParser};
 
-/// Parses stylesheet file into StyleRules.
-///   * path_and_name - Path to and filename of the stylesheet
+/// Parses string containing CSS into StyleRules.
 pub fn parse_str_to_stylesheet(
-    stylesheet_str: &mut str,
+    css_str: &mut str,
 ) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
-    let input = &mut ParserInput::new(stylesheet_str);
+    let input = &mut ParserInput::new(css_str);
     let parser = &mut Parser::new(input);
     let mut rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
     let mut sheet = Stylesheet::new();
@@ -32,12 +27,6 @@ impl<'i> From<std::io::Error> for StylesheetParseErr<'i> {
         StylesheetParseErr::Io(e)
     }
 }
-
-//impl<'i> From<(ParseError<'i, StyleParseErrorKind<'i>>, &str)> for StylesheetParseErr<'i> {
-//    fn from(e: (ParseError<'i, StyleParseErrorKind<'i>>, &str)) -> Self {
-//        StylesheetParseErr::Parse(e.0)
-//    }
-//}
 
 impl<'i> From<ParseError<'i, StyleParseErrorKind<'i>>> for StylesheetParseErr<'i> {
     fn from(e: ParseError<'i, StyleParseErrorKind<'i>>) -> Self {

@@ -1,25 +1,25 @@
+#[macro_use]
+extern crate cssparser;
+#[macro_use]
+extern crate html5ever;
+#[macro_use]
+extern crate matches;
+
+use std::fs::File;
+
+use gio::prelude::*;
+use gtk::prelude::*;
+use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
+
+use crate::dom::parser::parse_html;
+use crate::dom::traits::TendrilSink;
+use crate::dom::traits::*;
+
 pub mod dom;
 pub mod frame;
 #[allow(unused_imports)]
 pub mod layout;
 pub mod style;
-
-#[macro_use]
-extern crate matches;
-#[macro_use]
-extern crate html5ever;
-#[macro_use]
-extern crate cssparser;
-
-use gio::prelude::*;
-use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
-use std::fs::File;
-use std::io::Read;
-
-use crate::dom::parser::parse_html;
-use crate::dom::traits::TendrilSink;
-use crate::dom::traits::*;
 
 /// Algorithm:
 ///  1. Upon enter button of URL textbox, make request to URL (or local FS file)
@@ -31,6 +31,7 @@ use crate::dom::traits::*;
 ///     * https://html.spec.whatwg.org/#introduction
 ///     * https://dom.spec.whatwg.org/#goals
 
+#[allow(unused_variables)]
 fn main() {
     let application = Application::new(Some("com.kosmonaut.main"), Default::default())
         .expect("failed to initialize GTK application");

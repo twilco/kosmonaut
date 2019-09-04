@@ -27,8 +27,6 @@ impl LengthPercentage {
             }
             _ => return Err(location.new_unexpected_token_error(token.clone())),
         }
-
-        return Err(location.new_unexpected_token_error(token.clone()));
     }
 }
 

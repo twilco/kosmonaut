@@ -1,5 +1,7 @@
 ## Kosmonaut
 
+[![Join the chat at https://gitter.im/kosmonaut-browser/community](https://badges.gitter.im/kosmonaut-browser/community.svg)](https://gitter.im/kosmonaut-browser/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicle for your journey across the world wide web.
 
 > The road to the stars is steep and dangerous.  But we're not afraid...space flights can't be stopped.

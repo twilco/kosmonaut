@@ -19,7 +19,9 @@ addons:
     update: true
 
 before_install:
+  # Attempt one...
   # - if [ $TRAVIS_OS_NAME = windows ]; then git clone https://github.com/Microsoft/vcpkg; cd vcpkg; ./\bootstrap-vcpkg.bat; vcpkg install gtk:x64-windows; fi
+  # And attempt two...
   # - if [ $TRAVIS_OS_NAME = windows ]; then choco install ruby --force --version 2.6.3.1; choco install msys2; powershell refreshenv; ridk install 2 3; pacman -S mingw-w64-x86_64-gtk3; fi
   - if [ $TRAVIS_OS_NAME = osx ]; then export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig:/usr/local/Cellar/glib/2.60.6/lib/pkgconfig"; fi
 

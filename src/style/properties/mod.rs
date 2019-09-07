@@ -28,11 +28,7 @@ pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclaratio
                 let decls: Vec<PropertyDeclaration> =
                     decl_iter.parser.declarations.drain(..).collect();
                 for decl in decls.iter() {
-                    block.declarations.push(decl.clone());
-                    block.declarations_importance.push(match importance {
-                        Importance::Important => true,
-                        Importance::Normal => false,
-                    })
+                    block.add_declaration(decl.clone(), importance);
                 }
             }
             Err(parse_err) => {
@@ -104,7 +100,7 @@ pub struct PropertyDeclarationBlock {
 impl PropertyDeclarationBlock {
     /// Adds a new declaration to the block, de-duping with any existing property declarations
     /// of the same type.
-    pub fn add_declaration(&mut self, mut new_decl: PropertyDeclaration) {
+    pub fn add_declaration(&mut self, mut new_decl: PropertyDeclaration, new_importance: Importance) {
         let mut swap_index = None;
         for (i, existing_decl) in self.declarations.iter().enumerate() {
             if mem::discriminant(existing_decl) == mem::discriminant(&new_decl) {
@@ -116,8 +112,10 @@ impl PropertyDeclarationBlock {
 
         if let Some(idx) = swap_index {
             mem::swap(&mut self.declarations[idx], &mut new_decl);
+            self.declarations_importance.set(idx, new_importance.important());
         } else {
             self.declarations.push(new_decl);
+            self.declarations_importance.push(new_importance.important());
         }
     }
 }
@@ -180,6 +178,16 @@ pub enum Importance {
     Important,
 }
 
+impl Importance {
+    /// Return whether this is an important declaration.
+    pub fn important(self) -> bool {
+        match self {
+            Importance::Normal => false,
+            Importance::Important => true,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::style::properties::PropertyDeclaration;
@@ -194,13 +202,13 @@ mod tests {
         let mut decl_block = PropertyDeclarationBlock::new();
         decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
             LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(12.0))),
-        )));
+        )), Importance::Normal);
         decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
             LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(16.0))),
-        )));
+        )), Importance::Normal);
         decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
             LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(24.0))),
-        )));
+        )), Importance::Normal);
         assert_eq!(decl_block.declarations.len(), 1);
         assert_eq!(&24.0, font_size_px_or_panic(&decl_block.declarations[0]));
     }

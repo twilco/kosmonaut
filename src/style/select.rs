@@ -22,7 +22,7 @@ use std::fmt;
 /// Copied from rust-selectors.
 static SELECTOR_WHITESPACE: &'static [char] = &[' ', '\t', '\n', '\r', '\x0C'];
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct KosmonautSelectors;
 
 impl SelectorImpl for KosmonautSelectors {

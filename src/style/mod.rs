@@ -12,6 +12,7 @@ mod macros;
 pub mod properties;
 pub mod select;
 pub mod stylesheet;
+pub mod test_utils;
 pub mod values;
 
 // https://www.w3schools.com/CSSref/pr_class_display.asp
@@ -24,14 +25,14 @@ pub enum Display {
 }
 
 // TODO: Servo supports many different types of rules, but we won't support those yet.  https://github.com/servo/servo/blob/d2856ce8aeca11e543bc4d9f869400d73451374e/components/style/stylesheets/mod.rs#L236
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum CssRule {
     Style(StyleRule),
     None,
 }
 
 /// A style rule, with selectors and declarations.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StyleRule {
     /// The list of selectors in this rule.
     pub selectors: SelectorList<KosmonautSelectors>,

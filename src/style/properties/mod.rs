@@ -131,6 +131,10 @@ impl PropertyDeclarationBlock {
         &self.declarations
     }
 
+    pub fn remove_decl(&mut self, index: usize) {
+        &self.declarations.remove(index);
+    }
+
     pub fn declarations_importance(&self) -> &SmallBitVec {
         &self.declarations_importance
     }
@@ -182,11 +186,10 @@ mod tests {
     use crate::style::values::specified;
     use crate::style::values::specified::length::*;
 
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use crate::style::test_utils::font_size_px_or_panic;
 
     #[test]
-    // TODO: Create E2E test that exercises this as well
     fn dedupes_and_takes_newest_prop() {
         let mut decl_block = PropertyDeclarationBlock::new();
         decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
@@ -199,27 +202,6 @@ mod tests {
             LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(24.0))),
         )));
         assert_eq!(decl_block.declarations.len(), 1);
-
-        match &decl_block.declarations[0] {
-            PropertyDeclaration::FontSize(font_size) => match font_size {
-                specified::FontSize::Length(lp) => match lp {
-                    LengthPercentage::Length(no_calc_length) => match no_calc_length {
-                        NoCalcLength::Absolute(abs_len) => match abs_len {
-                            // should take the latest font-size in the block, 24px
-                            AbsoluteLength::Px(float_val) => assert_eq!(float_val, &24.0),
-                            _ => panic!("should always be `px` AbsoluteLength units"),
-                        },
-                    },
-                },
-                _ => panic!("should always be a `Length`-style font-size (e.g. `16 px;`)"),
-            },
-            _ => panic!("should always be `FontSize` property decl"),
-        }
-    }
-
-    fn selects_last_blocks_prop_in_dupes_across_blocks() {
-        assert!(true)
+        assert_eq!(&24.0, font_size_px_or_panic(&decl_block.declarations[0]));
     }
 }
-
-// TODO: 1. Create test to dedupe props across blocks

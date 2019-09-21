@@ -5,7 +5,7 @@ use crate::style::{
     TopLevelRuleParser,
 };
 
-use crate::dom::tree::NodeRef;
+use crate::dom::tree::{debug_recursive, NodeRef};
 use crate::style::properties::PropertyDeclarationBlock;
 use std::borrow::BorrowMut;
 use std::mem;
@@ -30,7 +30,7 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Styl
         if let CssRule::Style(style) = rule {
             match node.select(&style.selectors.to_css_string()) {
                 Ok(select) => {
-                    select.iter.for_each(|matching_node| {
+                    select.for_each(|matching_node| {
                         matching_node.as_node().add_rule(RuleWithOrigin {
                             origin: RuleOrigin::Sheet(origin.clone()),
                             rule: rule.clone(),

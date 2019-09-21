@@ -4,12 +4,15 @@ use html5ever::tree_builder::QuirksMode;
 use html5ever::QualName;
 use std::cell::{Cell, RefCell};
 use std::fmt;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
 
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
+use crate::style::properties::PropertyDeclaration;
+use crate::style::{RuleWithOrigin, StyleRule};
+use std::borrow::BorrowMut;
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -110,6 +113,7 @@ impl Deref for NodeRef {
 }
 
 impl Eq for NodeRef {}
+
 impl PartialEq for NodeRef {
     #[inline]
     fn eq(&self, other: &NodeRef) -> bool {
@@ -127,12 +131,19 @@ pub struct Node {
     first_child: Cell<Option<Rc<Node>>>,
     last_child: Cell<Option<Weak<Node>>>,
     data: NodeData,
+    // TODO: Might need a better name.  Maybe make this an enum state machine, allowing representation from
+    // declared -> cascaded -> defaulting -> computed, etc etc
+    rules: RefCell<Vec<RuleWithOrigin>>,
 }
 
 impl fmt::Debug for Node {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:?} @ {:?}", self.data, self as *const Node)
+        write!(
+            f,
+            "{:?} @ {:?}, rules: {:?}",
+            self.data, self as *const Node, self.rules
+        )
     }
 }
 
@@ -209,6 +220,7 @@ impl NodeRef {
             previous_sibling: Cell::new(None),
             next_sibling: Cell::new(None),
             data,
+            rules: RefCell::new(Vec::new()),
         }))
     }
 
@@ -294,6 +306,11 @@ impl Node {
     #[inline]
     pub fn data(&self) -> &NodeData {
         &self.data
+    }
+
+    #[inline]
+    pub fn add_rule(&self, new_rule: RuleWithOrigin) {
+        &self.rules.borrow_mut().push(new_rule);
     }
 
     /// If this node is an element, return a reference to element-specific data.
@@ -492,4 +509,10 @@ impl NodeRef {
             parent.first_child.replace(Some(new_sibling.0));
         }
     }
+}
+
+pub fn debug_recursive(node: &NodeRef) {
+    node.inclusive_descendants().for_each(|node| {
+        dbg!(node);
+    });
 }

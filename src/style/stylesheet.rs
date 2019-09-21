@@ -1,10 +1,15 @@
-use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
+use cssparser::{ParseError, Parser, ParserInput, RuleListParser, ToCss};
 
-use crate::style::{CssRule, StyleParseErrorKind, StyleRule, TopLevelRuleParser};
+use crate::style::{
+    CssRule, RuleOrigin, RuleWithOrigin, StyleParseErrorKind, StyleRule, StylesheetOrigin,
+    TopLevelRuleParser,
+};
 
+use crate::dom::tree::NodeRef;
+use crate::style::properties::PropertyDeclarationBlock;
+use std::borrow::BorrowMut;
 use std::mem;
 use std::mem::discriminant;
-use crate::style::properties::PropertyDeclarationBlock;
 
 /// Parses string containing CSS into StyleRules.
 pub fn parse_css_to_stylesheet(
@@ -18,6 +23,26 @@ pub fn parse_css_to_stylesheet(
         sheet.add_rule(rule?);
     }
     Ok(sheet)
+}
+
+pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: StylesheetOrigin) {
+    sheet.rules().iter().for_each(|rule| {
+        if let CssRule::Style(style) = rule {
+            match node.select(&style.selectors.to_css_string()) {
+                Ok(select) => {
+                    select.iter.for_each(|matching_node| {
+                        matching_node.as_node().add_rule(RuleWithOrigin {
+                            origin: RuleOrigin::Sheet(origin.clone()),
+                            rule: rule.clone(),
+                        })
+                    });
+                }
+                Err(_err) => {
+                    dbg!("error selecting matching styles in dom");
+                }
+            }
+        }
+    });
 }
 
 #[derive(Debug)]
@@ -49,6 +74,10 @@ impl Stylesheet {
         Stylesheet::default()
     }
 
+    pub fn rules(&self) -> &Vec<CssRule> {
+        &self.rules
+    }
+
     /// Adds a new rule to the stylesheet, de-duplicating rules with the same selectors and
     /// conflicting `property: value`s.
     pub fn add_rule(&mut self, new_rule: CssRule) {
@@ -60,7 +89,9 @@ impl Stylesheet {
                         CssRule::Style(existing_style) => {
                             if existing_style.selectors.eq(&new_style.selectors) {
                                 let mut obsolete_prop_indices = Vec::new();
-                                for (prop_index, existing_prop) in existing_style.block.declarations().iter().enumerate() {
+                                for (prop_index, existing_prop) in
+                                    existing_style.block.declarations().iter().enumerate()
+                                {
                                     for new_prop in new_style.block.declarations() {
                                         if discriminant(new_prop) == discriminant(existing_prop) {
                                             // the props are the same "type", e.g. both `font-size, both `display`, etc
@@ -93,29 +124,14 @@ impl Stylesheet {
     }
 }
 
-/// Stylesheets of the user agent (Kosmonaut's default stylesheets).
-pub struct UserAgentStylesheets {
-    sheets: Vec<Stylesheet>,
-}
-
-/// Stylesheets of the browser user.
-pub struct UserStylesheets {
-    sheets: Vec<Stylesheet>,
-}
-
-/// Stylesheets of the author of the webpage (the web developer).
-pub struct AuthorStylesheets {
-    sheets: Vec<Stylesheet>,
-}
-
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
     use crate::style::properties::PropertyDeclaration;
+    use crate::style::test_utils::font_size_px_or_panic;
     use crate::style::values::specified;
     use crate::style::values::specified::length::*;
-    use crate::style::test_utils::font_size_px_or_panic;
 
     #[test]
     // TODO: Create integration test that exercises this as well
@@ -132,10 +148,11 @@ mod tests {
         // it should be deleted entirely, since it has no more valid PropertyDeclarations.
         assert_eq!(sheet_a.rules.len(), 1);
         match sheet_a.rules.remove(0) {
-            CssRule::Style(style_rule) => {
-                assert_eq!(&16.0, font_size_px_or_panic(&style_rule.block.declarations()[0]))
-            },
-            _ => panic!("should always be a `StyleRule` CssRule")
+            CssRule::Style(style_rule) => assert_eq!(
+                &16.0,
+                font_size_px_or_panic(&style_rule.block.declarations()[0])
+            ),
+            _ => panic!("should always be a `StyleRule` CssRule"),
         }
     }
 }

@@ -14,6 +14,8 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 use crate::dom::traits::*;
+use crate::dom::tree::debug_recursive;
+use crate::style::apply_styles;
 
 pub mod dom;
 pub mod frame;
@@ -52,9 +54,12 @@ fn main() {
         .read_from(&mut File::open("web/basic.html").unwrap())
         .unwrap();
 
-    dbg!(style::stylesheet::parse_css_to_stylesheet(
-        &mut std::fs::read_to_string("web/browser.css").expect("file fail")
-    ));
+    let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
+        &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
+    )
+    .expect("parse stylesheet fail");
+
+    apply_styles(dom, vec![ua_sheet], Vec::new(), Vec::new());
 
     application.run(&[]);
 }

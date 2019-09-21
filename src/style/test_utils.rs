@@ -1,6 +1,6 @@
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
-use crate::style::values::specified::length::{LengthPercentage, NoCalcLength, AbsoluteLength};
+use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
 
 pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
     match prop_decl {

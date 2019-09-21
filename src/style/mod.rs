@@ -3,8 +3,10 @@ use std::convert::From;
 use cssparser::{AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser, SourceLocation};
 use selectors::parser::{SelectorList, SelectorParseErrorKind};
 
+use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::{KosmonautParser, KosmonautSelectors};
+use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
 
 #[macro_use]
 mod macros;
@@ -14,6 +16,58 @@ pub mod select;
 pub mod stylesheet;
 pub mod test_utils;
 pub mod values;
+
+pub fn apply_styles(
+    dom: NodeRef,
+    ua_sheets: Vec<Stylesheet>,
+    user_sheets: Vec<Stylesheet>,
+    author_sheets: Vec<Stylesheet>,
+) {
+    // https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages
+    // The final value of a CSS property for a given element or box is the result of a multi-step calculation:
+
+    // 1. First, all the declared values applied to an element are collected, for each property on each element. There may be zero or many declared values applied to the element.
+    // TODO: Need to embedded styles (<style></style>)
+    ua_sheets.iter().for_each(|stylesheet| {
+        apply_stylesheet_to_node(&dom, stylesheet, StylesheetOrigin::UserAgent);
+    });
+
+    user_sheets.iter().for_each(|stylesheet| {
+        apply_stylesheet_to_node(&dom, stylesheet, StylesheetOrigin::User);
+    });
+
+    author_sheets.iter().for_each(|stylesheet| {
+        apply_stylesheet_to_node(&dom, stylesheet, StylesheetOrigin::Author);
+    });
+
+    // collect all inline styles
+    dom.inclusive_descendants().for_each(|node| {
+        if let NodeData::Element(element_data) = node.data() {
+            match element_data.attributes.try_borrow() {
+                Ok(attrs) => {
+                    if let Some(style_str) = attrs.get("style") {
+                        // TODO: Parse inline style and apply it to node
+                        // cssparser::ParserInput::new(style_str)
+                        dbg!("found inline style but did not collect it: {:?}", style_str);
+                    }
+                }
+                Err(_e) => {
+                    dbg!("couldn't borrow node attributes");
+                }
+            }
+        }
+    });
+
+    debug_recursive(&dom);
+
+    // 2. Cascading yields the cascaded value. There is at most one cascaded value per property per element.
+    // https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
+
+    // 3. Defaulting yields the specified value. Every element has exactly one specified value per property.
+    // 4. Resolving value dependencies yields the computed value. Every element has exactly one computed value per property.
+    // 5. Formatting the document yields the used value. An element only has a used value for a given property if that property applies to the element.
+    // 6. Finally, the used value is transformed to the actual value based on constraints of the display environment. As with the used value, there may or may not be an actual value for a given property on an element.
+}
 
 // https://www.w3schools.com/CSSref/pr_class_display.asp
 pub enum Display {
@@ -40,6 +94,30 @@ pub struct StyleRule {
     pub block: PropertyDeclarationBlock,
     /// The location in the sheet where it was found.
     pub source_location: SourceLocation,
+}
+
+/// A CSS rule and its origin (e.g., user agent stylesheet, author stylesheet, user stylesheet, etc).
+#[derive(Clone, Debug)]
+pub struct RuleWithOrigin {
+    pub rule: CssRule,
+    pub origin: RuleOrigin,
+}
+
+#[derive(Clone, Debug)]
+pub enum RuleOrigin {
+    /// CSS found within `style` attribute on node
+    Inline,
+    /// CSS found within <style></style> tags
+    Embedded,
+    /// CSS found within a stylesheet
+    Sheet(StylesheetOrigin),
+}
+
+#[derive(Clone, Debug)]
+pub enum StylesheetOrigin {
+    Author,
+    User,
+    UserAgent,
 }
 
 #[derive(Debug)]

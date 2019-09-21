@@ -3,14 +3,16 @@ use std::mem;
 
 use cssparser::{
     parse_important, AtRuleParser, CowRcStr, DeclarationListParser, DeclarationParser, Delimiter,
-    ParseError, Parser,
+    ParseError, Parser, ToCss,
 };
 use smallbitvec::SmallBitVec;
 
 use crate::dom::tree::NodeRef;
 use crate::style::properties::id::{LonghandId, PropertyId};
+use crate::style::stylesheet::{Stylesheet, StylesheetParseErr};
 use crate::style::values::specified::FontSize;
-use crate::style::StyleParseErrorKind;
+use crate::style::CssRule;
+use crate::style::{RuleOrigin, RuleWithOrigin, StyleParseErrorKind};
 
 pub mod id;
 pub mod longhands;
@@ -38,8 +40,6 @@ pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclaratio
     }
     block
 }
-
-//pub fn apply_styles(dom: NodeRef, )
 
 /// A struct to parse property declarations.
 pub struct PropertyDeclarationParser {
@@ -100,7 +100,11 @@ pub struct PropertyDeclarationBlock {
 impl PropertyDeclarationBlock {
     /// Adds a new declaration to the block, de-duping with any existing property declarations
     /// of the same type.
-    pub fn add_declaration(&mut self, mut new_decl: PropertyDeclaration, new_importance: Importance) {
+    pub fn add_declaration(
+        &mut self,
+        mut new_decl: PropertyDeclaration,
+        new_importance: Importance,
+    ) {
         let mut swap_index = None;
         for (i, existing_decl) in self.declarations.iter().enumerate() {
             if mem::discriminant(existing_decl) == mem::discriminant(&new_decl) {
@@ -112,10 +116,12 @@ impl PropertyDeclarationBlock {
 
         if let Some(idx) = swap_index {
             mem::swap(&mut self.declarations[idx], &mut new_decl);
-            self.declarations_importance.set(idx, new_importance.important());
+            self.declarations_importance
+                .set(idx, new_importance.important());
         } else {
             self.declarations.push(new_decl);
-            self.declarations_importance.push(new_importance.important());
+            self.declarations_importance
+                .push(new_importance.important());
         }
     }
 }
@@ -200,15 +206,24 @@ mod tests {
     #[test]
     fn dedupes_and_takes_newest_prop() {
         let mut decl_block = PropertyDeclarationBlock::new();
-        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
-            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(12.0))),
-        )), Importance::Normal);
-        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
-            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(16.0))),
-        )), Importance::Normal);
-        decl_block.add_declaration(PropertyDeclaration::FontSize(FontSize::Length(
-            LengthPercentage::Length(NoCalcLength::Absolute(AbsoluteLength::Px(24.0))),
-        )), Importance::Normal);
+        decl_block.add_declaration(
+            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            Importance::Normal,
+        );
+        decl_block.add_declaration(
+            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(16.0)),
+            ))),
+            Importance::Normal,
+        );
+        decl_block.add_declaration(
+            PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(24.0)),
+            ))),
+            Importance::Normal,
+        );
         assert_eq!(decl_block.declarations.len(), 1);
         assert_eq!(&24.0, font_size_px_or_panic(&decl_block.declarations[0]));
     }

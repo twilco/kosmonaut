@@ -12,7 +12,7 @@ use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::stylesheet::{Stylesheet, StylesheetParseErr};
 use crate::style::values::specified::FontSize;
 use crate::style::CssRule;
-use crate::style::{RuleOrigin, RuleWithOrigin, StyleParseErrorKind};
+use crate::style::{CssOrigin, PropertyDeclWithOrigin, StyleParseErrorKind};
 
 pub mod id;
 pub mod longhands;

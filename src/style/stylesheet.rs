@@ -1,8 +1,8 @@
 use cssparser::{ParseError, Parser, ParserInput, RuleListParser, ToCss};
 
 use crate::style::{
-    CssRule, RuleOrigin, RuleWithOrigin, StyleParseErrorKind, StyleRule, StylesheetOrigin,
-    TopLevelRuleParser,
+    CascadeOrigin, CssOrigin, CssRule, PropertyDeclWithOrigin, StyleParseErrorKind, StyleRule,
+    StylesheetOrigin, TopLevelRuleParser,
 };
 
 use crate::dom::tree::{debug_recursive, NodeRef};
@@ -13,28 +13,49 @@ use std::mem::discriminant;
 
 /// Parses string containing CSS into StyleRules.
 pub fn parse_css_to_stylesheet(
+    sheet_name: Option<String>,
     css_str: &mut str,
 ) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
     let input = &mut ParserInput::new(css_str);
     let parser = &mut Parser::new(input);
     let mut rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
-    let mut sheet = Stylesheet::new();
+    let mut sheet = if let Some(name) = sheet_name {
+        Stylesheet::new_with_name(name)
+    } else {
+        Stylesheet::new()
+    };
     while let Some(rule) = rule_parser.next() {
         sheet.add_rule(rule?);
     }
     Ok(sheet)
 }
 
-pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: StylesheetOrigin) {
+pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: CascadeOrigin) {
     sheet.rules().iter().for_each(|rule| {
-        if let CssRule::Style(style) = rule {
-            match node.select(&style.selectors.to_css_string()) {
+        if let CssRule::Style(style_rule) = rule {
+            match node.select(&style_rule.selectors.to_css_string()) {
                 Ok(select) => {
                     select.for_each(|matching_node| {
-                        matching_node.as_node().add_rule(RuleWithOrigin {
-                            origin: RuleOrigin::Sheet(origin.clone()),
-                            rule: rule.clone(),
-                        })
+                        style_rule
+                            .block
+                            .declarations()
+                            .iter()
+                            .enumerate()
+                            .for_each(|(index, decl)| {
+                                matching_node.as_node().add_decl(PropertyDeclWithOrigin {
+                                    decl: decl.clone(),
+                                    important: style_rule
+                                        .block
+                                        .declarations_importance()
+                                        .get(index)
+                                        .expect("important bit not set for declaration"),
+                                    origin: CssOrigin::Sheet(StylesheetOrigin {
+                                        sheet_name: sheet.name,
+                                        cascade_origin: origin.clone(),
+                                    }),
+                                    source_location: style_rule.source_location,
+                                });
+                            });
                     });
                 }
                 Err(_err) => {
@@ -65,6 +86,8 @@ impl<'i> From<ParseError<'i, StyleParseErrorKind<'i>>> for StylesheetParseErr<'i
 
 #[derive(Clone, Debug, Default)]
 pub struct Stylesheet {
+    /// Name of the stylesheet
+    name: String,
     /// These rules should be de-duplicated before being accepted into the Vec.
     rules: Vec<CssRule>,
 }
@@ -72,6 +95,13 @@ pub struct Stylesheet {
 impl Stylesheet {
     pub fn new() -> Self {
         Stylesheet::default()
+    }
+
+    pub fn new_with_name(name: String) -> Self {
+        Stylesheet {
+            name,
+            ..Default::default()
+        }
     }
 
     pub fn rules(&self) -> &Vec<CssRule> {
@@ -136,10 +166,10 @@ mod tests {
     #[test]
     // TODO: Create integration test that exercises this as well
     fn selects_last_rules_prop_in_dupes_across_rules() {
-        let mut sheet_a = parse_css_to_stylesheet(&mut ".a { font-size: 12px; }".to_owned())
+        let mut sheet_a = parse_css_to_stylesheet(None, &mut ".a { font-size: 12px; }".to_owned())
             .expect("failed getting sheet_a for cross-block deduping test");
         // We won't actually use this sheet — just extract the `font-size` rule from it
-        let mut sheet_b = parse_css_to_stylesheet(&mut ".a { font-size: 16px; }".to_owned())
+        let mut sheet_b = parse_css_to_stylesheet(None, &mut ".a { font-size: 16px; }".to_owned())
             .expect("failed getting sheet_b for cross-block deduping test");
         sheet_a.add_rule(sheet_b.rules.remove(0));
 

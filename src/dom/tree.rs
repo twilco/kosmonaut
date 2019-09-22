@@ -11,7 +11,7 @@ use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
 use crate::style::properties::PropertyDeclaration;
-use crate::style::{RuleWithOrigin, StyleRule};
+use crate::style::{PropertyDeclWithOrigin, StyleRule};
 use std::borrow::BorrowMut;
 
 /// The type of DOM node.
@@ -133,7 +133,7 @@ pub struct Node {
     data: NodeData,
     // TODO: Might need a better name.  Maybe make this an enum state machine, allowing representation from
     // declared -> cascaded -> defaulting -> computed, etc etc
-    rules: RefCell<Vec<RuleWithOrigin>>,
+    property_decls: RefCell<Vec<PropertyDeclWithOrigin>>,
 }
 
 impl fmt::Debug for Node {
@@ -308,9 +308,15 @@ impl Node {
         &self.data
     }
 
+    /// Return a reference to this node’s list of property declarations.
     #[inline]
-    pub fn add_rule(&self, new_rule: RuleWithOrigin) {
-        &self.rules.borrow_mut().push(new_rule);
+    pub fn property_decls(&self) -> &Vec<PropertyDeclWithOrigin> {
+        &self.property_decls.borrow()
+    }
+
+    #[inline]
+    pub fn add_decl(&self, new_decl: PropertyDeclWithOrigin) {
+        &self.rules.borrow_mut().push(new_decl);
     }
 
     /// If this node is an element, return a reference to element-specific data.

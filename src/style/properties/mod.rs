@@ -1,18 +1,17 @@
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::mem;
 
 use cssparser::{
     parse_important, AtRuleParser, CowRcStr, DeclarationListParser, DeclarationParser, Delimiter,
-    ParseError, Parser, ToCss,
+    ParseError, Parser, SourceLocation,
 };
 use smallbitvec::SmallBitVec;
 
-use crate::dom::tree::NodeRef;
 use crate::style::properties::id::{LonghandId, PropertyId};
-use crate::style::stylesheet::{Stylesheet, StylesheetParseErr};
 use crate::style::values::specified::FontSize;
-use crate::style::CssRule;
-use crate::style::{CssOrigin, PropertyDeclWithOrigin, StyleParseErrorKind};
+use crate::style::CascadeOrigin;
+use crate::style::{CssOrigin, StyleParseErrorKind};
 
 pub mod id;
 pub mod longhands;
@@ -172,6 +171,95 @@ pub enum PropertyDeclaration {
     FontSize(crate::style::values::specified::FontSize),
 }
 
+/// A property declaration its origin (e.g., user agent stylesheet, author stylesheet, user stylesheet, etc).
+#[derive(Clone, Debug)]
+pub struct PropertyDeclWithOrigin {
+    pub decl: PropertyDeclaration,
+    pub important: bool,
+    pub origin: CssOrigin,
+    pub source_location: Option<SourceLocation>,
+}
+
+impl Ord for PropertyDeclWithOrigin {
+    /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade-origin
+    fn cmp(&self, other: &Self) -> Ordering {
+        fn cmp_important_origins(a: &CssOrigin, b: &CssOrigin) -> Ordering {
+            // Order of importance:
+            // Important user agent declarations
+            // Important user declarations
+            // Important author declarations
+            // Inline and embedded styles are considered author styles
+            match (a, b) {
+                (CssOrigin::Inline, CssOrigin::Inline)
+                | (CssOrigin::Inline, CssOrigin::Embedded)
+                | (CssOrigin::Embedded, CssOrigin::Inline)
+                | (CssOrigin::Embedded, CssOrigin::Embedded) => Ordering::Equal,
+                (CssOrigin::Inline, CssOrigin::Sheet(other_sheet_origin))
+                | (CssOrigin::Embedded, CssOrigin::Sheet(other_sheet_origin)) => {
+                    match &other_sheet_origin.cascade_origin {
+                        CascadeOrigin::UserAgent | CascadeOrigin::User => Ordering::Less,
+                        CascadeOrigin::Author => Ordering::Equal,
+                    }
+                }
+                (CssOrigin::Sheet(self_sheet_origin), CssOrigin::Inline)
+                | (CssOrigin::Sheet(self_sheet_origin), CssOrigin::Embedded) => {
+                    match &self_sheet_origin.cascade_origin {
+                        CascadeOrigin::UserAgent | CascadeOrigin::User => Ordering::Greater,
+                        CascadeOrigin::Author => Ordering::Equal,
+                    }
+                }
+                (CssOrigin::Sheet(self_sheet_origin), CssOrigin::Sheet(other_sheet_origin)) => {
+                    match (
+                        &self_sheet_origin.cascade_origin,
+                        &other_sheet_origin.cascade_origin,
+                    ) {
+                        (CascadeOrigin::UserAgent, CascadeOrigin::UserAgent) => Ordering::Equal,
+                        (CascadeOrigin::UserAgent, CascadeOrigin::User)
+                        | (CascadeOrigin::UserAgent, CascadeOrigin::Author) => Ordering::Greater,
+                        (CascadeOrigin::User, CascadeOrigin::UserAgent) => Ordering::Less,
+                        (CascadeOrigin::User, CascadeOrigin::User) => Ordering::Equal,
+                        (CascadeOrigin::User, CascadeOrigin::Author) => Ordering::Greater,
+                        (CascadeOrigin::Author, CascadeOrigin::UserAgent)
+                        | (CascadeOrigin::Author, CascadeOrigin::User) => Ordering::Less,
+                        (CascadeOrigin::Author, CascadeOrigin::Author) => Ordering::Equal,
+                    }
+                }
+            }
+        }
+
+        if mem::discriminant(&self.decl) == mem::discriminant(&other.decl) {
+            if self.important && !other.important {
+                return Ordering::Greater;
+            } else if !self.important && other.important {
+                return Ordering::Less;
+            } else if self.important && other.important {
+                return cmp_important_origins(&self.origin, &other.origin);
+            } else if !self.important && !other.important {
+                return match cmp_important_origins(&self.origin, &other.origin) {
+                    Ordering::Less => Ordering::Greater,
+                    Ordering::Greater => Ordering::Less,
+                    Ordering::Equal => Ordering::Equal,
+                };
+            }
+        }
+        return Ordering::Equal;
+    }
+}
+
+impl PartialOrd for PropertyDeclWithOrigin {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for PropertyDeclWithOrigin {}
+impl PartialEq for PropertyDeclWithOrigin {
+    fn eq(&self, other: &Self) -> bool {
+        return mem::discriminant(&self.decl) == mem::discriminant(&other.decl)
+            && &self.origin == &other.origin;
+    }
+}
+
 /// A declaration [importance][importance].
 ///
 /// [importance]: https://drafts.csswg.org/css-cascade/#importance
@@ -197,11 +285,31 @@ impl Importance {
 #[cfg(test)]
 mod tests {
     use crate::style::properties::PropertyDeclaration;
+    use crate::style::test_utils::font_size_px_or_panic;
     use crate::style::values::specified;
     use crate::style::values::specified::length::*;
 
     use super::*;
-    use crate::style::test_utils::font_size_px_or_panic;
+    use std::clone::Clone;
+
+    #[test]
+    fn decl_cmp_importance_ordering() {
+        let imp = PropertyDeclWithOrigin {
+            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            important: true,
+            origin: CssOrigin::Inline,
+            source_location: None,
+        };
+        let mut not_imp = imp.clone();
+        not_imp.important = false;
+
+        assert!(imp > not_imp);
+        assert!(not_imp < imp);
+        assert_eq!(imp, imp.clone());
+        assert_eq!(not_imp, not_imp.clone());
+    }
 
     #[test]
     fn dedupes_and_takes_newest_prop() {

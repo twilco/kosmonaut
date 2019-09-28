@@ -1,15 +1,12 @@
+use std::mem::discriminant;
+
 use cssparser::{ParseError, Parser, ParserInput, RuleListParser, ToCss};
 
+use crate::dom::tree::NodeRef;
+use crate::style::properties::PropertyDeclWithOrigin;
 use crate::style::{
-    CascadeOrigin, CssOrigin, CssRule, PropertyDeclWithOrigin, StyleParseErrorKind, StyleRule,
-    StylesheetOrigin, TopLevelRuleParser,
+    CascadeOrigin, CssOrigin, CssRule, StyleParseErrorKind, StylesheetOrigin, TopLevelRuleParser,
 };
-
-use crate::dom::tree::{debug_recursive, NodeRef};
-use crate::style::properties::PropertyDeclarationBlock;
-use std::borrow::BorrowMut;
-use std::mem;
-use std::mem::discriminant;
 
 /// Parses string containing CSS into StyleRules.
 pub fn parse_css_to_stylesheet(
@@ -36,12 +33,8 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
             match node.select(&style_rule.selectors.to_css_string()) {
                 Ok(select) => {
                     select.for_each(|matching_node| {
-                        style_rule
-                            .block
-                            .declarations()
-                            .iter()
-                            .enumerate()
-                            .for_each(|(index, decl)| {
+                        style_rule.block.declarations().iter().enumerate().for_each(
+                            |(index, decl)| {
                                 matching_node.as_node().add_decl(PropertyDeclWithOrigin {
                                     decl: decl.clone(),
                                     important: style_rule
@@ -50,12 +43,13 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
                                         .get(index)
                                         .expect("important bit not set for declaration"),
                                     origin: CssOrigin::Sheet(StylesheetOrigin {
-                                        sheet_name: sheet.name,
+                                        sheet_name: sheet.name.clone(),
                                         cascade_origin: origin.clone(),
                                     }),
-                                    source_location: style_rule.source_location,
+                                    source_location: Some(style_rule.source_location),
                                 });
-                            });
+                            },
+                        );
                     });
                 }
                 Err(_err) => {
@@ -156,12 +150,13 @@ impl Stylesheet {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
     use crate::style::properties::PropertyDeclaration;
     use crate::style::test_utils::font_size_px_or_panic;
     use crate::style::values::specified;
     use crate::style::values::specified::length::*;
+
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
 
     #[test]
     // TODO: Create integration test that exercises this as well

@@ -4,12 +4,10 @@ use cssparser::{AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser,
 use selectors::parser::{SelectorList, SelectorParseErrorKind};
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
-use crate::style::properties::{
-    parse_property_declaration_list, PropertyDeclaration, PropertyDeclarationBlock,
-};
+use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::{KosmonautParser, KosmonautSelectors};
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use std::cmp::Ordering;
+use std::mem::discriminant;
 
 #[macro_use]
 mod macros;
@@ -61,11 +59,12 @@ pub fn apply_styles(
         }
     });
 
-    debug_recursive(&dom);
+    //    debug_recursive(&dom);
 
     // 2. Cascading yields the cascaded value. There is at most one cascaded value per property per element.
     // https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
-    cascade(&dom)
+    cascade(&dom);
+    debug_recursive(&dom);
 
     // 3. Defaulting yields the specified value. Every element has exactly one specified value per property.
     // 4. Resolving value dependencies yields the computed value. Every element has exactly one computed value per property.
@@ -74,9 +73,9 @@ pub fn apply_styles(
 }
 
 pub fn cascade(start_node: &NodeRef) {
-    start_node
-        .inclusive_descendants()
-        .for_each(|node| node.rules());
+    start_node.inclusive_descendants().for_each(|node| {
+        node.property_decls_mut().as_mut_slice().sort();
+    });
 }
 
 // https://www.w3schools.com/CSSref/pr_class_display.asp
@@ -106,15 +105,6 @@ pub struct StyleRule {
     pub source_location: SourceLocation,
 }
 
-/// A property declaration its origin (e.g., user agent stylesheet, author stylesheet, user stylesheet, etc).
-#[derive(Clone, Debug)]
-pub struct PropertyDeclWithOrigin {
-    pub decl: PropertyDeclaration,
-    pub important: bool,
-    pub origin: CssOrigin,
-    pub source_location: Option<SourceLocation>,
-}
-
 #[derive(Clone, Debug)]
 pub enum CssOrigin {
     /// CSS found within `style` attribute on node
@@ -128,8 +118,25 @@ pub enum CssOrigin {
     Sheet(StylesheetOrigin),
 }
 
+impl PartialEq for CssOrigin {
+    fn eq(&self, other: &Self) -> bool {
+        match &self {
+            CssOrigin::Inline => return discriminant(other) == discriminant(&CssOrigin::Inline),
+            CssOrigin::Embedded => {
+                return discriminant(other) == discriminant(&CssOrigin::Embedded)
+            }
+            CssOrigin::Sheet(self_sheet_origin) => match other {
+                CssOrigin::Sheet(other_sheet_origin) => {
+                    return self_sheet_origin == other_sheet_origin
+                }
+                _ => return false,
+            },
+        }
+    }
+}
+
 /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascading-origins
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CascadeOrigin {
     Author,
     User,
@@ -142,23 +149,9 @@ pub struct StylesheetOrigin {
     pub cascade_origin: CascadeOrigin,
 }
 
-impl Ord for PropertyDeclWithOrigin {
-    fn cmp(&self, other: &Self) -> Ordering {
-        Ordering::Equal
-    }
-
-    fn max(self, other: Self) -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!()
-    }
-
-    fn min(self, other: Self) -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!()
+impl PartialEq for StylesheetOrigin {
+    fn eq(&self, other: &Self) -> bool {
+        return &self.cascade_origin == &other.cascade_origin;
     }
 }
 

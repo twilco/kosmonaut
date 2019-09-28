@@ -1,18 +1,17 @@
+use std::cell::{Cell, Ref, RefCell, RefMut};
+use std::fmt;
+use std::ops::Deref;
+use std::rc::{Rc, Weak};
+
 /// Much of this file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/tree.rs).
 /// Thanks to the authors of Kuchiki for their work.
 use html5ever::tree_builder::QuirksMode;
 use html5ever::QualName;
-use std::cell::{Cell, RefCell};
-use std::fmt;
-use std::ops::{Deref, DerefMut};
-use std::rc::{Rc, Weak};
 
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
-use crate::style::properties::PropertyDeclaration;
-use crate::style::{PropertyDeclWithOrigin, StyleRule};
-use std::borrow::BorrowMut;
+use crate::style::properties::PropertyDeclWithOrigin;
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -142,7 +141,7 @@ impl fmt::Debug for Node {
         write!(
             f,
             "{:?} @ {:?}, rules: {:?}",
-            self.data, self as *const Node, self.rules
+            self.data, self as *const Node, self.property_decls
         )
     }
 }
@@ -220,7 +219,7 @@ impl NodeRef {
             previous_sibling: Cell::new(None),
             next_sibling: Cell::new(None),
             data,
-            rules: RefCell::new(Vec::new()),
+            property_decls: RefCell::new(Vec::new()),
         }))
     }
 
@@ -310,13 +309,19 @@ impl Node {
 
     /// Return a reference to this node’s list of property declarations.
     #[inline]
-    pub fn property_decls(&self) -> &Vec<PropertyDeclWithOrigin> {
-        &self.property_decls.borrow()
+    pub fn property_decls(&self) -> Ref<Vec<PropertyDeclWithOrigin>> {
+        self.property_decls.borrow()
+    }
+
+    /// Return a mutable reference to this node’s list of property declarations.
+    #[inline]
+    pub fn property_decls_mut(&self) -> RefMut<Vec<PropertyDeclWithOrigin>> {
+        self.property_decls.borrow_mut()
     }
 
     #[inline]
     pub fn add_decl(&self, new_decl: PropertyDeclWithOrigin) {
-        &self.rules.borrow_mut().push(new_decl);
+        &self.property_decls.borrow_mut().push(new_decl);
     }
 
     /// If this node is an element, return a reference to element-specific data.

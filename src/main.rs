@@ -17,10 +17,6 @@ use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 use crate::dom::tree::debug_recursive;
 use crate::style::apply_styles;
-use crate::style::properties::*;
-use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
-use crate::style::values::specified::*;
-use crate::style::*;
 
 pub mod dom;
 pub mod frame;
@@ -67,22 +63,5 @@ fn main() {
 
     apply_styles(dom, vec![ua_sheet], Vec::new(), Vec::new());
 
-    let imp = PropertyDeclWithOrigin {
-        decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
-            NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
-        ))),
-        important: true,
-        origin: CssOrigin::Inline,
-        source_location: None,
-    };
-    let not_imp = PropertyDeclWithOrigin {
-        decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
-            NoCalcLength::Absolute(AbsoluteLength::Px(16.0)),
-        ))),
-        important: true,
-        origin: CssOrigin::Inline,
-        source_location: None,
-    };
-    assert!(imp > not_imp);
     application.run(&[]);
 }

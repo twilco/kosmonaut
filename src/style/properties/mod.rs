@@ -227,7 +227,8 @@ impl Ord for PropertyDeclWithOrigin {
             }
         }
 
-        if mem::discriminant(&self.decl) == mem::discriminant(&other.decl) {
+        dbg!("asdfasdfasdfa");
+        if dbg!(mem::discriminant(&self.decl)) == dbg!(mem::discriminant(&other.decl)) {
             if self.important && !other.important {
                 return Ordering::Greater;
             } else if !self.important && other.important {
@@ -291,6 +292,8 @@ mod tests {
 
     use super::*;
     use std::clone::Clone;
+    use crate::style::StylesheetOrigin;
+    use crate::style::values::specified::Display;
 
     #[test]
     fn decl_cmp_importance_ordering() {
@@ -309,6 +312,93 @@ mod tests {
         assert!(not_imp < imp);
         assert_eq!(imp, imp.clone());
         assert_eq!(not_imp, not_imp.clone());
+    }
+
+    #[test]
+    fn decl_cmp_both_important_sheet_origin() {
+        let ua_decl = PropertyDeclWithOrigin {
+            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            important: true,
+            origin: CssOrigin::Sheet(StylesheetOrigin {
+                sheet_name: "file.css".to_owned(),
+                cascade_origin: CascadeOrigin::UserAgent
+            }),
+            source_location: None,
+        };
+        let mut user_decl = ua_decl.clone();
+        let mut author_decl = ua_decl.clone();
+        user_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: "file.css".to_owned(),
+            cascade_origin: CascadeOrigin::User
+        });
+        author_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: "file.css".to_owned(),
+            cascade_origin: CascadeOrigin::Author
+        });
+
+        assert!(ua_decl > user_decl);
+        assert!(ua_decl > author_decl);
+
+        assert!(user_decl > author_decl);
+
+        assert_eq!(ua_decl.cmp(&ua_decl.clone()), Ordering::Equal);
+        assert_eq!(user_decl.cmp(&user_decl.clone()), Ordering::Equal);
+        assert_eq!(author_decl.cmp(&author_decl.clone()), Ordering::Equal);
+    }
+
+    #[test]
+    fn decl_cmp_both_unimportant_sheet_origin() {
+        let ua_decl = PropertyDeclWithOrigin {
+            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            important: false,
+            origin: CssOrigin::Sheet(StylesheetOrigin {
+                sheet_name: "file.css".to_owned(),
+                cascade_origin: CascadeOrigin::UserAgent
+            }),
+            source_location: None,
+        };
+        let mut user_decl = ua_decl.clone();
+        let mut author_decl = ua_decl.clone();
+        user_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: "file.css".to_owned(),
+            cascade_origin: CascadeOrigin::User
+        });
+        author_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: "file.css".to_owned(),
+            cascade_origin: CascadeOrigin::Author
+        });
+
+        assert!(author_decl > user_decl);
+        assert!(author_decl > ua_decl);
+
+        assert!(user_decl > ua_decl);
+
+        assert_eq!(ua_decl.cmp(&ua_decl.clone()), Ordering::Equal);
+        assert_eq!(user_decl.cmp(&user_decl.clone()), Ordering::Equal);
+        assert_eq!(author_decl.cmp(&author_decl.clone()), Ordering::Equal);
+    }
+
+    #[test]
+    fn decl_cmp_diff_prop_types_are_equal() {
+        let font_size = PropertyDeclWithOrigin {
+            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            important: false,
+            origin: CssOrigin::Inline,
+            source_location: None,
+        };
+        let display = PropertyDeclWithOrigin {
+            decl: PropertyDeclaration::Display(Display::Block),
+            important: false,
+            origin: CssOrigin::Inline,
+            source_location: None,
+        };
+        assert_eq!(font_size.cmp(&display), Ordering::Equal);
     }
 
     #[test]

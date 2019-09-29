@@ -286,7 +286,6 @@ impl Importance {
 mod tests {
     use crate::style::properties::PropertyDeclaration;
     use crate::style::test_utils::font_size_px_or_panic;
-    use crate::style::values::specified;
     use crate::style::values::specified::length::*;
 
     use super::*;

@@ -30,17 +30,10 @@ pub fn parse_css_to_stylesheet(
 pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: CascadeOrigin) {
     sheet.rules().iter().for_each(|rule| {
         if let CssRule::Style(style_rule) = rule {
-            // calculate specificity by iterating over selectors in list and finding most specific: https://www.w3.org/TR/selectors/#specificity-rules
             node.select(&style_rule.selectors)
                 .for_each(|matching_node| {
-                    let highest_matching_spec = &style_rule
-                        .selectors
-                        .0
-                        .clone()
-                        .into_iter()
-                        .for_each(|select| {
-                            dbg!(select);
-                        });
+                    let highest_matching_spec =
+                        style_rule.selectors.most_specific_match(&matching_node);
                     style_rule
                         .block
                         .declarations()
@@ -156,10 +149,7 @@ impl Stylesheet {
 
 #[cfg(test)]
 mod tests {
-    use crate::style::properties::PropertyDeclaration;
     use crate::style::test_utils::font_size_px_or_panic;
-    use crate::style::values::specified;
-    use crate::style::values::specified::length::*;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;

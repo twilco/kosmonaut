@@ -312,7 +312,7 @@ pub struct Selector(GenericSelector<KosmonautSelectors>);
 ///
 /// Determines precedence in the cascading algorithm.
 /// When equal, a rule later in source order takes precedence.
-#[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Specificity(u32);
 
 impl Selectors {
@@ -342,6 +342,29 @@ impl Selectors {
     #[inline]
     pub fn matches(&self, element: &NodeDataRef<ElementData>) -> bool {
         self.0.iter().any(|s| s.matches(element))
+    }
+
+    /// Returns a reference to the most specific matching selector.
+    /// https://www.w3.org/TR/selectors/#specificity-rules
+    ///   > If the selector is a selector list, this number is calculated for each selector in
+    ///   > the list. For a given matching process against the list, the specificity in effect
+    ///   > is that of the most specific selector in the list that matches.
+    #[inline]
+    pub fn most_specific_match(&self, element: &NodeDataRef<ElementData>) -> Option<&Selector> {
+        let mut highest_matching_spec_opt: Option<&Selector> = None;
+        self.0.iter().for_each(|selector| {
+            if selector.matches(element) {
+                match highest_matching_spec_opt {
+                    Some(cur_highest) => {
+                        if selector.specificity() > cur_highest.specificity() {
+                            highest_matching_spec_opt = Some(selector)
+                        }
+                    }
+                    None => highest_matching_spec_opt = Some(selector),
+                }
+            }
+        });
+        return highest_matching_spec_opt;
     }
 
     /// Filter an element iterator, yielding those matching this list of selectors.
@@ -414,5 +437,33 @@ impl fmt::Debug for Selector {
 impl fmt::Debug for Selectors {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dom::parser::parse_html;
+    use crate::dom::traits::TendrilSink;
+    use crate::dom::tree::debug_recursive;
+    use crate::style::test_utils::get_div;
+
+    #[test]
+    fn match_most_specific_works() {
+        let selectors =
+            Selectors::compile_str("div, div.specific, div.specific.even-more-specific")
+                .expect("should've been able to compile selectors in match_most_specific_works()");
+        let div = get_div("specific even-more-specific", "hello");
+        // specificity of most specific selector, `div.specific.even-more-specific`, is 2049
+        assert_eq!(
+            selectors
+                .most_specific_match(
+                    &div.into_element_ref()
+                        .expect("should be able to get element ref for canned node")
+                )
+                .expect("should've found a most-specific match")
+                .specificity(),
+            Specificity(2049)
+        )
     }
 }

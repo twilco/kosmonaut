@@ -1,3 +1,7 @@
+use crate::dom::node_data_ref::NodeDataRef;
+use crate::dom::parser::parse_html;
+use crate::dom::traits::TendrilSink;
+use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
 use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
@@ -18,4 +22,29 @@ pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
         },
         _ => panic!("should always be `FontSize` property decl"),
     }
+}
+
+/// Returns a single <div></div> NodeRef.
+///   * classes - What would go inside <div class="HERE">.  Space-separated list of classnames.
+///   * text - Text to insert inside the div
+pub fn get_div(classes: &str, text: &str) -> NodeRef {
+    let div = format!(r#"<div class="{}">{}</div>"#, classes, text);
+    let mut ret: Option<NodeRef> = None;
+    parse_html()
+        .from_utf8()
+        .read_from(&mut div.as_bytes())
+        .unwrap()
+        .inclusive_descendants()
+        .for_each(|node| {
+            match node.data() {
+                NodeData::Element(data) => match data.name.local {
+                    local_name!("div") => {
+                        ret = Some(node);
+                    }
+                    _ => {}
+                },
+                _ => {}
+            };
+        });
+    ret.expect("should've been able to get div from test_utils#get_div()")
 }

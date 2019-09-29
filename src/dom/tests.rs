@@ -16,7 +16,7 @@ fn text_nodes() {
 <title>Test case</title>
 <p>Content contains <b>Important</b> data</p>";
     let document = parse_html().one(html);
-    let paragraph = document.select("p").unwrap().collect::<Vec<_>>();
+    let paragraph = document.select_str("p").unwrap().collect::<Vec<_>>();
     assert_eq!(paragraph.len(), 1);
     assert_eq!(
         paragraph[0].text_contents(),
@@ -99,7 +99,7 @@ fn select() {
 ";
 
     let document = parse_html().one(html);
-    let matching = document.select("p.foo").unwrap().collect::<Vec<_>>();
+    let matching = document.select_str("p.foo").unwrap().collect::<Vec<_>>();
     assert_eq!(matching.len(), 2);
     let child = matching[0].as_node().first_child().unwrap();
     assert_eq!(&**child.as_text().unwrap().borrow(), "Foo\n");
@@ -109,7 +109,7 @@ fn select() {
         Some("foo")
     );
 
-    let selectors = Selectors::compile("p.foo").unwrap();
+    let selectors = Selectors::compile_str("p.foo").unwrap();
     let matching2 = selectors
         .filter(document.descendants().elements())
         .collect::<Vec<_>>();
@@ -163,7 +163,7 @@ fn to_string() {
 
 #[test]
 fn specificity() {
-    let selectors = Selectors::compile(".example, :first-child, div").unwrap();
+    let selectors = Selectors::compile_str(".example, :first-child, div").unwrap();
     let specificities = selectors
         .0
         .iter()

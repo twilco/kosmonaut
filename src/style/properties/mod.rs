@@ -227,8 +227,7 @@ impl Ord for PropertyDeclWithOrigin {
             }
         }
 
-        dbg!("asdfasdfasdfa");
-        if dbg!(mem::discriminant(&self.decl)) == dbg!(mem::discriminant(&other.decl)) {
+        if mem::discriminant(&self.decl) == mem::discriminant(&other.decl) {
             if self.important && !other.important {
                 return Ordering::Greater;
             } else if !self.important && other.important {
@@ -291,9 +290,9 @@ mod tests {
     use crate::style::values::specified::length::*;
 
     use super::*;
-    use std::clone::Clone;
-    use crate::style::StylesheetOrigin;
     use crate::style::values::specified::Display;
+    use crate::style::StylesheetOrigin;
+    use std::clone::Clone;
 
     #[test]
     fn decl_cmp_importance_ordering() {
@@ -323,7 +322,7 @@ mod tests {
             important: true,
             origin: CssOrigin::Sheet(StylesheetOrigin {
                 sheet_name: "file.css".to_owned(),
-                cascade_origin: CascadeOrigin::UserAgent
+                cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
         };
@@ -331,11 +330,11 @@ mod tests {
         let mut author_decl = ua_decl.clone();
         user_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
             sheet_name: "file.css".to_owned(),
-            cascade_origin: CascadeOrigin::User
+            cascade_origin: CascadeOrigin::User,
         });
         author_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
             sheet_name: "file.css".to_owned(),
-            cascade_origin: CascadeOrigin::Author
+            cascade_origin: CascadeOrigin::Author,
         });
 
         assert!(ua_decl > user_decl);
@@ -357,7 +356,7 @@ mod tests {
             important: false,
             origin: CssOrigin::Sheet(StylesheetOrigin {
                 sheet_name: "file.css".to_owned(),
-                cascade_origin: CascadeOrigin::UserAgent
+                cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
         };
@@ -365,11 +364,11 @@ mod tests {
         let mut author_decl = ua_decl.clone();
         user_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
             sheet_name: "file.css".to_owned(),
-            cascade_origin: CascadeOrigin::User
+            cascade_origin: CascadeOrigin::User,
         });
         author_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
             sheet_name: "file.css".to_owned(),
-            cascade_origin: CascadeOrigin::Author
+            cascade_origin: CascadeOrigin::Author,
         });
 
         assert!(author_decl > user_decl);

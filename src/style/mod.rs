@@ -1,11 +1,11 @@
 use std::convert::From;
 
 use cssparser::{AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser, SourceLocation};
-use selectors::parser::{SelectorList, SelectorParseErrorKind};
+use selectors::parser::SelectorParseErrorKind;
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
-use crate::style::select::{KosmonautParser, KosmonautSelectors};
+use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
 use std::mem::discriminant;
 
@@ -24,7 +24,7 @@ pub fn apply_styles(
     user_sheets: Vec<Stylesheet>,
     author_sheets: Vec<Stylesheet>,
 ) {
-    // https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages
+    // https://www.w3.org/TR/2018/CR-css-casade-3-20180828/#value-stages
     // The final value of a CSS property for a given element or box is the result of a multi-step calculation:
 
     // 1. First, all the declared values applied to an element are collected, for each property on each element. There may be zero or many declared values applied to the element.
@@ -72,6 +72,7 @@ pub fn apply_styles(
     // 6. Finally, the used value is transformed to the actual value based on constraints of the display environment. As with the used value, there may or may not be an actual value for a given property on an element.
 }
 
+// TODO: Need to incorporate specificity and order of appearance
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         node.property_decls_mut().as_mut_slice().sort();
@@ -98,7 +99,7 @@ pub enum CssRule {
 #[derive(Clone, Debug)]
 pub struct StyleRule {
     /// The list of selectors in this rule.
-    pub selectors: SelectorList<KosmonautSelectors>,
+    pub selectors: Selectors,
     /// The declaration block with the properties it contains.
     pub block: PropertyDeclarationBlock,
     /// The location in the sheet where it was found.
@@ -179,7 +180,7 @@ impl<'i> AtRuleParser<'i> for TopLevelRuleParser {
 }
 
 impl<'i> QualifiedRuleParser<'i> for TopLevelRuleParser {
-    type Prelude = SelectorList<KosmonautSelectors>;
+    type Prelude = Selectors;
     type QualifiedRule = CssRule;
     type Error = StyleParseErrorKind<'i>;
 
@@ -188,7 +189,7 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelRuleParser {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        SelectorList::parse(&KosmonautParser, input)
+        Selectors::compile(input)
     }
 
     #[inline]

@@ -1,4 +1,4 @@
 /* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
-div.main {
+div.main, div.main.main.div {
   font-size: 12px !important;
 }

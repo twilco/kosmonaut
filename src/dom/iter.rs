@@ -159,14 +159,20 @@ impl NodeRef {
 
     /// Return an iterator of the inclusive descendants element that match the given selector list.
     #[inline]
-    pub fn select(&self, selectors: &str) -> Result<Select<Elements<Descendants>>, ()> {
+    pub fn select(&self, selectors: &Selectors) -> Select<Elements<Descendants>> {
         self.inclusive_descendants().select(selectors)
+    }
+
+    /// Return an iterator of the inclusive descendants element that match the given selector list.
+    #[inline]
+    pub fn select_str(&self, selectors: &str) -> Result<Select<Elements<Descendants>>, ()> {
+        self.inclusive_descendants().select_str(selectors)
     }
 
     /// Return the first inclusive descendants element that match the given selector list.
     #[inline]
     pub fn select_first(&self, selectors: &str) -> Result<NodeDataRef<ElementData>, ()> {
-        let mut elements = self.select(selectors)?;
+        let mut elements = self.select_str(selectors)?;
         elements.next().ok_or(())
     }
 }
@@ -434,17 +440,32 @@ pub trait NodeIterator: Sized + Iterator<Item = NodeRef> {
 
     /// Filter this node iterator to elements maching the given selectors.
     #[inline]
-    fn select(self, selectors: &str) -> Result<Select<Elements<Self>>, ()> {
+    fn select(self, selectors: &Selectors) -> Select<Elements<Self>> {
         self.elements().select(selectors)
+    }
+
+    /// Filter this node iterator to elements maching the given selectors.
+    #[inline]
+    fn select_str(self, selectors: &str) -> Result<Select<Elements<Self>>, ()> {
+        self.elements().select_str(selectors)
     }
 }
 
 /// Convenience methods for element iterators.
 pub trait ElementIterator: Sized + Iterator<Item = NodeDataRef<ElementData>> {
-    /// Filter this element iterator to elements maching the given selectors.
+    /// Filter this element iterator to elements matching the given selectors.
     #[inline]
-    fn select(self, selectors: &str) -> Result<Select<Self>, ()> {
-        Selectors::compile(selectors).map(|s| Select {
+    fn select(self, selectors: &Selectors) -> Select<Self> {
+        Select {
+            iter: self,
+            selectors: selectors.clone(),
+        }
+    }
+
+    /// Filter this element iterator to elements matching the given selectors.
+    #[inline]
+    fn select_str(self, selectors: &str) -> Result<Select<Self>, ()> {
+        Selectors::compile_str(selectors).map(|s| Select {
             iter: self,
             selectors: s,
         })

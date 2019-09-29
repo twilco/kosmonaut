@@ -298,9 +298,12 @@ impl selectors::Element for NodeDataRef<ElementData> {
 }
 
 /// A pre-compiled list of CSS Selectors.
+/// TODO: Consider implementing ToCss trait
+#[derive(Clone, Eq, PartialEq)]
 pub struct Selectors(pub Vec<Selector>);
 
 /// A pre-compiled CSS Selector.
+#[derive(Clone, Eq, PartialEq)]
 pub struct Selector(GenericSelector<KosmonautSelectors>);
 
 /// The specificity of a selector.
@@ -313,9 +316,21 @@ pub struct Selector(GenericSelector<KosmonautSelectors>);
 pub struct Specificity(u32);
 
 impl Selectors {
-    /// Compile a list of selectors. This may fail on syntax errors or unsupported selectors.
+    /// Compile a list of selectors that is already wrapped in a Parser. This may fail on syntax
+    /// errors or unsupported selectors.
     #[inline]
-    pub fn compile(s: &str) -> Result<Selectors, ()> {
+    pub fn compile<'i, 't>(
+        parser: &mut cssparser::Parser<'i, 't>,
+    ) -> Result<Selectors, ParseError<'i, StyleParseErrorKind<'i>>> {
+        match SelectorList::parse(&KosmonautParser, parser) {
+            Ok(list) => Ok(Selectors(list.0.into_iter().map(Selector).collect())),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Compile a &str list of selectors. This may fail on syntax errors or unsupported selectors.
+    #[inline]
+    pub fn compile_str(s: &str) -> Result<Selectors, ()> {
         let mut input = cssparser::ParserInput::new(s);
         match SelectorList::parse(&KosmonautParser, &mut cssparser::Parser::new(&mut input)) {
             Ok(list) => Ok(Selectors(list.0.into_iter().map(Selector).collect())),
@@ -365,7 +380,7 @@ impl ::std::str::FromStr for Selectors {
     type Err = ();
     #[inline]
     fn from_str(s: &str) -> Result<Selectors, ()> {
-        Selectors::compile(s)
+        Selectors::compile_str(s)
     }
 }
 

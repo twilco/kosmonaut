@@ -1,6 +1,6 @@
 use std::mem::discriminant;
 
-use cssparser::{ParseError, Parser, ParserInput, RuleListParser, ToCss};
+use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
 
 use crate::dom::tree::NodeRef;
 use crate::style::properties::PropertyDeclWithOrigin;
@@ -30,32 +30,38 @@ pub fn parse_css_to_stylesheet(
 pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: CascadeOrigin) {
     sheet.rules().iter().for_each(|rule| {
         if let CssRule::Style(style_rule) = rule {
-            match node.select(&style_rule.selectors.to_css_string()) {
-                Ok(select) => {
-                    select.for_each(|matching_node| {
-                        style_rule.block.declarations().iter().enumerate().for_each(
-                            |(index, decl)| {
-                                matching_node.as_node().add_decl(PropertyDeclWithOrigin {
-                                    decl: decl.clone(),
-                                    important: style_rule
-                                        .block
-                                        .declarations_importance()
-                                        .get(index)
-                                        .expect("important bit not set for declaration"),
-                                    origin: CssOrigin::Sheet(StylesheetOrigin {
-                                        sheet_name: sheet.name.clone(),
-                                        cascade_origin: origin.clone(),
-                                    }),
-                                    source_location: Some(style_rule.source_location),
-                                });
-                            },
-                        );
-                    });
-                }
-                Err(_err) => {
-                    dbg!("error selecting matching styles in dom");
-                }
-            }
+            // calculate specificity by iterating over selectors in list and finding most specific: https://www.w3.org/TR/selectors/#specificity-rules
+            node.select(&style_rule.selectors)
+                .for_each(|matching_node| {
+                    let highest_matching_spec = &style_rule
+                        .selectors
+                        .0
+                        .clone()
+                        .into_iter()
+                        .for_each(|select| {
+                            dbg!(select);
+                        });
+                    style_rule
+                        .block
+                        .declarations()
+                        .iter()
+                        .enumerate()
+                        .for_each(|(index, decl)| {
+                            matching_node.as_node().add_decl(PropertyDeclWithOrigin {
+                                decl: decl.clone(),
+                                important: style_rule
+                                    .block
+                                    .declarations_importance()
+                                    .get(index)
+                                    .expect("important bit not set for declaration"),
+                                origin: CssOrigin::Sheet(StylesheetOrigin {
+                                    sheet_name: sheet.name.clone(),
+                                    cascade_origin: origin.clone(),
+                                }),
+                                source_location: Some(style_rule.source_location),
+                            });
+                        });
+                });
         }
     });
 }

@@ -3,7 +3,7 @@ use std::mem::discriminant;
 use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
 
 use crate::dom::tree::NodeRef;
-use crate::style::properties::PropertyDeclWithOrigin;
+use crate::style::properties::ContextualPropertyDeclaration;
 use crate::style::{
     CascadeOrigin, CssOrigin, CssRule, StyleParseErrorKind, StylesheetOrigin, TopLevelRuleParser,
 };
@@ -32,15 +32,13 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
         if let CssRule::Style(style_rule) = rule {
             node.select(&style_rule.selectors)
                 .for_each(|matching_node| {
-                    let highest_matching_spec =
-                        style_rule.selectors.most_specific_match(&matching_node);
                     style_rule
                         .block
                         .declarations()
                         .iter()
                         .enumerate()
                         .for_each(|(index, decl)| {
-                            matching_node.as_node().add_decl(PropertyDeclWithOrigin {
+                            matching_node.as_node().add_decl(ContextualPropertyDeclaration {
                                 decl: decl.clone(),
                                 important: style_rule
                                     .block
@@ -52,6 +50,11 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
                                     cascade_origin: origin.clone(),
                                 }),
                                 source_location: Some(style_rule.source_location),
+                                specificity: style_rule
+                                    .selectors
+                                    .most_specific_match(&matching_node)
+                                    .expect("there should be at least one matching selector at this point")
+                                    .specificity()
                             });
                         });
                 });

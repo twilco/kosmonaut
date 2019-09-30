@@ -9,6 +9,7 @@ use cssparser::{
 use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
+use crate::style::select::Specificity;
 use crate::style::values::specified::FontSize;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -171,16 +172,18 @@ pub enum PropertyDeclaration {
     FontSize(crate::style::values::specified::FontSize),
 }
 
-/// A property declaration its origin (e.g., user agent stylesheet, author stylesheet, user stylesheet, etc).
+/// A property declaration with contextual information, such as its importance, specificity,
+/// origin, and source location, all of which likely deriving from its parent style rule.
 #[derive(Clone, Debug)]
-pub struct PropertyDeclWithOrigin {
+pub struct ContextualPropertyDeclaration {
     pub decl: PropertyDeclaration,
     pub important: bool,
     pub origin: CssOrigin,
     pub source_location: Option<SourceLocation>,
+    pub specificity: Specificity,
 }
 
-impl Ord for PropertyDeclWithOrigin {
+impl Ord for ContextualPropertyDeclaration {
     /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade-origin
     fn cmp(&self, other: &Self) -> Ordering {
         fn cmp_important_origins(a: &CssOrigin, b: &CssOrigin) -> Ordering {
@@ -246,14 +249,14 @@ impl Ord for PropertyDeclWithOrigin {
     }
 }
 
-impl PartialOrd for PropertyDeclWithOrigin {
+impl PartialOrd for ContextualPropertyDeclaration {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Eq for PropertyDeclWithOrigin {}
-impl PartialEq for PropertyDeclWithOrigin {
+impl Eq for ContextualPropertyDeclaration {}
+impl PartialEq for ContextualPropertyDeclaration {
     fn eq(&self, other: &Self) -> bool {
         return mem::discriminant(&self.decl) == mem::discriminant(&other.decl)
             && &self.origin == &other.origin;
@@ -295,13 +298,14 @@ mod tests {
 
     #[test]
     fn decl_cmp_importance_ordering() {
-        let imp = PropertyDeclWithOrigin {
+        let imp = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: true,
             origin: CssOrigin::Inline,
             source_location: None,
+            specificity: Specificity::new(0)
         };
         let mut not_imp = imp.clone();
         not_imp.important = false;
@@ -314,7 +318,7 @@ mod tests {
 
     #[test]
     fn decl_cmp_both_important_sheet_origin() {
-        let ua_decl = PropertyDeclWithOrigin {
+        let ua_decl = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
@@ -324,6 +328,7 @@ mod tests {
                 cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
+            specificity: Specificity::new(0)
         };
         let mut user_decl = ua_decl.clone();
         let mut author_decl = ua_decl.clone();
@@ -348,7 +353,7 @@ mod tests {
 
     #[test]
     fn decl_cmp_both_unimportant_sheet_origin() {
-        let ua_decl = PropertyDeclWithOrigin {
+        let ua_decl = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
@@ -358,6 +363,7 @@ mod tests {
                 cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
+            specificity: Specificity::new(0)
         };
         let mut user_decl = ua_decl.clone();
         let mut author_decl = ua_decl.clone();
@@ -382,19 +388,21 @@ mod tests {
 
     #[test]
     fn decl_cmp_diff_prop_types_are_equal() {
-        let font_size = PropertyDeclWithOrigin {
+        let font_size = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,
+            specificity: Specificity::new(0)
         };
-        let display = PropertyDeclWithOrigin {
+        let display = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::Display(Display::Block),
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,
+            specificity: Specificity::new(0)
         };
         assert_eq!(font_size.cmp(&display), Ordering::Equal);
     }

@@ -11,7 +11,7 @@ use html5ever::QualName;
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
-use crate::style::properties::PropertyDeclWithOrigin;
+use crate::style::properties::ContextualPropertyDeclaration;
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -132,7 +132,7 @@ pub struct Node {
     data: NodeData,
     // TODO: Might need a better name.  Maybe make this an enum state machine, allowing representation from
     // declared -> cascaded -> defaulting -> computed, etc etc
-    property_decls: RefCell<Vec<PropertyDeclWithOrigin>>,
+    property_decls: RefCell<Vec<ContextualPropertyDeclaration>>,
 }
 
 impl fmt::Debug for Node {
@@ -309,18 +309,18 @@ impl Node {
 
     /// Return a reference to this node’s list of property declarations.
     #[inline]
-    pub fn property_decls(&self) -> Ref<Vec<PropertyDeclWithOrigin>> {
+    pub fn property_decls(&self) -> Ref<Vec<ContextualPropertyDeclaration>> {
         self.property_decls.borrow()
     }
 
     /// Return a mutable reference to this node’s list of property declarations.
     #[inline]
-    pub fn property_decls_mut(&self) -> RefMut<Vec<PropertyDeclWithOrigin>> {
+    pub fn property_decls_mut(&self) -> RefMut<Vec<ContextualPropertyDeclaration>> {
         self.property_decls.borrow_mut()
     }
 
     #[inline]
-    pub fn add_decl(&self, new_decl: PropertyDeclWithOrigin) {
+    pub fn add_decl(&self, new_decl: ContextualPropertyDeclaration) {
         &self.property_decls.borrow_mut().push(new_decl);
     }
 

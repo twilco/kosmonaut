@@ -315,6 +315,12 @@ pub struct Selector(GenericSelector<KosmonautSelectors>);
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Specificity(u32);
 
+impl Specificity {
+    pub fn new(val: u32) -> Self {
+        Specificity(val)
+    }
+}
+
 impl Selectors {
     /// Compile a list of selectors that is already wrapped in a Parser. This may fail on syntax
     /// errors or unsupported selectors.

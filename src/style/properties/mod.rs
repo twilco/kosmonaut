@@ -183,15 +183,39 @@ pub struct ContextualPropertyDeclaration {
     pub specificity: Specificity,
 }
 
+/// Much of Kosmonaut's cascade algorithm is in this implementation — namely, the first two top-level
+/// bullet points.  The final deciding factor in the cascade, order of appearance, can't possibly
+/// be exercised here.
+///
+/// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade-origin
+/// The cascade sorts declarations according to the following criteria, in descending order of priority:
+///
+/// * Origin and Importance
+///   The origin of a declaration is based on where it comes from and its importance is whether or
+///   not it is declared !important (see below).  The precedence of the various origins is, in descending order:
+///     1. Transition declarations [css-transitions-1]
+///     2. Important user agent declarations
+///     3. Important user declarations
+///     4. Important author declarations
+///     5. Animation declarations [css-animations-1]
+///     6. Normal author declarations
+///     7. Normal user declarations
+///     8. Normal user agent declarations
+///
+///     Declarations from origins earlier in this list win over declarations from later origins.
+/// * Specificity
+///     The Selectors module [SELECT] describes how to compute the specificity of a selector. Each declaration
+///     has the same specificity as the style rule it appears in. For the purpose of this step, declarations
+///     that do not belong to a style rule (such as the contents of a style attribute) are considered to
+///     have a specificity higher than any selector. The declaration with the highest specificity wins.
+/// * Order of Appearance (NOTE: This is portion of the cascade is not represented in this function.
+///     The last declaration in document order wins. For this purpose:
+///         * Declarations from imported style sheets are ordered as if their style sheets were substituted in place of the @import rule.
+///         * Declarations from style sheets independently linked by the originating document are treated as if they were concatenated in linking order, as determined by the host document language.
+///         * Declarations from style attributes are ordered according to the document order of the element the style attribute appears on, and are all placed after any style sheets.
 impl Ord for ContextualPropertyDeclaration {
-    /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade-origin
     fn cmp(&self, other: &Self) -> Ordering {
         fn cmp_important_origins(a: &CssOrigin, b: &CssOrigin) -> Ordering {
-            // Order of importance:
-            // Important user agent declarations
-            // Important user declarations
-            // Important author declarations
-            // Inline and embedded styles are considered author styles
             match (a, b) {
                 (CssOrigin::Inline, CssOrigin::Inline)
                 | (CssOrigin::Inline, CssOrigin::Embedded)
@@ -236,12 +260,16 @@ impl Ord for ContextualPropertyDeclaration {
             } else if !self.important && other.important {
                 return Ordering::Less;
             } else if self.important && other.important {
-                return cmp_important_origins(&self.origin, &other.origin);
+                match cmp_important_origins(&self.origin, &other.origin) {
+                    Ordering::Greater => return Ordering::Greater,
+                    Ordering::Less => return Ordering::Less,
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity)
+                }
             } else if !self.important && !other.important {
                 return match cmp_important_origins(&self.origin, &other.origin) {
                     Ordering::Less => Ordering::Greater,
                     Ordering::Greater => Ordering::Less,
-                    Ordering::Equal => Ordering::Equal,
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity)
                 };
             }
         }
@@ -297,6 +325,31 @@ mod tests {
     use std::clone::Clone;
 
     #[test]
+    fn decl_cmp_specificity() {
+        let zero_spec = ContextualPropertyDeclaration {
+            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+                NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
+            ))),
+            important: true,
+            origin: CssOrigin::Inline,
+            source_location: None,
+            specificity: Specificity::new(0)
+        };
+        let mut one_thousand_spec = zero_spec.clone();
+        one_thousand_spec.specificity = Specificity::new(1000);
+        let mut two_thousand_spec = zero_spec.clone();
+        two_thousand_spec.specificity = Specificity::new(2049);
+
+        assert!(two_thousand_spec > one_thousand_spec);
+        assert!(two_thousand_spec > zero_spec);
+        assert!(one_thousand_spec > zero_spec);
+
+        assert_eq!(two_thousand_spec.cmp(&two_thousand_spec.clone()), Ordering::Equal);
+        assert_eq!(one_thousand_spec.cmp(&one_thousand_spec.clone()), Ordering::Equal);
+        assert_eq!(zero_spec.cmp(&zero_spec.clone()), Ordering::Equal);
+    }
+
+    #[test]
     fn decl_cmp_importance_ordering() {
         let imp = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
@@ -312,8 +365,8 @@ mod tests {
 
         assert!(imp > not_imp);
         assert!(not_imp < imp);
-        assert_eq!(imp, imp.clone());
-        assert_eq!(not_imp, not_imp.clone());
+        assert_eq!(imp.cmp(&imp.clone()), Ordering::Equal);
+        assert_eq!(not_imp.cmp(&not_imp.clone()), Ordering::Equal);
     }
 
     #[test]

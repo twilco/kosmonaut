@@ -9,6 +9,8 @@ use cssparser::{ParseError, Parser, Token};
 #[derive(Clone, Debug, PartialEq)]
 pub enum LengthPercentage {
     Length(NoCalcLength),
+    //    Percentage(computed::Percentage),
+    //    Calc(Box<CalcLengthPercentage>),
 }
 
 impl LengthPercentage {

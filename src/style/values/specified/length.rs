@@ -1,3 +1,4 @@
+use crate::style::values::computed;
 use crate::style::values::specified::CSSFloat;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser, Token};
@@ -9,7 +10,7 @@ use cssparser::{ParseError, Parser, Token};
 #[derive(Clone, Debug, PartialEq)]
 pub enum LengthPercentage {
     Length(NoCalcLength),
-    //    Percentage(computed::Percentage),
+    Percentage(computed::Percentage),
     //    Calc(Box<CalcLengthPercentage>),
 }
 
@@ -26,6 +27,11 @@ impl LengthPercentage {
                 return NoCalcLength::parse_dimension(value, unit)
                     .map(LengthPercentage::Length)
                     .map_err(|()| location.new_unexpected_token_error(token.clone()));
+            }
+            Token::Percentage { unit_value, .. } => {
+                return Ok(LengthPercentage::Percentage(computed::Percentage(
+                    unit_value,
+                )));
             }
             _ => return Err(location.new_unexpected_token_error(token.clone())),
         }

@@ -17,6 +17,7 @@ pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
                         _ => panic!("should always be `px` AbsoluteLength units"),
                     },
                 },
+                _ => panic!("should always be a `length` variant, not a `calc` or `percentage`")
             },
             _ => panic!("should always be a `Length`-style font-size (e.g. `16 px;`)"),
         },

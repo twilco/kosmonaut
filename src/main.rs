@@ -1,4 +1,5 @@
 #![feature(todo_macro)]
+#![feature(crate_visibility_modifier)]
 
 #[macro_use]
 extern crate cssparser;

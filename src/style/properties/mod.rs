@@ -10,6 +10,7 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
+use crate::style::values::specified::length::LengthPercentage;
 use crate::style::values::specified::FontSize;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -156,6 +157,12 @@ impl PropertyDeclaration {
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
                 }
+                LonghandId::MarginLeft => {
+                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
+                        input,
+                    )?))
+                }
                 _ => {}
             },
             PropertyId::Shorthand(_short_id) => {}
@@ -170,6 +177,8 @@ pub enum PropertyDeclaration {
     // Property(value)
     Display(crate::style::values::specified::Display),
     FontSize(crate::style::values::specified::FontSize),
+    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+    MarginLeft(crate::style::values::specified::length::LengthPercentage),
 }
 
 /// A property declaration with contextual information, such as its importance, specificity,
@@ -206,12 +215,6 @@ pub struct ContextualPropertyDeclaration {
 /// * Specificity
 ///     The Selectors module [SELECT] describes how to compute the specificity of a selector. Each declaration
 ///     has the same specificity as the style rule it appears in. For the purpose of this step, declarations
-///     that do not belong to a style rule (such as the contents of a style attribute) are considered to
-///     have a specificity higher than any selector. The declaration with the highest specificity wins.
-/// * Order of Appearance (NOTE: This is portion of the cascade is not represented in this function.
-///     The last declaration in document order wins. For this purpose:
-///         * Declarations from imported style sheets are ordered as if their style sheets were substituted in place of the @import rule.
-///         * Declarations from style sheets independently linked by the originating document are treated as if they were concatenated in linking order, as determined by the host document language.
 ///         * Declarations from style attributes are ordered according to the document order of the element the style attribute appears on, and are all placed after any style sheets.
 impl Ord for ContextualPropertyDeclaration {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -263,13 +266,13 @@ impl Ord for ContextualPropertyDeclaration {
                 match cmp_important_origins(&self.origin, &other.origin) {
                     Ordering::Greater => return Ordering::Greater,
                     Ordering::Less => return Ordering::Less,
-                    Ordering::Equal => return self.specificity.cmp(&other.specificity)
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
                 }
             } else if !self.important && !other.important {
                 return match cmp_important_origins(&self.origin, &other.origin) {
                     Ordering::Less => Ordering::Greater,
                     Ordering::Greater => Ordering::Less,
-                    Ordering::Equal => return self.specificity.cmp(&other.specificity)
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
                 };
             }
         }
@@ -333,7 +336,7 @@ mod tests {
             important: true,
             origin: CssOrigin::Inline,
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         let mut one_thousand_spec = zero_spec.clone();
         one_thousand_spec.specificity = Specificity::new(1000);
@@ -344,8 +347,14 @@ mod tests {
         assert!(two_thousand_spec > zero_spec);
         assert!(one_thousand_spec > zero_spec);
 
-        assert_eq!(two_thousand_spec.cmp(&two_thousand_spec.clone()), Ordering::Equal);
-        assert_eq!(one_thousand_spec.cmp(&one_thousand_spec.clone()), Ordering::Equal);
+        assert_eq!(
+            two_thousand_spec.cmp(&two_thousand_spec.clone()),
+            Ordering::Equal
+        );
+        assert_eq!(
+            one_thousand_spec.cmp(&one_thousand_spec.clone()),
+            Ordering::Equal
+        );
         assert_eq!(zero_spec.cmp(&zero_spec.clone()), Ordering::Equal);
     }
 
@@ -358,7 +367,7 @@ mod tests {
             important: true,
             origin: CssOrigin::Inline,
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         let mut not_imp = imp.clone();
         not_imp.important = false;
@@ -381,7 +390,7 @@ mod tests {
                 cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         let mut user_decl = ua_decl.clone();
         let mut author_decl = ua_decl.clone();
@@ -416,7 +425,7 @@ mod tests {
                 cascade_origin: CascadeOrigin::UserAgent,
             }),
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         let mut user_decl = ua_decl.clone();
         let mut author_decl = ua_decl.clone();
@@ -448,14 +457,14 @@ mod tests {
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         let display = ContextualPropertyDeclaration {
             decl: PropertyDeclaration::Display(Display::Block),
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,
-            specificity: Specificity::new(0)
+            specificity: Specificity::new(0),
         };
         assert_eq!(font_size.cmp(&display), Ordering::Equal);
     }

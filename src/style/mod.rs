@@ -24,7 +24,7 @@ pub fn apply_styles(
     user_sheets: Vec<Stylesheet>,
     author_sheets: Vec<Stylesheet>,
 ) {
-    // https://www.w3.org/TR/2018/CR-css-casade-3-20180828/#value-stages
+    // https://www.w3.org/TR/css-cascade-3/#value-stages
     // The final value of a CSS property for a given element or box is the result of a multi-step calculation:
 
     // 1. First, all the declared values applied to an element are collected, for each property on each element. There may be zero or many declared values applied to the element.
@@ -47,7 +47,7 @@ pub fn apply_styles(
             match element_data.attributes.try_borrow() {
                 Ok(attrs) => {
                     if let Some(style_str) = attrs.get("style") {
-                        // TODO: Parse inline style and apply it to node
+                        // TODO: Parse inline style and apply it to node.  Make sure these styles have a greater specificity than anything else
                         // cssparser::ParserInput::new(style_str)
                         dbg!("found inline style but did not collect it: {:?}", style_str);
                     }
@@ -66,16 +66,30 @@ pub fn apply_styles(
     cascade(&dom);
     debug_recursive(&dom);
 
+    // TODO: Add two new properties — one inherited, one not
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/specified_value
+    //
+    // The specified value of a CSS property is the value it receives from the document's style sheet. The specified value for a given property is determined according to the following rules:
+    //     If the document's style sheet explicitly specifies a value for the property, the given value will be used (the cascaded value).
+    //     If the document's style sheet doesn't specify a value but it is an inherited property, the computed value will be taken from the parent element.
+    //     If none of the above pertain, the element's initial value will be used.
+
     // 3. Defaulting yields the specified value. Every element has exactly one specified value per property.
     // 4. Resolving value dependencies yields the computed value. Every element has exactly one computed value per property.
     // 5. Formatting the document yields the used value. An element only has a used value for a given property if that property applies to the element.
     // 6. Finally, the used value is transformed to the actual value based on constraints of the display environment. As with the used value, there may or may not be an actual value for a given property on an element.
 }
 
-// TODO: Need to incorporate specificity and order of appearance
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         node.property_decls_mut().as_mut_slice().sort();
+        // font-size:12px;
+        // font-size:16px;
+        // when determining cascaded value,
+        //   1. find first property
+        //   2. from that index forward, find any other instances of this property
+        //   3. if one is found, first.cmp(after)
+        //       if Ordering::Equal, this is new cascaded value.  go back to 2.
     });
 }
 

@@ -14,6 +14,7 @@ use crate::style::values::specified::length::LengthPercentage;
 use crate::style::values::specified::FontSize;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
+use std::borrow::Borrow;
 
 pub mod id;
 pub mod longhands;
@@ -185,11 +186,48 @@ pub enum PropertyDeclaration {
 /// origin, and source location, all of which likely deriving from its parent style rule.
 #[derive(Clone, Debug)]
 pub struct ContextualPropertyDeclaration {
-    pub decl: PropertyDeclaration,
+    pub inner_decl: PropertyDeclaration,
     pub important: bool,
     pub origin: CssOrigin,
     pub source_location: Option<SourceLocation>,
     pub specificity: Specificity,
+}
+
+/// Wrapper over a Vec<PropertyDeclaration> to provide efficient helpers over common operations
+/// such as determining the existence of a type of property declaration.
+#[derive(Clone, Debug)]
+pub struct ContextualPropertyDeclarations {
+    /// The actual context property declarations.
+    decls: Vec<ContextualPropertyDeclaration>,
+    /// The LonghandIds present in this container.
+    longhands: HashSet<LonghandId>,
+}
+
+impl ContextualPropertyDeclarations {
+    #[inline]
+    pub fn new() -> Self {
+        ContextualPropertyDeclarations {
+            decls: Vec::new(),
+            longhands: HashSet::new(),
+        }
+    }
+
+    #[inline]
+    pub fn sort(&mut self) {
+        self.decls.as_mut_slice().sort();
+    }
+
+    #[inline]
+    pub fn contains(&self, longhand: LonghandId) -> bool {
+        self.longhands.contains(&longhand)
+    }
+
+    #[inline]
+    pub fn add(&mut self, new_decl: ContextualPropertyDeclaration) {
+        self.longhands
+            .insert(LonghandId::from(&new_decl.inner_decl).clone());
+        self.decls.push(new_decl);
+    }
 }
 
 /// Much of Kosmonaut's cascade algorithm is in this implementation — namely, the first two top-level
@@ -257,7 +295,7 @@ impl Ord for ContextualPropertyDeclaration {
             }
         }
 
-        if mem::discriminant(&self.decl) == mem::discriminant(&other.decl) {
+        if mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl) {
             if self.important && !other.important {
                 return Ordering::Greater;
             } else if !self.important && other.important {
@@ -289,7 +327,7 @@ impl PartialOrd for ContextualPropertyDeclaration {
 impl Eq for ContextualPropertyDeclaration {}
 impl PartialEq for ContextualPropertyDeclaration {
     fn eq(&self, other: &Self) -> bool {
-        return mem::discriminant(&self.decl) == mem::discriminant(&other.decl)
+        return mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl)
             && &self.origin == &other.origin;
     }
 }
@@ -330,7 +368,7 @@ mod tests {
     #[test]
     fn decl_cmp_specificity() {
         let zero_spec = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: true,
@@ -361,7 +399,7 @@ mod tests {
     #[test]
     fn decl_cmp_importance_ordering() {
         let imp = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: true,
@@ -381,7 +419,7 @@ mod tests {
     #[test]
     fn decl_cmp_both_important_sheet_origin() {
         let ua_decl = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: true,
@@ -416,7 +454,7 @@ mod tests {
     #[test]
     fn decl_cmp_both_unimportant_sheet_origin() {
         let ua_decl = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: false,
@@ -451,7 +489,7 @@ mod tests {
     #[test]
     fn decl_cmp_diff_prop_types_are_equal() {
         let font_size = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
                 NoCalcLength::Absolute(AbsoluteLength::Px(12.0)),
             ))),
             important: false,
@@ -460,7 +498,7 @@ mod tests {
             specificity: Specificity::new(0),
         };
         let display = ContextualPropertyDeclaration {
-            decl: PropertyDeclaration::Display(Display::Block),
+            inner_decl: PropertyDeclaration::Display(Display::Block),
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,

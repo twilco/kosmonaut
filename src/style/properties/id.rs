@@ -1,3 +1,5 @@
+use crate::style::properties::PropertyDeclaration;
+
 /// Representation of a CSS property, that is, either a longhand, a
 /// shorthand, or a custom property.
 ///
@@ -410,6 +412,22 @@ pub enum LonghandId {
     //    Right = 175,
     //    /// top
     //    Top = 176,
+}
+
+impl From<&PropertyDeclaration> for LonghandId {
+    fn from(prop_decl: &PropertyDeclaration) -> Self {
+        match prop_decl {
+            PropertyDeclaration::Display(_) => LonghandId::Display,
+            PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
+            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+        }
+    }
+}
+
+impl From<PropertyDeclaration> for LonghandId {
+    fn from(prop_decl: PropertyDeclaration) -> Self {
+        LonghandId::from(&prop_decl)
+    }
 }
 
 /// An identifier for a given shorthand property.

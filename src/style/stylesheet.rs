@@ -39,7 +39,7 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
                         .enumerate()
                         .for_each(|(index, decl)| {
                             matching_node.as_node().add_decl(ContextualPropertyDeclaration {
-                                decl: decl.clone(),
+                                inner_decl: decl.clone(),
                                 important: style_rule
                                     .block
                                     .declarations_importance()

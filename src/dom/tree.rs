@@ -11,7 +11,7 @@ use html5ever::QualName;
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
-use crate::style::properties::ContextualPropertyDeclaration;
+use crate::style::properties::{ContextualPropertyDeclaration, ContextualPropertyDeclarations};
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -132,7 +132,7 @@ pub struct Node {
     data: NodeData,
     // TODO: Might need a better name.  Maybe make this an enum state machine, allowing representation from
     // declared -> cascaded -> defaulting -> computed, etc etc
-    property_decls: RefCell<Vec<ContextualPropertyDeclaration>>,
+    property_decls: RefCell<ContextualPropertyDeclarations>,
 }
 
 impl fmt::Debug for Node {
@@ -219,7 +219,7 @@ impl NodeRef {
             previous_sibling: Cell::new(None),
             next_sibling: Cell::new(None),
             data,
-            property_decls: RefCell::new(Vec::new()),
+            property_decls: RefCell::new(ContextualPropertyDeclarations::new()),
         }))
     }
 
@@ -309,19 +309,19 @@ impl Node {
 
     /// Return a reference to this node’s list of property declarations.
     #[inline]
-    pub fn property_decls(&self) -> Ref<Vec<ContextualPropertyDeclaration>> {
+    pub fn property_decls(&self) -> Ref<ContextualPropertyDeclarations> {
         self.property_decls.borrow()
     }
 
     /// Return a mutable reference to this node’s list of property declarations.
     #[inline]
-    pub fn property_decls_mut(&self) -> RefMut<Vec<ContextualPropertyDeclaration>> {
+    pub fn property_decls_mut(&self) -> RefMut<ContextualPropertyDeclarations> {
         self.property_decls.borrow_mut()
     }
 
     #[inline]
     pub fn add_decl(&self, new_decl: ContextualPropertyDeclaration) {
-        &self.property_decls.borrow_mut().push(new_decl);
+        &self.property_decls.borrow_mut().add(new_decl);
     }
 
     /// If this node is an element, return a reference to element-specific data.

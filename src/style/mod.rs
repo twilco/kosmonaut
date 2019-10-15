@@ -82,7 +82,7 @@ pub fn apply_styles(
 
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
-        node.property_decls_mut().as_mut_slice().sort();
+        node.property_decls_mut().sort();
         // font-size:12px;
         // font-size:16px;
         // when determining cascaded value,

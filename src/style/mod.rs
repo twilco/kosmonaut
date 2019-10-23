@@ -7,7 +7,6 @@ use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use std::mem::discriminant;
 
 #[macro_use]
 mod macros;
@@ -82,14 +81,17 @@ pub fn apply_styles(
 
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
-        node.property_decls_mut().sort();
-        // font-size:12px;
-        // font-size:16px;
-        // when determining cascaded value,
-        //   1. find first property
-        //   2. from that index forward, find any other instances of this property
-        //   3. if one is found, first.cmp(after)
-        //       if Ordering::Equal, this is new cascaded value.  go back to 2.
+        node.property_decls_mut().cascade_sort();
+        // TODO
+        //        LonghandId::iter().for_each(|longhand| {
+        //            let prop_decl = match node.property_decls().get_by_longhand(longhand) {
+        //                Some(contextual_decl) => contextual_decl.inner_decl,
+        //                None => {
+        //                    // default for longhand
+        //                    // TODO
+        //                }
+        //            };
+        //        });
     });
 }
 
@@ -120,7 +122,7 @@ pub struct StyleRule {
     pub source_location: SourceLocation,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CssOrigin {
     /// CSS found within `style` attribute on node
     /// In the cascade, inline styles are considered to have an author origin and a specificity
@@ -131,23 +133,6 @@ pub enum CssOrigin {
     Embedded,
     /// CSS found within a stylesheet
     Sheet(StylesheetOrigin),
-}
-
-impl PartialEq for CssOrigin {
-    fn eq(&self, other: &Self) -> bool {
-        match &self {
-            CssOrigin::Inline => return discriminant(other) == discriminant(&CssOrigin::Inline),
-            CssOrigin::Embedded => {
-                return discriminant(other) == discriminant(&CssOrigin::Embedded)
-            }
-            CssOrigin::Sheet(self_sheet_origin) => match other {
-                CssOrigin::Sheet(other_sheet_origin) => {
-                    return self_sheet_origin == other_sheet_origin
-                }
-                _ => return false,
-            },
-        }
-    }
 }
 
 /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascading-origins
@@ -183,6 +168,7 @@ pub struct TopLevelRuleParser {}
 
 // TODO: Support @ rules
 pub enum AtRuleNonBlockPrelude {}
+
 pub enum AtRuleBlockPrelude {}
 
 /// Kosmonaut currently does not support @rules, so fall back to the default @rule error impl.

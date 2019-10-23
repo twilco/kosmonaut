@@ -1,10 +1,12 @@
-use crate::dom::node_data_ref::NodeDataRef;
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::style::properties::PropertyDeclaration;
+use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
+use crate::style::select::Specificity;
 use crate::style::values::specified;
 use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
+use crate::style::values::specified::{Display, FontSize};
+use crate::style::CssOrigin;
 
 pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
     match prop_decl {
@@ -48,4 +50,29 @@ pub fn get_div(classes: &str, text: &str) -> NodeRef {
             };
         });
     ret.expect("should've been able to get div from test_utils#get_div()")
+}
+
+/// Method for creating a "default"-ish font-size contextual property declaration for tests.
+/// If you need to customize these arguments further, create a new method named something like:
+///    font_size_px_origin(px: f32, origin: CssOrigin)
+pub fn font_size_px(px: f32) -> ContextualPropertyDeclaration {
+    ContextualPropertyDeclaration {
+        inner_decl: PropertyDeclaration::FontSize(FontSize::Length(LengthPercentage::Length(
+            NoCalcLength::Absolute(AbsoluteLength::Px(px)),
+        ))),
+        important: false,
+        origin: CssOrigin::Inline,
+        source_location: None,
+        specificity: Specificity::new(0),
+    }
+}
+
+pub fn display_by_type(display_type: Display) -> ContextualPropertyDeclaration {
+    ContextualPropertyDeclaration {
+        inner_decl: PropertyDeclaration::Display(display_type),
+        important: false,
+        origin: CssOrigin::Inline,
+        source_location: None,
+        specificity: Specificity::new(0),
+    }
 }

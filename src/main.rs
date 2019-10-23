@@ -1,4 +1,3 @@
-#![feature(todo_macro)]
 #![feature(crate_visibility_modifier)]
 
 #[macro_use]
@@ -7,6 +6,8 @@ extern crate cssparser;
 extern crate html5ever;
 #[macro_use]
 extern crate matches;
+#[macro_use]
+extern crate strum_macros;
 
 use std::fs::File;
 

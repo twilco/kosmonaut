@@ -1,4 +1,4 @@
-use crate::style::properties::PropertyDeclaration;
+use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
 
 /// Representation of a CSS property, that is, either a longhand, a
 /// shorthand, or a custom property.
@@ -55,7 +55,7 @@ impl PropertyId {
 
 /// An identifier for a given longhand property.
 ///  TODO: Uncomment as properties are implemented.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIter, Eq, Hash, PartialEq)]
 #[repr(u16)]
 pub enum LonghandId {
     //    /// align-content
@@ -427,6 +427,22 @@ impl From<&PropertyDeclaration> for LonghandId {
 impl From<PropertyDeclaration> for LonghandId {
     fn from(prop_decl: PropertyDeclaration) -> Self {
         LonghandId::from(&prop_decl)
+    }
+}
+
+impl From<&ContextualPropertyDeclaration> for LonghandId {
+    fn from(contextual_decl: &ContextualPropertyDeclaration) -> Self {
+        match contextual_decl.inner_decl {
+            PropertyDeclaration::Display(_) => LonghandId::Display,
+            PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
+            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+        }
+    }
+}
+
+impl From<ContextualPropertyDeclaration> for LonghandId {
+    fn from(contextual_decl: ContextualPropertyDeclaration) -> Self {
+        LonghandId::from(&contextual_decl)
     }
 }
 

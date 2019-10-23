@@ -4,7 +4,6 @@ Kosmonaut matches Servo's license, MPL 2.0: https://mozilla.org/MPL/2.0/ */
 //! Computed percentages.
 
 use crate::style::values::specified::CSSFloat;
-use std::fmt;
 
 /// A computed percentage.
 #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]

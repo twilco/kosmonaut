@@ -231,10 +231,7 @@ impl ContextualPropertyDeclarations {
         // Now sort by order of appearance.
         let mut swaps: Vec<(usize, usize)> = Vec::new();
         for (outer_idx, outer_decl) in self.decls.iter().enumerate() {
-            // Manually maintain `inner_idx`.  Rust's .iter().rev().enumerate() properly reverses
-            // the values, but still starts counting indices from 0.
-            let mut inner_idx = self.decls.len() - 1;
-            for inner_decl in self.decls.iter().rev() {
+            for (inner_idx, inner_decl) in self.decls.iter().enumerate().rev() {
                 // Since inner_idx starts from .rev(), stop looking for possible swaps when outer
                 // and inner indexes meet. If there was a swap to be found, we already would've
                 // found it, and won't find any more swaps by continuing.  Also, there's no point in swapping an element with itself.
@@ -248,7 +245,6 @@ impl ContextualPropertyDeclarations {
                     swaps.push((outer_idx, inner_idx));
                     break;
                 }
-                inner_idx = inner_idx - 1;
             }
         }
 

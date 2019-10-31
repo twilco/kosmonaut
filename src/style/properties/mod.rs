@@ -330,6 +330,27 @@ impl ContextualPropertyDeclarations {
 ///         * Declarations from style attributes are ordered according to the document order of the element the style attribute appears on, and are all placed after any style sheets.
 impl Ord for ContextualPropertyDeclaration {
     fn cmp(&self, other: &Self) -> Ordering {
+        if mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl) {
+            if self.important && !other.important {
+                return Ordering::Greater;
+            } else if !self.important && other.important {
+                return Ordering::Less;
+            } else if self.important && other.important {
+                match cmp_important_origins(&self.origin, &other.origin) {
+                    Ordering::Greater => return Ordering::Greater,
+                    Ordering::Less => return Ordering::Less,
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
+                }
+            } else if !self.important && !other.important {
+                return match cmp_important_origins(&self.origin, &other.origin) {
+                    Ordering::Less => Ordering::Greater,
+                    Ordering::Greater => Ordering::Less,
+                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
+                };
+            }
+        }
+        return Ordering::Equal;
+
         fn cmp_important_origins(a: &CssOrigin, b: &CssOrigin) -> Ordering {
             match (a, b) {
                 (CssOrigin::Inline, CssOrigin::Inline)
@@ -368,27 +389,6 @@ impl Ord for ContextualPropertyDeclaration {
                 }
             }
         }
-
-        if mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl) {
-            if self.important && !other.important {
-                return Ordering::Greater;
-            } else if !self.important && other.important {
-                return Ordering::Less;
-            } else if self.important && other.important {
-                match cmp_important_origins(&self.origin, &other.origin) {
-                    Ordering::Greater => return Ordering::Greater,
-                    Ordering::Less => return Ordering::Less,
-                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
-                }
-            } else if !self.important && !other.important {
-                return match cmp_important_origins(&self.origin, &other.origin) {
-                    Ordering::Less => Ordering::Greater,
-                    Ordering::Greater => Ordering::Less,
-                    Ordering::Equal => return self.specificity.cmp(&other.specificity),
-                };
-            }
-        }
-        return Ordering::Equal;
     }
 }
 
@@ -400,8 +400,6 @@ impl PartialOrd for ContextualPropertyDeclaration {
 
 impl Eq for ContextualPropertyDeclaration {}
 
-// TODO: I'm pretty sure we're doing something wrong with our manual implementations of Ord, PartialOrd, and PartialEq.
-// As I recall, they're all supposed to "agree".  Figure out the best way to do this, and audit all implementations.
 impl PartialEq for ContextualPropertyDeclaration {
     fn eq(&self, other: &Self) -> bool {
         return mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl)

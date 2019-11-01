@@ -4,9 +4,11 @@ use cssparser::{AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser,
 use selectors::parser::SelectorParseErrorKind;
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
+use crate::style::properties::id::LonghandId;
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
+use strum::IntoEnumIterator;
 
 #[macro_use]
 mod macros;
@@ -82,13 +84,11 @@ pub fn apply_styles(
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         node.property_decls_mut().cascade_sort();
-        // TODO
         //        LonghandId::iter().for_each(|longhand| {
         //            let prop_decl = match node.property_decls().get_by_longhand(longhand) {
         //                Some(contextual_decl) => contextual_decl.inner_decl,
         //                None => {
-        //                    // default for longhand
-        //                    // TODO
+        //                    // TODO: default for longhand
         //                }
         //            };
         //        });

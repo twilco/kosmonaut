@@ -3,15 +3,15 @@ use crate::dom::traits::TendrilSink;
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
 use crate::style::select::Specificity;
-use crate::style::values::specified;
-use crate::style::values::specified::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
-use crate::style::values::specified::{Display, FontSize};
+use crate::style::values;
+use crate::style::values::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
+use crate::style::values::{Display, FontSize};
 use crate::style::CssOrigin;
 
 pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
     match prop_decl {
         PropertyDeclaration::FontSize(font_size) => match font_size {
-            specified::FontSize::Length(lp) => match lp {
+            FontSize::Length(lp) => match lp {
                 LengthPercentage::Length(no_calc_length) => match no_calc_length {
                     NoCalcLength::Absolute(abs_len) => match abs_len {
                         // should've taken the most recent rule added to the sheet, `font-size: 16px`

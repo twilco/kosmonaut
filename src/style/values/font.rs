@@ -1,4 +1,4 @@
-use crate::style::values::specified::length::LengthPercentage;
+use crate::style::values::length::LengthPercentage;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 

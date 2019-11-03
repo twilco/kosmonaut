@@ -1,9 +1,17 @@
-use crate::style::values::{CSSFloat, Percentage};
+use crate::style::values::computed::Percentage;
+use crate::style::values::CSSFloat;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser, Token};
 
+/// The computed `<length>` value.
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub struct CSSPixelLength(CSSFloat);
+
 /// A `<length-percentage>` value. This can be either a `<length>`, a
 /// `<percentage>`, or a combination of both via `calc()`.
+///
+/// TODO: We don't yet support calc expressions.  If we did, we would need a specified::LengthPercentage
+/// that had a Calc(Box<CalcLengthPercentage>) variant.
 ///
 /// https://drafts.csswg.org/css-values-4/#typedef-length-percentage
 #[derive(Clone, Debug, PartialEq)]

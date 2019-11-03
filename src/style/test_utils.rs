@@ -4,8 +4,9 @@ use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
 use crate::style::select::Specificity;
 use crate::style::values;
-use crate::style::values::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
-use crate::style::values::{Display, FontSize};
+use crate::style::values::computed::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
+use crate::style::values::computed::Display;
+use crate::style::values::specified::FontSize;
 use crate::style::CssOrigin;
 
 pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {

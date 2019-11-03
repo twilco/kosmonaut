@@ -1,7 +1,7 @@
 use crate::style::StyleParseErrorKind;
 
 use crate::style::values;
-use crate::style::values::font::FontSize;
+use crate::style::values::specified::font::FontSize;
 use cssparser::{ParseError, Parser};
 
 // TODO: This may not be needed.

@@ -11,7 +11,10 @@ use html5ever::QualName;
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
-use crate::style::properties::{ContextualPropertyDeclaration, ContextualPropertyDeclarations};
+use crate::style::properties::{
+    ContextualPropertyDeclaration, ContextualPropertyDeclarations, PropertyDeclaration,
+};
+use crate::style::values::computed;
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -90,9 +93,14 @@ impl DocumentData {
 ///
 /// Each node holds a strong reference to its first child and next sibling (if any),
 /// but only a weak reference to its last child, previous sibling, and parent.
-/// This is to avoid strong reference cycles, which would cause memory leaks.
+/// This is to avoid strong reference cycles, which would cause memory leaks.  These weak references
+/// are a convenience, allowing an easy way to access these other nodes without unnecessarily keeping
+/// them alive.
 ///
-/// As a result, a single `NodeRef` is sufficient to keep alive a node
+/// For more exploration on the topic of weak vs. strong references, read this JavaScript
+/// proposal for WeakRefs at a language level.  https://github.com/tc39/proposal-weakrefs#weak-references
+///
+/// A single `NodeRef` is sufficient to keep alive a node
 /// and nodes that are after it in tree order
 /// (its descendants, its following siblings, and their descendants)
 /// but not other nodes in a tree.
@@ -130,9 +138,18 @@ pub struct Node {
     first_child: Cell<Option<Rc<Node>>>,
     last_child: Cell<Option<Weak<Node>>>,
     data: NodeData,
-    // TODO: Might need a better name.  Maybe make this an enum state machine, allowing representation from
-    // declared -> cascaded -> defaulting -> computed, etc etc
-    property_decls: RefCell<ContextualPropertyDeclarations>,
+    /// Property declarations with sufficient context (e.g. origin, specificity, importance) to
+    /// perform a cascade, getting us through step 2 of the value stages algorithm.
+    /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages
+    contextual_decls: RefCell<ContextualPropertyDeclarations>,
+    /// The result of step 3 and 4 of the CSS value processing stages.  This will be `None` if the
+    /// node has not yet calculated its computed values.
+    computed_decls: RefCell<Option<ComputedValues>>,
+}
+
+pub struct ComputedValues {
+    display: computed::Display,
+    font_size: computed::FontSize,
 }
 
 impl fmt::Debug for Node {
@@ -141,7 +158,7 @@ impl fmt::Debug for Node {
         write!(
             f,
             "{:?} @ {:?}, rules: {:?}",
-            self.data, self as *const Node, self.property_decls
+            self.data, self as *const Node, self.contextual_decls
         )
     }
 }
@@ -219,7 +236,8 @@ impl NodeRef {
             previous_sibling: Cell::new(None),
             next_sibling: Cell::new(None),
             data,
-            property_decls: RefCell::new(ContextualPropertyDeclarations::new()),
+            contextual_decls: RefCell::new(ContextualPropertyDeclarations::new()),
+            computed_decls: RefCell::new(None),
         }))
     }
 
@@ -307,21 +325,21 @@ impl Node {
         &self.data
     }
 
-    /// Return a reference to this node’s list of property declarations.
+    /// Return a reference to this node’s list of contextual property declarations.
     #[inline]
-    pub fn property_decls(&self) -> Ref<ContextualPropertyDeclarations> {
-        self.property_decls.borrow()
+    pub fn contextual_decls(&self) -> Ref<ContextualPropertyDeclarations> {
+        self.contextual_decls.borrow()
     }
 
-    /// Return a mutable reference to this node’s list of property declarations.
+    /// Return a mutable reference to this node’s list of contextual property declarations.
     #[inline]
-    pub fn property_decls_mut(&self) -> RefMut<ContextualPropertyDeclarations> {
-        self.property_decls.borrow_mut()
+    pub fn contextual_decls_mut(&self) -> RefMut<ContextualPropertyDeclarations> {
+        self.contextual_decls.borrow_mut()
     }
 
     #[inline]
     pub fn add_decl(&self, new_decl: ContextualPropertyDeclaration) {
-        &self.property_decls.borrow_mut().add(new_decl);
+        &self.contextual_decls.borrow_mut().add(new_decl);
     }
 
     /// If this node is an element, return a reference to element-specific data.

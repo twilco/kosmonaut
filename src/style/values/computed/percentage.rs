@@ -2,6 +2,8 @@
 Kosmonaut matches Servo's license, MPL 2.0: https://mozilla.org/MPL/2.0/ */
 
 //! Computed percentages.
+//! TODO: We don't yet have a specified::Percentage.  As far as I can tell, specified::Percentages
+//! deal with calc expressions, which we don't yet support.
 
 use crate::style::values::CSSFloat;
 

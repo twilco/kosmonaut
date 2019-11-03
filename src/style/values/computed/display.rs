@@ -36,3 +36,10 @@ pub enum Display {
     Grid,
     InlineGrid,
 }
+
+impl Display {
+    /// https://www.w3.org/TR/2019/CR-css-display-3-20190711/#property-index
+    pub fn initial_value() -> Self {
+        Display::Inline
+    }
+}

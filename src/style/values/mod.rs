@@ -1,11 +1,5 @@
-pub mod display;
-pub mod font;
-pub mod length;
-pub mod percentage;
-
-pub use display::Display;
-pub use font::FontSize;
-pub use percentage::Percentage;
+pub mod computed;
+pub mod specified;
 
 /// A CSS float value.
 pub type CSSFloat = f32;

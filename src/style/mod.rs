@@ -8,6 +8,7 @@ use crate::style::properties::id::LonghandId;
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
+use std::borrow::Borrow;
 use strum::IntoEnumIterator;
 
 #[macro_use]
@@ -83,9 +84,9 @@ pub fn apply_styles(
 
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
-        node.property_decls_mut().cascade_sort();
+        node.contextual_decls_mut().cascade_sort();
         //        LonghandId::iter().for_each(|longhand| {
-        //            let prop_decl = match node.property_decls().get_by_longhand(longhand) {
+        //            let prop_decl = match node.contextual_decls().get_by_longhand(longhand) {
         //                Some(contextual_decl) => contextual_decl.inner_decl,
         //                None => {
         //                    // TODO: default for longhand
@@ -93,15 +94,6 @@ pub fn cascade(start_node: &NodeRef) {
         //            };
         //        });
     });
-}
-
-// https://www.w3schools.com/CSSref/pr_class_display.asp
-pub enum Display {
-    None,
-    Inline,
-    Block,
-    InlineBlock,
-    ListItem,
 }
 
 // TODO: Servo supports many different types of rules, but we won't support those yet.  https://github.com/servo/servo/blob/d2856ce8aeca11e543bc4d9f869400d73451374e/components/style/stylesheets/mod.rs#L236

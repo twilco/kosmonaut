@@ -10,8 +10,8 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
-use crate::style::values::length::LengthPercentage;
-use crate::style::values::FontSize;
+use crate::style::values::computed::length::LengthPercentage;
+use crate::style::values::specified::FontSize;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
 use std::mem::discriminant;
@@ -176,11 +176,13 @@ impl PropertyDeclaration {
 #[repr(u16)]
 pub enum PropertyDeclaration {
     // Property(value)
-    Display(crate::style::values::Display),
-    FontSize(crate::style::values::FontSize),
+    Display(crate::style::values::computed::Display),
+    FontSize(crate::style::values::specified::FontSize),
     // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-    MarginLeft(crate::style::values::length::LengthPercentage),
+    MarginLeft(crate::style::values::computed::length::LengthPercentage),
 }
+
+pub struct ComputedPropertyDeclarations {}
 
 /// A property declaration with contextual information, such as its importance, specificity,
 /// origin, and source location, all of which likely deriving from its parent style rule.
@@ -433,10 +435,11 @@ impl Importance {
 mod tests {
     use crate::style::properties::PropertyDeclaration;
     use crate::style::test_utils::{display_by_type, font_size_px, font_size_px_or_panic};
-    use crate::style::values::length::*;
+    use crate::style::values::computed::length::*;
 
     use super::*;
-    use crate::style::values::Display;
+    use crate::style::values::computed::length::{AbsoluteLength, NoCalcLength};
+    use crate::style::values::computed::Display;
     use crate::style::StylesheetOrigin;
     use std::clone::Clone;
 

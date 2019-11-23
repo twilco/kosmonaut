@@ -3,11 +3,10 @@ use crate::dom::traits::TendrilSink;
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
 use crate::style::select::Specificity;
-use crate::style::values;
-use crate::style::values::computed::length::{AbsoluteLength, LengthPercentage, NoCalcLength};
 use crate::style::values::computed::Display;
-use crate::style::values::specified::FontSize;
+use crate::style::values::specified::{FontSize, NoCalcLength};
 use crate::style::CssOrigin;
+use crate::style::values::specified::length::{LengthPercentage, AbsoluteLength};
 
 pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
     match prop_decl {

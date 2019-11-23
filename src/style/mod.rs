@@ -5,11 +5,12 @@ use selectors::parser::SelectorParseErrorKind;
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
 use crate::style::properties::id::LonghandId;
-use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
+use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclaration};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use std::borrow::Borrow;
 use strum::IntoEnumIterator;
+use crate::style::values::computed::{ToComputedValue, ComputeContext};
+use crate::style::values::computed::{ComputedValuesBuilder};
 
 #[macro_use]
 mod macros;
@@ -85,14 +86,29 @@ pub fn apply_styles(
 pub fn cascade(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         node.contextual_decls_mut().cascade_sort();
-        //        LonghandId::iter().for_each(|longhand| {
-        //            let prop_decl = match node.contextual_decls().get_by_longhand(longhand) {
-        //                Some(contextual_decl) => contextual_decl.inner_decl,
-        //                None => {
-        //                    // TODO: default for longhand
-        //                }
-        //            };
-        //        });
+        // TODO: Build context with parent's computed values
+        let mut cv_builder = ComputedValuesBuilder::default();
+        LonghandId::iter().for_each(|longhand: LonghandId| {
+            match node.contextual_decls().get_by_longhand(longhand) {
+                Some(contextual_decl) => {
+                    match &contextual_decl.inner_decl {
+                        PropertyDeclaration::Display(display) => {
+                            cv_builder.display(display.clone());
+                        }
+                        PropertyDeclaration::FontSize(font_size) => {
+                            cv_builder.font_size(font_size.to_computed_value(&context));
+                        }
+//                        PropertyDeclaration::MarginLeft(lp) => {
+//                            cv_builder
+//                        }
+                    }
+                },
+                None => {
+                    longhand.value_default(&mut cv_builder, &context);
+                }
+            };
+        });
+        *node.computed_values_mut() = Some(dbg!(cv_builder.build()).expect("couldn't build computed values"));
     });
 }
 

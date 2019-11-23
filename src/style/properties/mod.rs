@@ -10,7 +10,6 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
-use crate::style::values::computed::length::LengthPercentage;
 use crate::style::values::specified::FontSize;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -158,12 +157,12 @@ impl PropertyDeclaration {
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
                 }
-                LonghandId::MarginLeft => {
-                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
-                        input,
-                    )?))
-                }
+//                LonghandId::MarginLeft => {
+//                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+//                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
+//                        input,
+//                    )?))
+//                }
                 _ => {}
             },
             PropertyId::Shorthand(_short_id) => {}
@@ -179,7 +178,7 @@ pub enum PropertyDeclaration {
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-    MarginLeft(crate::style::values::computed::length::LengthPercentage),
+//    MarginLeft(crate::style::values::specified::length::LengthPercentage),
 }
 
 pub struct ComputedPropertyDeclarations {}
@@ -438,10 +437,11 @@ mod tests {
     use crate::style::values::computed::length::*;
 
     use super::*;
-    use crate::style::values::computed::length::{AbsoluteLength, NoCalcLength};
+    use crate::style::values::computed::length::AbsoluteLength;
     use crate::style::values::computed::Display;
     use crate::style::StylesheetOrigin;
     use std::clone::Clone;
+    use crate::style::values::specified::NoCalcLength;
 
     #[test]
     fn decl_cmp_specificity() {

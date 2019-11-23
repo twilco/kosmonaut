@@ -1,18 +1,19 @@
-use crate::style::values::computed::length::LengthPercentage;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
+
+use crate::style::values::specified::length::LengthPercentage;
 
 #[derive(Clone, Debug, PartialEq)]
 /// A specified font-size value
 pub enum FontSize {
     /// A keyword size, e.g. medium
     Keyword(KeywordSize),
-    /// font-size: larger
-    Larger,
+    // font-size: larger
+    // Larger,
     /// A length; e.g. 10px.
     Length(LengthPercentage),
-    /// font-size: smaller
-    Smaller,
+    // font-size: smaller
+    // Smaller,
 }
 
 /// CSS font keywords
@@ -53,13 +54,9 @@ impl FontSize {
         if let Ok(lp) = input.try_parse(|i| LengthPercentage::parse(i)) {
             return Ok(FontSize::Length(lp));
         }
-        if let Ok(kws) = input.try_parse(|i| KeywordSize::parse(i)) {
-            return Ok(FontSize::Keyword(kws));
-        }
-
-        try_match_ident_ignore_ascii_case! { input,
-            "smaller" => Ok(FontSize::Smaller),
-            "larger" => Ok(FontSize::Larger),
+        match input.try_parse(|i| KeywordSize::parse(i)) {
+            Ok(kws) => Ok(FontSize::Keyword(kws)),
+            Err(parse_err) => Err(parse_err)
         }
     }
 

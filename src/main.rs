@@ -8,6 +8,8 @@ extern crate html5ever;
 extern crate matches;
 #[macro_use]
 extern crate strum_macros;
+#[macro_use]
+extern crate derive_builder;
 
 use std::fs::File;
 
@@ -17,7 +19,7 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
-use crate::dom::tree::debug_recursive;
+use crate::dom::tree::{debug_recursive};
 use crate::style::apply_styles;
 
 pub mod dom;

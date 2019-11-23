@@ -1,4 +1,6 @@
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
+use crate::style::values::computed::{ComputeContext, ComputedValuesBuilder, ValueDefault};
+use crate::style::values::{specified, computed};
 
 /// Representation of a CSS property, that is, either a longhand, a
 /// shorthand, or a custom property.
@@ -20,23 +22,23 @@ impl PropertyId {
         let id = match prop_name {
             // Longhands
             "display" => PropertyId::Longhand(LonghandId::Display),
-            "float" => PropertyId::Longhand(LonghandId::Float),
-            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
-            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
-            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
-            "color" => PropertyId::Longhand(LonghandId::Color),
+//            "float" => PropertyId::Longhand(LonghandId::Float),
+//            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
+//            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
+//            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
+//            "color" => PropertyId::Longhand(LonghandId::Color),
             "font-size" => PropertyId::Longhand(LonghandId::FontSize),
-            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
-            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
-            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
-            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
-            "height" => PropertyId::Longhand(LonghandId::Height),
-            "width" => PropertyId::Longhand(LonghandId::Width),
-            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
-            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
-            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
-            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
-            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
+//            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
+//            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
+//            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
+//            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
+//            "height" => PropertyId::Longhand(LonghandId::Height),
+//            "width" => PropertyId::Longhand(LonghandId::Width),
+//            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
+//            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
+//            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
+//            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
+//            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
             // Shorthands
             "background" => PropertyId::Shorthand(ShorthandId::Background),
             "border-width" => PropertyId::Shorthand(ShorthandId::BorderWidth),
@@ -90,16 +92,16 @@ pub enum LonghandId {
     //    FlexDirection = 14,
     //    /// flex-wrap
     //    FlexWrap = 15,
-    /// float
-    Float = 16,
+    //    /// float
+    //    Float = 16,
     //    /// font-stretch
     //    FontStretch = 17,
-    /// font-style
-    FontStyle = 18,
+    //    /// font-style
+    //    FontStyle = 18,
     //    /// font-variant-caps
     //    FontVariantCaps = 19,
-    /// font-weight
-    FontWeight = 20,
+    //    /// font-weight
+    //    FontWeight = 20,
     //    /// image-rendering
     //    ImageRendering = 21,
     //    /// justify-content
@@ -138,8 +140,8 @@ pub enum LonghandId {
     //    TransformStyle = 38,
     //    /// unicode-bidi
     //    UnicodeBidi = 39,
-    /// visibility
-    Visibility = 40,
+    //    /// visibility
+    //    Visibility = 40,
     //    /// white-space
     //    WhiteSpace = 41,
     //    /// word-break
@@ -222,8 +224,8 @@ pub enum LonghandId {
     //    BoxShadow = 80,
     //    /// clip
     //    Clip = 81,
-    /// color
-    Color = 82,
+    //    /// color
+    //    Color = 82,
     //    /// column-gap
     //    ColumnGap = 83,
     //    /// column-width
@@ -314,22 +316,22 @@ pub enum LonghandId {
     //    PaddingBlockEnd = 126,
     //    /// padding-block-start
     //    PaddingBlockStart = 127,
-    /// padding-bottom
-    PaddingBottom = 128,
+    //    /// padding-bottom
+    //    PaddingBottom = 128,
     //    /// padding-inline-end
     //    PaddingInlineEnd = 129,
     //    /// padding-inline-start
     //    PaddingInlineStart = 130,
-    /// padding-left
-    PaddingLeft = 131,
-    /// padding-right
-    PaddingRight = 132,
-    /// padding-top
-    PaddingTop = 133,
+    //    /// padding-left
+    //    PaddingLeft = 131,
+    //    /// padding-right
+    //    PaddingRight = 132,
+    //    /// padding-top
+    //    PaddingTop = 133,
     //    /// block-size
     //    BlockSize = 134,
-    /// height
-    Height = 135,
+    //    /// height
+    //    Height = 135,
     //    /// inline-size
     //    InlineSize = 136,
     //    /// min-block-size
@@ -340,8 +342,8 @@ pub enum LonghandId {
     //    MinInlineSize = 139,
     //    /// min-width
     //    MinWidth = 140,
-    /// width
-    Width = 141,
+    //    /// width
+    //    Width = 141,
     //    /// border-block-end-width
     //    BorderBlockEndWidth = 142,
     //    /// border-block-start-width
@@ -360,8 +362,8 @@ pub enum LonghandId {
     //    BorderTopWidth = 149,
     //    /// outline-width
     //    OutlineWidth = 150,
-    /// background-color
-    BackgroundColor = 151,
+    //    /// background-color
+    //    BackgroundColor = 151,
     //    /// border-block-end-color
     //    BorderBlockEndColor = 152,
     //    /// border-block-start-color
@@ -396,22 +398,36 @@ pub enum LonghandId {
     //    MarginBlockEnd = 167,
     //    /// margin-block-start
     //    MarginBlockStart = 168,
-    /// margin-bottom
-    MarginBottom = 169,
+    //    /// margin-bottom
+    //    MarginBottom = 169,
     //    /// margin-inline-end
     //    MarginInlineEnd = 170,
     //    /// margin-inline-start
     //    MarginInlineStart = 171,
-    /// margin-left
-    MarginLeft = 172,
-    /// margin-right
-    MarginRight = 173,
-    /// margin-top
-    MarginTop = 174,
+    //    /// margin-left
+    //    MarginLeft = 172,
+    //    /// margin-right
+    //    MarginRight = 173,
+    //    /// margin-top
+    //    MarginTop = 174,
     //    /// right
     //    Right = 175,
     //    /// top
     //    Top = 176,
+}
+
+impl LonghandId {
+    pub fn value_default(&self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
+        match self {
+            LonghandId::Display => {
+                cv_builder.display(computed::Display::value_default(ctx));
+            },
+            LonghandId::FontSize => {
+                cv_builder.font_size(specified::FontSize::value_default(ctx));
+            },
+            _ => unimplemented!("{}", format!("value default by longhand for id: {:?}", self))
+        }
+    }
 }
 
 impl From<&PropertyDeclaration> for LonghandId {
@@ -419,7 +435,7 @@ impl From<&PropertyDeclaration> for LonghandId {
         match prop_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+//            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
         }
     }
 }
@@ -435,7 +451,7 @@ impl From<&ContextualPropertyDeclaration> for LonghandId {
         match contextual_decl.inner_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+//            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
         }
     }
 }

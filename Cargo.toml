@@ -5,6 +5,7 @@ authors = ["Tyler Wilcock <tyler.l.wilcock@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+app_units = "0.7.1"
 cssparser = "0.25.8"
 glib = "0.8"
 html5ever = "0.24.0"
@@ -15,6 +16,7 @@ smallbitvec = "2.3.0"
 strum = "0.16.0"
 strum_macros = "0.16.0"
 tempdir = "0.3.7"
+derive_builder = "0.8.1"
 
 [dependencies.gtk]
 version = "0.7"

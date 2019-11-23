@@ -1,3 +1,5 @@
+use crate::style::values::computed::{ValueDefault, ComputeContext};
+
 /// The specified value of a CSS property is the value it receives from the document's style sheet.
 /// The specified value for a given property is determined according to the following rules:
 ///
@@ -41,5 +43,13 @@ impl Display {
     /// https://www.w3.org/TR/2019/CR-css-display-3-20190711/#property-index
     pub fn initial_value() -> Self {
         Display::Inline
+    }
+}
+
+impl ValueDefault for Display {
+    type ComputedValue = Display;
+
+    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+        Display::initial_value()
     }
 }

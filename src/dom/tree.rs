@@ -12,9 +12,9 @@ use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
 use crate::style::properties::{
-    ContextualPropertyDeclaration, ContextualPropertyDeclarations, PropertyDeclaration,
+    ContextualPropertyDeclaration, ContextualPropertyDeclarations
 };
-use crate::style::values::computed;
+use crate::style::values::computed::ComputedValues;
 
 /// The type of DOM node.
 /// https://html.spec.whatwg.org/#a-quick-introduction-to-html
@@ -144,12 +144,7 @@ pub struct Node {
     contextual_decls: RefCell<ContextualPropertyDeclarations>,
     /// The result of step 3 and 4 of the CSS value processing stages.  This will be `None` if the
     /// node has not yet calculated its computed values.
-    computed_decls: RefCell<Option<ComputedValues>>,
-}
-
-pub struct ComputedValues {
-    display: computed::Display,
-    font_size: computed::FontSize,
+    computed_values: RefCell<Option<ComputedValues>>,
 }
 
 impl fmt::Debug for Node {
@@ -237,7 +232,7 @@ impl NodeRef {
             next_sibling: Cell::new(None),
             data,
             contextual_decls: RefCell::new(ContextualPropertyDeclarations::new()),
-            computed_decls: RefCell::new(None),
+            computed_values: RefCell::new(None),
         }))
     }
 
@@ -335,6 +330,18 @@ impl Node {
     #[inline]
     pub fn contextual_decls_mut(&self) -> RefMut<ContextualPropertyDeclarations> {
         self.contextual_decls.borrow_mut()
+    }
+
+    /// Return a reference to this node’s computed values.
+    #[inline]
+    pub fn computed_values(&self) -> Ref<Option<ComputedValues>> {
+        self.computed_values.borrow()
+    }
+
+    /// Return a mutable reference to this node’s computed values.
+    #[inline]
+    pub fn computed_values_mut(&self) -> RefMut<Option<ComputedValues>> {
+        self.computed_values.borrow_mut()
     }
 
     #[inline]

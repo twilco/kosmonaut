@@ -126,7 +126,7 @@ impl CSSPixelLength {
 impl ToComputedValue for specified::AbsoluteLength {
     type ComputedValue = CSSPixelLength;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn to_computed_value(&self, _context: &ComputeContext) -> Self::ComputedValue {
         CSSPixelLength(self.to_px())
     }
 }

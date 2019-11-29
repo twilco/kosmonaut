@@ -9,8 +9,10 @@ use crate::style::properties::{parse_property_declaration_list, PropertyDeclarat
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
 use strum::IntoEnumIterator;
-use crate::style::values::computed::{ToComputedValue, ComputeContext};
+use crate::style::values::computed::{ToComputedValue, ComputeContext, ComputedValues, FontSize};
 use crate::style::values::computed::{ComputedValuesBuilder};
+use crate::style::values::computed::length::CSSPixelLength;
+use crate::style::values::computed;
 
 #[macro_use]
 mod macros;
@@ -88,6 +90,27 @@ pub fn cascade(start_node: &NodeRef) {
         node.contextual_decls_mut().cascade_sort();
         // TODO: Build context with parent's computed values
         let mut cv_builder = ComputedValuesBuilder::default();
+        let parent = node.parent();
+        let parent_computed_values = parent.map_or(None, |p| {
+            // TODO: This _could_ be an expensive clone when we actually support all CSS properties.
+            p.computed_values().clone()
+        });
+//        let parent_computed_values = match parent {
+//            Some(p) => p.computed_values().clone(),
+//            None => {
+//                Some(ComputedValues {
+//                    display: computed::Display::Inline,
+//                    font_size: FontSize {
+//                        size: CSSPixelLength::new(32.0),
+//                        keyword_size: None
+//                    }
+//                })
+//            }
+//        };
+        let pcvs_ref = parent_computed_values.as_ref();
+        let context = ComputeContext {
+            parent_computed_values: pcvs_ref
+        };
         LonghandId::iter().for_each(|longhand: LonghandId| {
             match node.contextual_decls().get_by_longhand(longhand) {
                 Some(contextual_decl) => {

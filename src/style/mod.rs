@@ -66,31 +66,23 @@ pub fn apply_styles(
         }
     });
 
-    //    debug_recursive(&dom);
-
-    // 2. Cascading yields the cascaded value. There is at most one cascaded value per property per element.
-    // https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
-    cascade(&dom);
+    cascade_and_compute(&dom);
     debug_recursive(&dom);
 
-    // TODO: Add two new properties — one inherited, one not
-    // https://developer.mozilla.org/en-US/docs/Web/CSS/specified_value
-    //
-    // The specified value of a CSS property is the value it receives from the document's style sheet. The specified value for a given property is determined according to the following rules:
-    //     If the document's style sheet explicitly specifies a value for the property, the given value will be used (the cascaded value).
-    //     If the document's style sheet doesn't specify a value but it is an inherited property, the computed value will be taken from the parent element.
-    //     If none of the above pertain, the element's initial value will be used.
-
-    // 3. Defaulting yields the specified value. Every element has exactly one specified value per property.
-    // 4. Resolving value dependencies yields the computed value. Every element has exactly one computed value per property.
     // 5. Formatting the document yields the used value. An element only has a used value for a given property if that property applies to the element.
     // 6. Finally, the used value is transformed to the actual value based on constraints of the display environment. As with the used value, there may or may not be an actual value for a given property on an element.
 }
 
-pub fn cascade(start_node: &NodeRef) {
+/// Performs steps 2-4 of https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages.
+///
+/// Specifically, this is:
+///
+/// 2) Cascading — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
+/// 3) Defaulting to specified values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#specified-value
+/// 4) Resolving specified values to computed values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#computed
+pub fn cascade_and_compute(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         node.contextual_decls_mut().cascade_sort();
-        // TODO: Build context with parent's computed values
         let mut cv_builder = ComputedValuesBuilder::default();
         let parent = node.parent();
         // If this is the root node (aka there is no parent to inherit properties from), just default all properties.
@@ -98,21 +90,10 @@ pub fn cascade(start_node: &NodeRef) {
             // TODO: This _could_ be an expensive clone when we actually support all CSS properties.
             p.computed_values().clone()
         });
-        //        let parent_computed_values = match parent {
-        //            Some(p) => p.computed_values().clone(),
-        //            None => {
-        //                Some(ComputedValues {
-        //                    display: computed::Display::Inline,
-        //                    font_size: FontSize {
-        //                        size: CSSPixelLength::new(32.0),
-        //                        keyword_size: None
-        //                    }
-        //                })
-        //            }
-        //        };
-        let pcvs_ref = parent_computed_values_opt.unwrap_or(ComputedValues::default());
+        let parent_computed_values =
+            parent_computed_values_opt.unwrap_or(ComputedValues::default());
         let context = ComputeContext {
-            parent_computed_values: &pcvs_ref,
+            parent_computed_values: &parent_computed_values,
         };
         LonghandId::iter().for_each(|longhand: LonghandId| {
             match node.contextual_decls().get_by_longhand(longhand) {
@@ -134,7 +115,9 @@ pub fn cascade(start_node: &NodeRef) {
             };
         });
         *node.computed_values_mut() =
-            Some(dbg!(cv_builder.build()).expect("couldn't build computed values"));
+            Some(dbg!(cv_builder.build()).expect(
+                "couldn't build computed values - maybe a field wasn't given to the builder?",
+            ));
     });
 }
 

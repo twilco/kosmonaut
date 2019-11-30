@@ -1,6 +1,6 @@
 use crate::style::values::{computed, CSSFloat};
-use cssparser::{Token, Parser, ParseError};
 use crate::style::StyleParseErrorKind;
+use cssparser::{ParseError, Parser, Token};
 
 /// Number of app units per pixel
 pub const AU_PER_PX: CSSFloat = 60.;
@@ -51,13 +51,13 @@ pub enum AbsoluteLength {
 impl AbsoluteLength {
     fn is_zero(&self) -> bool {
         match *self {
-            AbsoluteLength::Px(v) |
-            AbsoluteLength::In(v) |
-            AbsoluteLength::Cm(v) |
-            AbsoluteLength::Mm(v) |
-            AbsoluteLength::Q(v) |
-            AbsoluteLength::Pt(v) |
-            AbsoluteLength::Pc(v) => v == 0.,
+            AbsoluteLength::Px(v)
+            | AbsoluteLength::In(v)
+            | AbsoluteLength::Cm(v)
+            | AbsoluteLength::Mm(v)
+            | AbsoluteLength::Q(v)
+            | AbsoluteLength::Pt(v)
+            | AbsoluteLength::Pc(v) => v == 0.,
         }
     }
 
@@ -124,10 +124,11 @@ impl LengthPercentage {
                     .map_err(|()| location.new_unexpected_token_error(token.clone()));
             }
             Token::Percentage { unit_value, .. } => {
-                return Ok(LengthPercentage::Percentage(computed::Percentage(unit_value)));
+                return Ok(LengthPercentage::Percentage(computed::Percentage(
+                    unit_value,
+                )));
             }
             _ => return Err(location.new_unexpected_token_error(token.clone())),
         }
     }
 }
-

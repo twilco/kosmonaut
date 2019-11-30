@@ -5,14 +5,16 @@ use selectors::parser::SelectorParseErrorKind;
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
 use crate::style::properties::id::LonghandId;
-use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock, PropertyDeclaration};
+use crate::style::properties::{
+    parse_property_declaration_list, PropertyDeclaration, PropertyDeclarationBlock,
+};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use strum::IntoEnumIterator;
-use crate::style::values::computed::{ToComputedValue, ComputeContext, ComputedValues, FontSize};
-use crate::style::values::computed::{ComputedValuesBuilder};
-use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed;
+use crate::style::values::computed::length::CSSPixelLength;
+use crate::style::values::computed::ComputedValuesBuilder;
+use crate::style::values::computed::{ComputeContext, ComputedValues, FontSize, ToComputedValue};
+use strum::IntoEnumIterator;
 
 #[macro_use]
 mod macros;
@@ -91,25 +93,26 @@ pub fn cascade(start_node: &NodeRef) {
         // TODO: Build context with parent's computed values
         let mut cv_builder = ComputedValuesBuilder::default();
         let parent = node.parent();
-        let parent_computed_values = parent.map_or(None, |p| {
+        // If this is the root node (aka there is no parent to inherit properties from), just default all properties.
+        let parent_computed_values_opt = parent.map_or(None, |p| {
             // TODO: This _could_ be an expensive clone when we actually support all CSS properties.
             p.computed_values().clone()
         });
-//        let parent_computed_values = match parent {
-//            Some(p) => p.computed_values().clone(),
-//            None => {
-//                Some(ComputedValues {
-//                    display: computed::Display::Inline,
-//                    font_size: FontSize {
-//                        size: CSSPixelLength::new(32.0),
-//                        keyword_size: None
-//                    }
-//                })
-//            }
-//        };
-        let pcvs_ref = parent_computed_values.as_ref();
+        //        let parent_computed_values = match parent {
+        //            Some(p) => p.computed_values().clone(),
+        //            None => {
+        //                Some(ComputedValues {
+        //                    display: computed::Display::Inline,
+        //                    font_size: FontSize {
+        //                        size: CSSPixelLength::new(32.0),
+        //                        keyword_size: None
+        //                    }
+        //                })
+        //            }
+        //        };
+        let pcvs_ref = parent_computed_values_opt.unwrap_or(ComputedValues::default());
         let context = ComputeContext {
-            parent_computed_values: pcvs_ref
+            parent_computed_values: &pcvs_ref,
         };
         LonghandId::iter().for_each(|longhand: LonghandId| {
             match node.contextual_decls().get_by_longhand(longhand) {
@@ -120,18 +123,18 @@ pub fn cascade(start_node: &NodeRef) {
                         }
                         PropertyDeclaration::FontSize(font_size) => {
                             cv_builder.font_size(font_size.to_computed_value(&context));
-                        }
-//                        PropertyDeclaration::MarginLeft(lp) => {
-//                            cv_builder
-//                        }
+                        } //                        PropertyDeclaration::MarginLeft(lp) => {
+                          //                            cv_builder
+                          //                        }
                     }
-                },
+                }
                 None => {
                     longhand.value_default(&mut cv_builder, &context);
                 }
             };
         });
-        *node.computed_values_mut() = Some(dbg!(cv_builder.build()).expect("couldn't build computed values"));
+        *node.computed_values_mut() =
+            Some(dbg!(cv_builder.build()).expect("couldn't build computed values"));
     });
 }
 

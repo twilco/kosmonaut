@@ -3,6 +3,9 @@ use cssparser::{ParseError, Parser};
 
 use crate::style::values::specified::length::LengthPercentage;
 
+/// The default font size.
+pub const FONT_MEDIUM_PX: i32 = 16;
+
 #[derive(Clone, Debug, PartialEq)]
 /// A specified font-size value
 pub enum FontSize {
@@ -56,7 +59,7 @@ impl FontSize {
         }
         match input.try_parse(|i| KeywordSize::parse(i)) {
             Ok(kws) => Ok(FontSize::Keyword(kws)),
-            Err(parse_err) => Err(parse_err)
+            Err(parse_err) => Err(parse_err),
         }
     }
 

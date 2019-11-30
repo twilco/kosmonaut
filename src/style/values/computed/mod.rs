@@ -16,18 +16,18 @@ pub use percentage::Percentage;
 pub struct ComputedValues {
     pub display: Display,
     pub font_size: FontSize,
-//    pub margin_left: computed::MarginLeft,
+    //    pub margin_left: computed::MarginLeft,
 }
 
 /// Create a default set of computed values.  Likely most useful for the case in which we're working
 /// with the root node of a DOM, which has no parent to inherit from.
 impl Default for ComputedValues {
-    // TODO: We might eventually need to use the `Default` trait here in case we need `ComputeContext`
+    // TODO: We might eventually need to not use the `Default` trait here in case we need `ComputeContext`
     // to calculate the default computed values.
     fn default() -> Self {
         ComputedValues {
             display: Display::initial_value(),
-            font_size: FontSize::
+            font_size: FontSize::medium(),
         }
     }
 }
@@ -62,8 +62,7 @@ pub trait ValueDefault {
 /// A `ComputeContext` is all the data a specified value could ever need to compute
 /// itself and be transformed to a computed value.
 pub struct ComputeContext<'a> {
-    /// The computed values of the parent for cases where inheritance is necessary.  `None` if
-    /// computing styles for the root node.
-    pub parent_computed_values: Option<&'a ComputedValues>
-    // TODO: Viewport dimensions will be needed
+    /// The computed values of the parent for cases where inheritance is necessary.  If the current
+    /// node has no parent (it is the root node), this is `ComputedValues::default()`.
+    pub parent_computed_values: &'a ComputedValues, // TODO: Viewport dimensions will be needed
 }

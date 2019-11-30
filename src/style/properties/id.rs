@@ -1,6 +1,6 @@
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
 use crate::style::values::computed::{ComputeContext, ComputedValuesBuilder, ValueDefault};
-use crate::style::values::{specified, computed};
+use crate::style::values::{computed, specified};
 
 /// Representation of a CSS property, that is, either a longhand, a
 /// shorthand, or a custom property.
@@ -22,23 +22,23 @@ impl PropertyId {
         let id = match prop_name {
             // Longhands
             "display" => PropertyId::Longhand(LonghandId::Display),
-//            "float" => PropertyId::Longhand(LonghandId::Float),
-//            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
-//            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
-//            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
-//            "color" => PropertyId::Longhand(LonghandId::Color),
+            //            "float" => PropertyId::Longhand(LonghandId::Float),
+            //            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
+            //            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
+            //            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
+            //            "color" => PropertyId::Longhand(LonghandId::Color),
             "font-size" => PropertyId::Longhand(LonghandId::FontSize),
-//            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
-//            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
-//            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
-//            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
-//            "height" => PropertyId::Longhand(LonghandId::Height),
-//            "width" => PropertyId::Longhand(LonghandId::Width),
-//            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
-//            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
-//            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
-//            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
-//            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
+            //            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
+            //            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
+            //            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
+            //            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
+            //            "height" => PropertyId::Longhand(LonghandId::Height),
+            //            "width" => PropertyId::Longhand(LonghandId::Width),
+            //            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
+            //            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
+            //            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
+            //            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
+            //            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
             // Shorthands
             "background" => PropertyId::Shorthand(ShorthandId::Background),
             "border-width" => PropertyId::Shorthand(ShorthandId::BorderWidth),
@@ -421,11 +421,14 @@ impl LonghandId {
         match self {
             LonghandId::Display => {
                 cv_builder.display(computed::Display::value_default(ctx));
-            },
+            }
             LonghandId::FontSize => {
                 cv_builder.font_size(specified::FontSize::value_default(ctx));
-            },
-            _ => unimplemented!("{}", format!("value default by longhand for id: {:?}", self))
+            }
+            _ => unimplemented!(
+                "{}",
+                format!("value default by longhand for id: {:?}", self)
+            ),
         }
     }
 }
@@ -435,7 +438,7 @@ impl From<&PropertyDeclaration> for LonghandId {
         match prop_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-//            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+            //            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
         }
     }
 }
@@ -451,7 +454,7 @@ impl From<&ContextualPropertyDeclaration> for LonghandId {
         match contextual_decl.inner_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-//            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+            //            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
         }
     }
 }

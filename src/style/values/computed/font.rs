@@ -1,9 +1,9 @@
 use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::specified::font::KeywordSize;
-use crate::style::values::computed::{ToComputedValue, ComputeContext, ValueDefault};
+use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
 use crate::style::values::specified;
-use app_units::Au;
+use crate::style::values::specified::font::KeywordSize;
 use crate::style::values::specified::{LengthPercentage, NoCalcLength};
+use app_units::Au;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 /// The computed value of font-size
@@ -16,12 +16,22 @@ pub struct FontSize {
     pub keyword_size: Option<KeywordSize>,
 }
 
+impl FontSize {
+    #[inline]
+    /// Get default value of font size.
+    pub fn medium() -> Self {
+        Self {
+            size: Au::from_px(specified::FONT_MEDIUM_PX).into(),
+            keyword_size: Some(KeywordSize::Medium),
+        }
+    }
+}
+
 impl ValueDefault for specified::FontSize {
     type ComputedValue = FontSize;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        let parent_cvs = context.parent_computed_values.as_ref().expect("need parent computed values for font-size default");
-        parent_cvs.font_size.clone()
+        context.parent_computed_values.font_size.clone()
     }
 }
 
@@ -30,24 +40,25 @@ impl ToComputedValue for specified::FontSize {
 
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
         let (size_px, keyword_size) = match self {
-            specified::FontSize::Keyword(keyword_size) => {
-                (keyword_size.to_computed_value(&context), Some(keyword_size.clone()))
-            },
-            specified::FontSize::Length(LengthPercentage::Length(NoCalcLength::Absolute(abs_len))) => {
-                (abs_len.to_computed_value(context), None)
-            },
+            specified::FontSize::Keyword(keyword_size) => (
+                keyword_size.to_computed_value(&context),
+                Some(keyword_size.clone()),
+            ),
+            specified::FontSize::Length(LengthPercentage::Length(NoCalcLength::Absolute(
+                abs_len,
+            ))) => (abs_len.to_computed_value(context), None),
             specified::FontSize::Length(specified::LengthPercentage::Percentage(percentage)) => {
-                let parent_font = match &context.parent_computed_values {
-                    Some(parent_computed_values) => { parent_computed_values.font_size.clone() },
-                    None => specified::FontSize::initial_value().to_computed_value(context)
-                };
-                (CSSPixelLength::from(Au::from(parent_font.size).scale_by(percentage.0.clone())), None)
-            },
+                let parent_font = context.parent_computed_values.font_size.clone();
+                (
+                    CSSPixelLength::from(Au::from(parent_font.size).scale_by(percentage.0.clone())),
+                    None,
+                )
+            }
         };
 
         FontSize {
             size: size_px,
-            keyword_size
+            keyword_size,
         }
     }
 }
@@ -71,6 +82,6 @@ impl ToComputedValue for KeywordSize {
             KeywordSize::XXLarge => Au::from_px(FONT_MEDIUM_PX) * 2,
             KeywordSize::XXXLarge => Au::from_px(FONT_MEDIUM_PX) * 3,
         }
-            .into()
+        .into()
     }
 }

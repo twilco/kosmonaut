@@ -1,4 +1,4 @@
-use crate::style::values::computed::{ValueDefault, ComputeContext};
+use crate::style::values::computed::{ComputeContext, ValueDefault};
 
 /// The specified value of a CSS property is the value it receives from the document's style sheet.
 /// The specified value for a given property is determined according to the following rules:

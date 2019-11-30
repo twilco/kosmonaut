@@ -19,7 +19,7 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
-use crate::dom::tree::{debug_recursive};
+use crate::dom::tree::debug_recursive;
 use crate::style::apply_styles;
 
 pub mod dom;

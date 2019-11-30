@@ -157,12 +157,12 @@ impl PropertyDeclaration {
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
                 }
-//                LonghandId::MarginLeft => {
-//                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-//                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
-//                        input,
-//                    )?))
-//                }
+                //                LonghandId::MarginLeft => {
+                //                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+                //                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
+                //                        input,
+                //                    )?))
+                //                }
                 _ => {}
             },
             PropertyId::Shorthand(_short_id) => {}
@@ -178,7 +178,7 @@ pub enum PropertyDeclaration {
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-//    MarginLeft(crate::style::values::specified::length::LengthPercentage),
+    //    MarginLeft(crate::style::values::specified::length::LengthPercentage),
 }
 
 pub struct ComputedPropertyDeclarations {}
@@ -439,9 +439,9 @@ mod tests {
     use super::*;
     use crate::style::values::computed::length::AbsoluteLength;
     use crate::style::values::computed::Display;
+    use crate::style::values::specified::NoCalcLength;
     use crate::style::StylesheetOrigin;
     use std::clone::Clone;
-    use crate::style::values::specified::NoCalcLength;
 
     #[test]
     fn decl_cmp_specificity() {

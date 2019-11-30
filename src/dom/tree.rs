@@ -11,9 +11,7 @@ use html5ever::QualName;
 use crate::dom::attributes::{Attribute, Attributes, ExpandedName};
 use crate::dom::cell_extras::*;
 use crate::dom::iter::NodeIterator;
-use crate::style::properties::{
-    ContextualPropertyDeclaration, ContextualPropertyDeclarations
-};
+use crate::style::properties::{ContextualPropertyDeclaration, ContextualPropertyDeclarations};
 use crate::style::values::computed::ComputedValues;
 
 /// The type of DOM node.

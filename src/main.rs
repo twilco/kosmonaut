@@ -23,7 +23,6 @@ use crate::dom::tree::debug_recursive;
 use crate::style::apply_styles;
 
 pub mod dom;
-pub mod frame;
 #[allow(unused_imports)]
 pub mod layout;
 pub mod style;

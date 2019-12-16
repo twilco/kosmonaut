@@ -28,17 +28,17 @@ impl PropertyId {
             //            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
             //            "color" => PropertyId::Longhand(LonghandId::Color),
             "font-size" => PropertyId::Longhand(LonghandId::FontSize),
-            //            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
-            //            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
-            //            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
-            //            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
+            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
+            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
+            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
+            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
             //            "height" => PropertyId::Longhand(LonghandId::Height),
             //            "width" => PropertyId::Longhand(LonghandId::Width),
             //            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
-            //            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
-            //            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
-            //            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
-            //            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
+            "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
+            "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
+            "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
+            "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
             // Shorthands
             "background" => PropertyId::Shorthand(ShorthandId::Background),
             "border-width" => PropertyId::Shorthand(ShorthandId::BorderWidth),
@@ -316,18 +316,18 @@ pub enum LonghandId {
     //    PaddingBlockEnd = 126,
     //    /// padding-block-start
     //    PaddingBlockStart = 127,
-    //    /// padding-bottom
-    //    PaddingBottom = 128,
-    //    /// padding-inline-end
+    /// padding-bottom
+    PaddingBottom = 128,
+    /// padding-inline-end
     //    PaddingInlineEnd = 129,
     //    /// padding-inline-start
     //    PaddingInlineStart = 130,
     //    /// padding-left
-    //    PaddingLeft = 131,
-    //    /// padding-right
-    //    PaddingRight = 132,
-    //    /// padding-top
-    //    PaddingTop = 133,
+    PaddingLeft = 131,
+    /// padding-right
+    PaddingRight = 132,
+    /// padding-top
+    PaddingTop = 133,
     //    /// block-size
     //    BlockSize = 134,
     //    /// height
@@ -348,18 +348,18 @@ pub enum LonghandId {
     //    BorderBlockEndWidth = 142,
     //    /// border-block-start-width
     //    BorderBlockStartWidth = 143,
-    //    /// border-bottom-width
-    //    BorderBottomWidth = 144,
+    /// border-bottom-width
+    BorderBottomWidth = 144,
     //    /// border-inline-end-width
     //    BorderInlineEndWidth = 145,
     //    /// border-inline-start-width
     //    BorderInlineStartWidth = 146,
     //    /// border-left-width
-    //    BorderLeftWidth = 147,
-    //    /// border-right-width
-    //    BorderRightWidth = 148,
-    //    /// border-top-width
-    //    BorderTopWidth = 149,
+    BorderLeftWidth = 147,
+    /// border-right-width
+    BorderRightWidth = 148,
+    /// border-top-width
+    BorderTopWidth = 149,
     //    /// outline-width
     //    OutlineWidth = 150,
     //    /// background-color
@@ -398,18 +398,18 @@ pub enum LonghandId {
     //    MarginBlockEnd = 167,
     //    /// margin-block-start
     //    MarginBlockStart = 168,
-    //    /// margin-bottom
-    //    MarginBottom = 169,
+    /// margin-bottom
+    MarginBottom = 169,
     //    /// margin-inline-end
     //    MarginInlineEnd = 170,
     //    /// margin-inline-start
     //    MarginInlineStart = 171,
-    //    /// margin-left
-    //    MarginLeft = 172,
-    //    /// margin-right
-    //    MarginRight = 173,
-    //    /// margin-top
-    //    MarginTop = 174,
+    /// margin-left
+    MarginLeft = 172,
+    /// margin-right
+    MarginRight = 173,
+    /// margin-top
+    MarginTop = 174,
     //    /// right
     //    Right = 175,
     //    /// top

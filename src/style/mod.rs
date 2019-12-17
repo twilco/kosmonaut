@@ -10,10 +10,8 @@ use crate::style::properties::{
 };
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use crate::style::values::computed;
-use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::ComputedValuesBuilder;
-use crate::style::values::computed::{ComputeContext, ComputedValues, FontSize, ToComputedValue};
+use crate::style::values::computed::{ComputeContext, ComputedValues, ToComputedValue};
 use strum::IntoEnumIterator;
 
 #[macro_use]
@@ -100,13 +98,36 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
                 Some(contextual_decl) => {
                     match &contextual_decl.inner_decl {
                         PropertyDeclaration::Display(display) => {
+                            // TODO: Should we cloning here, rather than computing the value?
                             cv_builder.display(display.clone());
                         }
                         PropertyDeclaration::FontSize(font_size) => {
                             cv_builder.font_size(font_size.to_computed_value(&context));
-                        } //                        PropertyDeclaration::MarginLeft(lp) => {
-                          //                            cv_builder
-                          //                        }
+                        }
+                        PropertyDeclaration::MarginBottom(margin_bottom) => {
+                            cv_builder.margin_bottom(margin_bottom.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::MarginLeft(margin_left) => {
+                            cv_builder.margin_left(margin_left.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::MarginRight(margin_right) => {
+                            cv_builder.margin_right(margin_right.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::MarginTop(margin_top) => {
+                            cv_builder.margin_top(margin_top.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::PaddingBottom(padding_bottom) => {
+                            cv_builder.padding_bottom(padding_bottom.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::PaddingLeft(padding_left) => {
+                            cv_builder.padding_left(padding_left.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::PaddingRight(padding_right) => {
+                            cv_builder.padding_right(padding_right.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::PaddingTop(padding_top) => {
+                            cv_builder.padding_top(padding_top.to_computed_value(&context));
+                        }
                     }
                 }
                 None => {

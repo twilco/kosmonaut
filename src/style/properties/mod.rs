@@ -10,7 +10,10 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
-use crate::style::values::specified::FontSize;
+use crate::style::values::specified::{
+    FontSize, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
+    PaddingRight, PaddingTop,
+};
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
 use std::mem::discriminant;
@@ -153,16 +156,43 @@ impl PropertyDeclaration {
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
             PropertyId::Longhand(long_id) => match long_id {
-                LonghandId::Display => {}
+                LonghandId::Display => {
+                    // TODO: Implement display parsing
+                    //                    declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
+                }
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
                 }
-                //                LonghandId::MarginLeft => {
-                //                    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-                //                    declarations.push(PropertyDeclaration::MarginLeft(LengthPercentage::parse(
-                //                        input,
-                //                    )?))
-                //                }
+                LonghandId::MarginBottom => {
+                    declarations.push(PropertyDeclaration::MarginBottom(MarginBottom::parse(
+                        input,
+                    )?));
+                }
+                LonghandId::MarginLeft => {
+                    declarations.push(PropertyDeclaration::MarginLeft(MarginLeft::parse(input)?));
+                }
+                LonghandId::MarginRight => {
+                    declarations.push(PropertyDeclaration::MarginRight(MarginRight::parse(input)?));
+                }
+                LonghandId::MarginTop => {
+                    declarations.push(PropertyDeclaration::MarginTop(MarginTop::parse(input)?));
+                }
+                LonghandId::PaddingBottom => {
+                    declarations.push(PropertyDeclaration::PaddingBottom(PaddingBottom::parse(
+                        input,
+                    )?));
+                }
+                LonghandId::PaddingLeft => {
+                    declarations.push(PropertyDeclaration::PaddingLeft(PaddingLeft::parse(input)?));
+                }
+                LonghandId::PaddingRight => {
+                    declarations.push(PropertyDeclaration::PaddingRight(PaddingRight::parse(
+                        input,
+                    )?));
+                }
+                LonghandId::PaddingTop => {
+                    declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
+                }
                 _ => {}
             },
             PropertyId::Shorthand(_short_id) => {}
@@ -177,8 +207,15 @@ pub enum PropertyDeclaration {
     // Property(value)
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
-    // TODO: This should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-    //    MarginLeft(crate::style::values::specified::length::LengthPercentage),
+    // TODO: Margin properties should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+    MarginBottom(crate::style::values::specified::MarginBottom),
+    MarginLeft(crate::style::values::specified::MarginLeft),
+    MarginRight(crate::style::values::specified::MarginRight),
+    MarginTop(crate::style::values::specified::MarginTop),
+    PaddingBottom(crate::style::values::specified::PaddingBottom),
+    PaddingLeft(crate::style::values::specified::PaddingLeft),
+    PaddingRight(crate::style::values::specified::PaddingRight),
+    PaddingTop(crate::style::values::specified::PaddingTop),
 }
 
 pub struct ComputedPropertyDeclarations {}
@@ -437,9 +474,8 @@ mod tests {
     use crate::style::values::computed::length::*;
 
     use super::*;
-    use crate::style::values::computed::length::AbsoluteLength;
     use crate::style::values::computed::Display;
-    use crate::style::values::specified::NoCalcLength;
+    use crate::style::values::specified::{AbsoluteLength, LengthPercentage, NoCalcLength};
     use crate::style::StylesheetOrigin;
     use std::clone::Clone;
 

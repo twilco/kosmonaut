@@ -348,18 +348,18 @@ pub enum LonghandId {
     //    BorderBlockEndWidth = 142,
     //    /// border-block-start-width
     //    BorderBlockStartWidth = 143,
-    /// border-bottom-width
-    BorderBottomWidth = 144,
+    //    /// border-bottom-width
+    //    BorderBottomWidth = 144,
     //    /// border-inline-end-width
     //    BorderInlineEndWidth = 145,
     //    /// border-inline-start-width
     //    BorderInlineStartWidth = 146,
     //    /// border-left-width
-    BorderLeftWidth = 147,
-    /// border-right-width
-    BorderRightWidth = 148,
-    /// border-top-width
-    BorderTopWidth = 149,
+    //    BorderLeftWidth = 147,
+    //    /// border-right-width
+    //    BorderRightWidth = 148,
+    //    /// border-top-width
+    //    BorderTopWidth = 149,
     //    /// outline-width
     //    OutlineWidth = 150,
     //    /// background-color
@@ -425,6 +425,30 @@ impl LonghandId {
             LonghandId::FontSize => {
                 cv_builder.font_size(specified::FontSize::value_default(ctx));
             }
+            LonghandId::MarginBottom => {
+                cv_builder.margin_bottom(specified::MarginBottom::value_default(ctx));
+            }
+            LonghandId::MarginLeft => {
+                cv_builder.margin_left(specified::MarginLeft::value_default(ctx));
+            }
+            LonghandId::MarginRight => {
+                cv_builder.margin_right(specified::MarginRight::value_default(ctx));
+            }
+            LonghandId::MarginTop => {
+                cv_builder.margin_top(specified::MarginTop::value_default(ctx));
+            }
+            LonghandId::PaddingBottom => {
+                cv_builder.padding_bottom(specified::PaddingBottom::value_default(ctx));
+            }
+            LonghandId::PaddingLeft => {
+                cv_builder.padding_left(specified::PaddingLeft::value_default(ctx));
+            }
+            LonghandId::PaddingRight => {
+                cv_builder.padding_right(specified::PaddingRight::value_default(ctx));
+            }
+            LonghandId::PaddingTop => {
+                cv_builder.padding_top(specified::PaddingTop::value_default(ctx));
+            }
             _ => unimplemented!(
                 "{}",
                 format!("value default by longhand for id: {:?}", self)
@@ -438,7 +462,14 @@ impl From<&PropertyDeclaration> for LonghandId {
         match prop_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-            //            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+            PropertyDeclaration::MarginBottom(_) => LonghandId::MarginBottom,
+            PropertyDeclaration::MarginLeft(_) => LonghandId::PaddingLeft,
+            PropertyDeclaration::MarginRight(_) => LonghandId::MarginRight,
+            PropertyDeclaration::MarginTop(_) => LonghandId::MarginTop,
+            PropertyDeclaration::PaddingBottom(_) => LonghandId::PaddingBottom,
+            PropertyDeclaration::PaddingLeft(_) => LonghandId::PaddingLeft,
+            PropertyDeclaration::PaddingRight(_) => LonghandId::PaddingRight,
+            PropertyDeclaration::PaddingTop(_) => LonghandId::PaddingTop,
         }
     }
 }
@@ -454,7 +485,14 @@ impl From<&ContextualPropertyDeclaration> for LonghandId {
         match contextual_decl.inner_decl {
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
-            //            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+            PropertyDeclaration::MarginBottom(_) => LonghandId::MarginBottom,
+            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
+            PropertyDeclaration::MarginRight(_) => LonghandId::MarginRight,
+            PropertyDeclaration::MarginTop(_) => LonghandId::MarginTop,
+            PropertyDeclaration::PaddingBottom(_) => LonghandId::PaddingBottom,
+            PropertyDeclaration::PaddingLeft(_) => LonghandId::PaddingLeft,
+            PropertyDeclaration::PaddingRight(_) => LonghandId::PaddingRight,
+            PropertyDeclaration::PaddingTop(_) => LonghandId::PaddingTop,
         }
     }
 }

@@ -119,8 +119,8 @@ impl LayoutBox {
     fn layout(&mut self, containing_block: Dimensions) {
         match self.box_type {
             BoxType::Block(_) => self.layout_block(containing_block),
-            BoxType::Inline(_) => { unimplemented!("layout inline box types") }
-            BoxType::Anonymous => { unimplemented!("layout anonymous box types") }
+            BoxType::Inline(_) => unimplemented!("layout inline box types"),
+            BoxType::Anonymous => unimplemented!("layout anonymous box types"),
         }
     }
 
@@ -141,20 +141,13 @@ impl LayoutBox {
         self.calculate_block_height();
     }
 
-    fn calculate_block_width(&mut self, containing_block: Dimensions) {
-    }
+    fn calculate_block_width(&mut self, containing_block: Dimensions) {}
 
-    fn calculate_block_height(&mut self) {
+    fn calculate_block_height(&mut self) {}
 
-    }
+    fn calculate_block_position(&mut self, containing_block: Dimensions) {}
 
-    fn calculate_block_position(&mut self, containing_block: Dimensions) {
-
-    }
-
-    fn layout_block_children(&mut self) {
-
-    }
+    fn layout_block_children(&mut self) {}
 }
 
 #[derive(Clone, Debug)]

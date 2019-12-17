@@ -7,6 +7,10 @@ pub mod margin;
 pub mod padding;
 pub mod percentage;
 
+use crate::style::values::computed::margin::{MarginBottom, MarginLeft, MarginRight, MarginTop};
+use crate::style::values::computed::padding::{
+    PaddingBottom, PaddingLeft, PaddingRight, PaddingTop,
+};
 pub use display::Display;
 pub use font::FontSize;
 pub use percentage::Percentage;
@@ -18,7 +22,14 @@ pub use percentage::Percentage;
 pub struct ComputedValues {
     pub display: Display,
     pub font_size: FontSize,
-    //    pub margin_left: computed::MarginLeft,
+    pub margin_bottom: MarginBottom,
+    pub margin_left: MarginLeft,
+    pub margin_right: MarginRight,
+    pub margin_top: MarginTop,
+    pub padding_bottom: PaddingBottom,
+    pub padding_left: PaddingLeft,
+    pub padding_right: PaddingRight,
+    pub padding_top: PaddingTop,
 }
 
 /// Create a default set of computed values.  Likely most useful for the case in which we're working
@@ -30,6 +41,14 @@ impl Default for ComputedValues {
         ComputedValues {
             display: Display::initial_value(),
             font_size: FontSize::medium(),
+            margin_bottom: MarginBottom::initial_value(),
+            margin_left: MarginLeft::initial_value(),
+            margin_right: MarginRight::initial_value(),
+            margin_top: MarginTop::initial_value(),
+            padding_bottom: PaddingBottom::initial_value(),
+            padding_left: PaddingLeft::initial_value(),
+            padding_right: PaddingRight::initial_value(),
+            padding_top: PaddingTop::initial_value(),
         }
     }
 }

@@ -49,7 +49,7 @@ impl Display {
 impl ValueDefault for Display {
     type ComputedValue = Display;
 
-    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
         Display::initial_value()
     }
 }

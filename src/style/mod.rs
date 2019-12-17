@@ -98,7 +98,9 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
                 Some(contextual_decl) => {
                     match &contextual_decl.inner_decl {
                         PropertyDeclaration::Display(display) => {
-                            // TODO: Should we cloning here, rather than computing the value?
+                            // TODO: Should we cloning here (taking the specified value), rather than computing the value?
+                            // There is currently no `specified/display.rs`, so that would need to be remedied.
+                            // Computing display might not be straightforward — see: https://github.com/w3c/csswg-drafts/issues/1716
                             cv_builder.display(display.clone());
                         }
                         PropertyDeclaration::FontSize(font_size) => {

@@ -10,6 +10,7 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
+use crate::style::values::computed::Display;
 use crate::style::values::specified::{
     FontSize, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
     PaddingRight, PaddingTop,
@@ -157,8 +158,7 @@ impl PropertyDeclaration {
         match id {
             PropertyId::Longhand(long_id) => match long_id {
                 LonghandId::Display => {
-                    // TODO: Implement display parsing
-                    //                    declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
+                    declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
                 }
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));

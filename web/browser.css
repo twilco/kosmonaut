@@ -3,4 +3,5 @@ div.main, div.main.main.div {
   font-size: 12px !important;
   margin-bottom: 543px;
   padding-bottom: 216px;
+  display: block;
 }

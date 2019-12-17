@@ -1,4 +1,6 @@
-use crate::style::values::computed::{ComputeContext, ValueDefault};
+use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
+use crate::style::StyleParseErrorKind;
+use cssparser::{ParseError, Parser};
 
 /// The specified value of a CSS property is the value it receives from the document's style sheet.
 /// The specified value for a given property is determined according to the following rules:
@@ -39,8 +41,18 @@ pub enum Display {
     //    InlineGrid,
 }
 
+/// https://www.w3.org/TR/2019/CR-css-display-3-20190711/#property-index
 impl Display {
-    /// https://www.w3.org/TR/2019/CR-css-display-3-20190711/#property-index
+    pub fn parse<'i, 't>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
+        try_match_ident_ignore_ascii_case! { input,
+            "none" => Ok(Display::None),
+            "block" => Ok(Display::Block),
+            "inline" => Ok(Display::Inline),
+        }
+    }
+
     pub fn initial_value() -> Self {
         Display::Inline
     }

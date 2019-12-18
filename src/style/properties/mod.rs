@@ -208,6 +208,7 @@ pub enum PropertyDeclaration {
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     // TODO: Margin properties should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
+    // For some example of changes that might be required in layout with `auto`, see: https://www.w3.org/TR/CSS2/visudet.html#blockwidth
     MarginBottom(crate::style::values::specified::MarginBottom),
     MarginLeft(crate::style::values::specified::MarginLeft),
     MarginRight(crate::style::values::specified::MarginRight),

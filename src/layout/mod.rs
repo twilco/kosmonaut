@@ -116,6 +116,9 @@ impl LayoutBox {
     ///
     /// A block's width depends on that of its parent (called "containing block" in the spec), while
     /// a block's height depends on that of its children.  This is important to know in layout.
+    ///
+    /// In this step, we will be taking computed values and calculating actual, used values
+    /// based on the constraint of our environment.
     fn layout(&mut self, containing_block: Dimensions) {
         match self.box_type {
             BoxType::Block(_) => self.layout_block(containing_block),

@@ -148,6 +148,11 @@ impl ValueDefault for specified::PaddingTop {
     }
 }
 
+// TODO: I'm not sure this is correct...callers of this function pass the `context.parent_computed_values.padding_<side>.size`,
+// whereas the spec says percentages should be based on the "logical width of the containing block", which is not the same as
+// `context.parent_computed_values`, since the containing block could be an anonymous block, which would not have it's own computed values.
+// I _think_ anonymous blocks inherit their parents computed values, though, so maybe it's ok?
+// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
 fn computed_padding_px_size(
     self_lp: &LengthPercentage,
     context: &ComputeContext,

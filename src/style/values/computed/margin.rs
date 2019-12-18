@@ -148,6 +148,10 @@ impl ValueDefault for specified::MarginTop {
     }
 }
 
+// TODO: I'm not sure this is correct...callers of this function pass the `context.parent_computed_values.margin_<side>.size`,
+// whereas the spec says percentages should be based on the "logical width of the containing block", which is not the same as
+// `context.parent_computed_values`, since the containing block could be an anonymous block, which would not have it's own computed values.
+// I _think_ anonymous blocks inherit their parents computed values, though, so maybe it's ok?
 fn computed_margin_px_size(
     self_lp: &LengthPercentage,
     context: &ComputeContext,

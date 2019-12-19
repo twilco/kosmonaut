@@ -9,10 +9,7 @@ use std::mem::discriminant;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.
 pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
-    let computed_opt = &*node.computed_values();
-    let computed_values = computed_opt
-        .as_ref()
-        .expect("layout called on a node that has not yet acquired computed values");
+    let computed_values = &*node.computed_values();
     let mut layout_box = match computed_values.display {
         Display::Block => LayoutBox::new(BoxType::Block(node.clone())),
         Display::Inline => LayoutBox::new(BoxType::Inline(node.clone())),
@@ -22,10 +19,7 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
     };
 
     for child in node.children() {
-        let child_computed_opt = &*child.computed_values();
-        let child_computed_values = child_computed_opt
-            .as_ref()
-            .expect("layout called on a node that has not yet acquired computed values");
+        let child_computed_values = &*child.computed_values();
         match child_computed_values.display {
             Display::Block => match build_layout_tree(child.clone()) {
                 // TODO: We don't handle the case where a block-flow child box is added to an inline

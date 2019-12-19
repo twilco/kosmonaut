@@ -84,12 +84,10 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
         let mut cv_builder = ComputedValuesBuilder::default();
         let parent = node.parent();
         // If this is the root node (aka there is no parent to inherit properties from), just default all properties.
-        let parent_computed_values_opt = parent.map_or(None, |p| {
+        let parent_computed_values = parent.map_or(ComputedValues::default(), |p| {
             // TODO: This _could_ be an expensive clone when we actually support all CSS properties.
             p.computed_values().clone()
         });
-        let parent_computed_values =
-            parent_computed_values_opt.unwrap_or(ComputedValues::default());
         let context = ComputeContext {
             parent_computed_values: &parent_computed_values,
         };
@@ -137,10 +135,8 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
                 }
             };
         });
-        *node.computed_values_mut() =
-            Some(dbg!(cv_builder.build()).expect(
-                "couldn't build computed values - maybe a field wasn't given to the builder?",
-            ));
+        *node.computed_values_mut() = dbg!(cv_builder.build())
+            .expect("couldn't build computed values - maybe a field wasn't given to the builder?");
     });
 }
 

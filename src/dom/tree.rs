@@ -140,9 +140,10 @@ pub struct Node {
     /// perform a cascade, getting us through step 2 of the value stages algorithm.
     /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages
     contextual_decls: RefCell<ContextualPropertyDeclarations>,
-    /// The result of step 3 and 4 of the CSS value processing stages.  This will be `None` if the
-    /// node has not yet calculated its computed values.
-    computed_values: RefCell<Option<ComputedValues>>,
+    /// The result of step 3 and 4 of the CSS value processing stages.  Until the node goes through
+    /// the cascade and computed value calculation phases, this will be something like
+    /// `ComputedValues::default()`.
+    computed_values: RefCell<ComputedValues>,
 }
 
 impl fmt::Debug for Node {
@@ -230,7 +231,7 @@ impl NodeRef {
             next_sibling: Cell::new(None),
             data,
             contextual_decls: RefCell::new(ContextualPropertyDeclarations::new()),
-            computed_values: RefCell::new(None),
+            computed_values: RefCell::new(ComputedValues::default()),
         }))
     }
 
@@ -332,13 +333,13 @@ impl Node {
 
     /// Return a reference to this node’s computed values.
     #[inline]
-    pub fn computed_values(&self) -> Ref<Option<ComputedValues>> {
+    pub fn computed_values(&self) -> Ref<ComputedValues> {
         self.computed_values.borrow()
     }
 
     /// Return a mutable reference to this node’s computed values.
     #[inline]
-    pub fn computed_values_mut(&self) -> RefMut<Option<ComputedValues>> {
+    pub fn computed_values_mut(&self) -> RefMut<ComputedValues> {
         self.computed_values.borrow_mut()
     }
 

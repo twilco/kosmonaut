@@ -1,7 +1,7 @@
 /* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
 div.main, div.main.main.div {
   font-size: 12px !important;
-  margin-bottom: 543px;
+  margin-bottom: auto;
   padding-bottom: 216px;
   display: block;
 }

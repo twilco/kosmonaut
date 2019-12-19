@@ -1,4 +1,4 @@
-use crate::style::values::specified::LengthPercentage;
+use crate::style::values::specified::LengthPercentageOrAuto;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 
@@ -7,8 +7,7 @@ use cssparser::{ParseError, Parser};
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
 #[derive(Clone, Debug)]
 pub struct MarginBottom {
-    // TODO: This should also support the `auto` keyword
-    pub length_percentage: LengthPercentage,
+    pub lp_or_auto: LengthPercentageOrAuto,
 }
 
 impl MarginBottom {
@@ -16,9 +15,9 @@ impl MarginBottom {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| MarginBottom {
-                length_percentage: lp,
+            .try_parse(|i| LengthPercentageOrAuto::parse(i))
+            .map(|lp_or_auto| MarginBottom {
+                lp_or_auto,
             })
     }
 }
@@ -28,8 +27,7 @@ impl MarginBottom {
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
 #[derive(Clone, Debug)]
 pub struct MarginLeft {
-    // TODO: This should also support the `auto` keyword
-    pub length_percentage: LengthPercentage,
+    pub lp_or_auto: LengthPercentageOrAuto,
 }
 
 impl MarginLeft {
@@ -37,9 +35,9 @@ impl MarginLeft {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| MarginLeft {
-                length_percentage: lp,
+            .try_parse(|i| LengthPercentageOrAuto::parse(i))
+            .map(|lp_or_auto| MarginLeft {
+                lp_or_auto,
             })
     }
 }
@@ -49,8 +47,7 @@ impl MarginLeft {
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
 #[derive(Clone, Debug)]
 pub struct MarginRight {
-    // TODO: This should also support the `auto` keyword
-    pub length_percentage: LengthPercentage,
+    pub lp_or_auto: LengthPercentageOrAuto,
 }
 
 impl MarginRight {
@@ -58,9 +55,9 @@ impl MarginRight {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| MarginRight {
-                length_percentage: lp,
+            .try_parse(|i| LengthPercentageOrAuto::parse(i))
+            .map(|lp_or_auto| MarginRight {
+                lp_or_auto,
             })
     }
 }
@@ -70,8 +67,7 @@ impl MarginRight {
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
 #[derive(Clone, Debug)]
 pub struct MarginTop {
-    // TODO: This should also support the `auto` keyword
-    pub length_percentage: LengthPercentage,
+    pub lp_or_auto: LengthPercentageOrAuto,
 }
 
 impl MarginTop {
@@ -79,9 +75,9 @@ impl MarginTop {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| MarginTop {
-                length_percentage: lp,
+            .try_parse(|i| LengthPercentageOrAuto::parse(i))
+            .map(|lp_or_auto| MarginTop {
+                lp_or_auto,
             })
     }
 }

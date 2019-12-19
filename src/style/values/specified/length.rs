@@ -102,7 +102,7 @@ impl NoCalcLength {
 /// that had a Calc(Box<CalcLengthPercentage>) variant.
 ///
 /// https://drafts.csswg.org/css-values-4/#typedef-length-percentage
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LengthPercentage {
     Length(NoCalcLength),
     Percentage(computed::Percentage),
@@ -132,3 +132,45 @@ impl LengthPercentage {
         }
     }
 }
+
+/// A `<length-percentage>` value, or the `auto` keyword.
+///
+/// Some details on `auto`: https://www.w3.org/TR/css-sizing-3/#sizing-values
+#[derive(Clone, Debug, PartialEq)]
+pub enum LengthPercentageOrAuto {
+    LengthPercentage(LengthPercentage),
+    Auto
+}
+
+impl LengthPercentageOrAuto {
+    pub fn parse<'i, 't>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
+        let start = input.state();
+        let location = input.current_source_location();
+        let token = input.next()?;
+        match *token {
+            Token::Dimension {
+                value, ref unit, ..
+            } => {
+                match NoCalcLength::parse_dimension(value, unit) {
+                    Ok(no_calc_len) => {
+                        return Ok(LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(no_calc_len)))
+                    },
+                    Err(_) => return Err(location.new_unexpected_token_error(token.clone()))
+                }
+            }
+            Token::Percentage { unit_value, .. } => {
+                return Ok(LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Percentage(computed::Percentage(
+                    unit_value,
+                ))));
+            }
+            _ => {}
+        };
+        input.reset(&start);
+        try_match_ident_ignore_ascii_case! { input,
+            "auto" => Ok(LengthPercentageOrAuto::Auto),
+        }
+    }
+}
+

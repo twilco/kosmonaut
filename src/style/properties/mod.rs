@@ -156,7 +156,7 @@ impl PropertyDeclaration {
         input: &mut Parser<'i, 't>,
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
-            PropertyId::Longhand(long_id) => match long_id {
+            PropertyId::Longhand(longhand) => match longhand {
                 LonghandId::Display => {
                     declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
                 }
@@ -193,7 +193,10 @@ impl PropertyDeclaration {
                 LonghandId::PaddingTop => {
                     declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
                 }
-                _ => {}
+                _ => unimplemented!(
+                    "{}",
+                    format!("value default by longhand for id: {:?}", longhand)
+                )
             },
             PropertyId::Shorthand(_short_id) => {}
         }

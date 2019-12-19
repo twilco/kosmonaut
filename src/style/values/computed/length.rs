@@ -1,4 +1,4 @@
-use crate::style::values::computed::{ComputeContext, ToComputedValue};
+use crate::style::values::computed::{ComputeContext, ToComputedValue, Percentage};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
@@ -120,6 +120,32 @@ impl CSSPixelLength {
     pub fn max_assign(&mut self, other: Self) {
         *self = self.max(other);
     }
+}
+
+/// A computed `<length>` value, a computed `<percentage>` value, or the `auto` keyword.
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub enum LengthPercentageOrAuto {
+    LengthPercentage(LengthPercentage),
+    Auto
+}
+
+impl LengthPercentageOrAuto {
+    pub fn new_len(px_len: f32) -> LengthPercentageOrAuto {
+        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(CSSPixelLength::new(px_len)))
+    }
+}
+
+impl From<CSSPixelLength> for LengthPercentageOrAuto {
+    fn from(px_length: CSSPixelLength) -> Self {
+        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(px_length))
+    }
+}
+
+/// A computed `<length>` value, or a computed `<percentage>` value.
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub enum LengthPercentage {
+    Length(CSSPixelLength),
+    Percentage(Percentage)
 }
 
 impl ToComputedValue for specified::AbsoluteLength {

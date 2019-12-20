@@ -1,7 +1,7 @@
-/// A macro to parse an identifier, or return an `UnexpectedIdent` error
+/// A macro to parse an identifier, or return an `OtherInvalidValue` error
 /// otherwise.
 ///
-/// This was taken from Servo.
+/// This was originally taken from Servo and has been slightly modified since.
 macro_rules! try_match_ident_ignore_ascii_case {
     ($input:expr, $( $match_body:tt )*) => {{
         let location = $input.current_source_location();
@@ -9,7 +9,7 @@ macro_rules! try_match_ident_ignore_ascii_case {
         match_ignore_ascii_case! { &ident,
             $( $match_body )*
             _ => return Err(location.new_custom_error(
-                ::selectors::parser::SelectorParseErrorKind::UnexpectedIdent(ident.clone())
+                crate::style::StyleParseErrorKind::OtherInvalidValue(ident.clone())
             ))
         }
     }}

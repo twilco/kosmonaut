@@ -31,7 +31,7 @@ impl ValueDefault for specified::FontSize {
     type ComputedValue = FontSize;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        context.parent_computed_values.font_size.clone()
+        context.parent_computed_values.font_size
     }
 }
 
@@ -42,13 +42,13 @@ impl ToComputedValue for specified::FontSize {
         let (size_px, keyword_size) = match self {
             specified::FontSize::Keyword(keyword_size) => (
                 keyword_size.to_computed_value(&context),
-                Some(keyword_size.clone()),
+                Some(*keyword_size),
             ),
             specified::FontSize::Length(LengthPercentage::Length(NoCalcLength::Absolute(
                 abs_len,
             ))) => (abs_len.to_computed_value(context), None),
             specified::FontSize::Length(specified::LengthPercentage::Percentage(percentage)) => {
-                let parent_font = context.parent_computed_values.font_size.clone();
+                let parent_font = context.parent_computed_values.font_size;
                 (
                     CSSPixelLength::from(Au::from(parent_font.size).scale_by(percentage.0.clone())),
                     None,

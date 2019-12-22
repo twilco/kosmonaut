@@ -187,7 +187,7 @@ pub struct StylesheetOrigin {
 
 impl PartialEq for StylesheetOrigin {
     fn eq(&self, other: &Self) -> bool {
-        return &self.cascade_origin == &other.cascade_origin;
+        self.cascade_origin == other.cascade_origin
     }
 }
 

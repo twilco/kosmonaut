@@ -15,7 +15,7 @@ pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
                 LengthPercentage::Length(no_calc_length) => match no_calc_length {
                     NoCalcLength::Absolute(abs_len) => match abs_len {
                         // should've taken the most recent rule added to the sheet, `font-size: 16px`
-                        AbsoluteLength::Px(float_val) => return &float_val,
+                        AbsoluteLength::Px(float_val) => &float_val,
                         _ => panic!("should always be `px` AbsoluteLength units"),
                     },
                 },
@@ -39,15 +39,12 @@ pub fn get_div(classes: &str, text: &str) -> NodeRef {
         .unwrap()
         .inclusive_descendants()
         .for_each(|node| {
-            match node.data() {
-                NodeData::Element(data) => match data.name.local {
-                    local_name!("div") => {
-                        ret = Some(node);
-                    }
+            if let NodeData::Element(data) = node.data() {
+                match data.name.local {
+                    local_name!("div") => ret = Some(node),
                     _ => {}
-                },
-                _ => {}
-            };
+                }
+            }
         });
     ret.expect("should've been able to get div from test_utils#get_div()")
 }

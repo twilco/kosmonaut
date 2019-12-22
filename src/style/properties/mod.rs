@@ -141,7 +141,7 @@ impl PropertyDeclarationBlock {
     }
 
     pub fn remove_decl(&mut self, index: usize) {
-        &self.declarations.remove(index);
+        self.declarations.remove(index);
     }
 
     pub fn declarations_importance(&self) -> &SmallBitVec {
@@ -150,6 +150,7 @@ impl PropertyDeclarationBlock {
 }
 
 impl PropertyDeclaration {
+    #[allow(unreachable_patterns)]
     pub fn parse_into<'i, 't>(
         declarations: &mut Vec<PropertyDeclaration>,
         id: PropertyId,
@@ -196,7 +197,7 @@ impl PropertyDeclaration {
                 _ => unimplemented!(
                     "{}",
                     format!("value default by longhand for id: {:?}", longhand)
-                )
+                ),
             },
             PropertyId::Shorthand(_short_id) => {}
         }
@@ -253,11 +254,7 @@ pub struct ContextualPropertyDeclarations {
 impl ContextualPropertyDeclarations {
     #[inline]
     pub fn new() -> Self {
-        ContextualPropertyDeclarations {
-            decls: Vec::new(),
-            longhands: HashSet::new(),
-            is_sorted: true,
-        }
+        ContextualPropertyDeclarations::default()
     }
 
     /// Sort according to the cascade algorithm.
@@ -309,7 +306,7 @@ impl ContextualPropertyDeclarations {
         fn either_index_already_in_swap(
             new_a: usize,
             new_b: usize,
-            swaps: &Vec<(usize, usize)>,
+            swaps: &[(usize, usize)],
         ) -> bool {
             for (existing_a, existing_b) in swaps.iter() {
                 if new_a == *existing_a || new_b == *existing_b {
@@ -343,6 +340,16 @@ impl ContextualPropertyDeclarations {
             .insert(LonghandId::from(&new_decl.inner_decl).clone());
         self.decls.push(new_decl);
         self.is_sorted = false;
+    }
+}
+
+impl Default for ContextualPropertyDeclarations {
+    fn default() -> Self {
+        ContextualPropertyDeclarations {
+            decls: Vec::default(),
+            longhands: HashSet::default(),
+            is_sorted: true,
+        }
     }
 }
 
@@ -444,8 +451,8 @@ impl Eq for ContextualPropertyDeclaration {}
 
 impl PartialEq for ContextualPropertyDeclaration {
     fn eq(&self, other: &Self) -> bool {
-        return mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl)
-            && &self.origin == &other.origin;
+        mem::discriminant(&self.inner_decl) == mem::discriminant(&other.inner_decl)
+            && self.origin == other.origin
     }
 }
 
@@ -475,7 +482,6 @@ impl Importance {
 mod tests {
     use crate::style::properties::PropertyDeclaration;
     use crate::style::test_utils::{display_by_type, font_size_px, font_size_px_or_panic};
-    use crate::style::values::computed::length::*;
 
     use super::*;
     use crate::style::values::computed::Display;

@@ -1,11 +1,11 @@
-use crate::style::values::computed::length::{LengthPercentageOrAuto, LengthPercentage};
+use crate::style::values::computed::length::{LengthPercentage, LengthPercentageOrAuto};
 use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
 use crate::style::values::specified;
 
 /// Computed value of a `margin-bottom`.
 #[derive(Clone, Debug)]
 pub struct MarginBottom {
-    size: LengthPercentageOrAuto
+    size: LengthPercentageOrAuto,
 }
 
 impl MarginBottom {
@@ -21,10 +21,7 @@ impl ToComputedValue for specified::MarginBottom {
 
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
         MarginBottom {
-            size: computed_margin_px_size(
-                &self.lp_or_auto,
-                &context
-            ),
+            size: computed_margin_px_size(&self.lp_or_auto, &context),
         }
     }
 }
@@ -40,7 +37,7 @@ impl ValueDefault for specified::MarginBottom {
 /// Computed value of a `margin-left`.
 #[derive(Clone, Debug)]
 pub struct MarginLeft {
-    size: LengthPercentageOrAuto
+    size: LengthPercentageOrAuto,
 }
 
 impl MarginLeft {
@@ -56,10 +53,7 @@ impl ToComputedValue for specified::MarginLeft {
 
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
         MarginLeft {
-            size: computed_margin_px_size(
-                &self.lp_or_auto,
-                &context
-            ),
+            size: computed_margin_px_size(&self.lp_or_auto, &context),
         }
     }
 }
@@ -75,7 +69,7 @@ impl ValueDefault for specified::MarginLeft {
 /// Computed value of a `margin-right`.
 #[derive(Clone, Debug)]
 pub struct MarginRight {
-    size: LengthPercentageOrAuto
+    size: LengthPercentageOrAuto,
 }
 
 impl MarginRight {
@@ -91,10 +85,7 @@ impl ToComputedValue for specified::MarginRight {
 
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
         MarginRight {
-            size: computed_margin_px_size(
-                &self.lp_or_auto,
-                &context
-            ),
+            size: computed_margin_px_size(&self.lp_or_auto, &context),
         }
     }
 }
@@ -110,7 +101,7 @@ impl ValueDefault for specified::MarginRight {
 /// Computed value of a `margin-top`.
 #[derive(Clone, Debug)]
 pub struct MarginTop {
-    size: LengthPercentageOrAuto
+    size: LengthPercentageOrAuto,
 }
 
 impl MarginTop {
@@ -126,10 +117,7 @@ impl ToComputedValue for specified::MarginTop {
 
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
         MarginTop {
-            size: computed_margin_px_size(
-                &self.lp_or_auto,
-                &context
-            ),
+            size: computed_margin_px_size(&self.lp_or_auto, &context),
         }
     }
 }
@@ -144,19 +132,19 @@ impl ValueDefault for specified::MarginTop {
 
 fn computed_margin_px_size(
     self_lp_auto: &specified::LengthPercentageOrAuto,
-    context: &ComputeContext
+    context: &ComputeContext,
 ) -> LengthPercentageOrAuto {
     match self_lp_auto {
         specified::LengthPercentageOrAuto::Auto => LengthPercentageOrAuto::Auto,
-        specified::LengthPercentageOrAuto::LengthPercentage(lp) => {
-            match lp {
-                specified::LengthPercentage::Length(no_calc_length) => match no_calc_length {
-                    specified::NoCalcLength::Absolute(abs_len) => abs_len.to_computed_value(context).into(),
-                },
-                specified::LengthPercentage::Percentage(percentage) => {
-                    LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Percentage(percentage.clone()))
+        specified::LengthPercentageOrAuto::LengthPercentage(lp) => match lp {
+            specified::LengthPercentage::Length(no_calc_length) => match no_calc_length {
+                specified::NoCalcLength::Absolute(abs_len) => {
+                    abs_len.to_computed_value(context).into()
                 }
+            },
+            specified::LengthPercentage::Percentage(percentage) => {
+                LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Percentage(*percentage))
             }
-        }
+        },
     }
 }

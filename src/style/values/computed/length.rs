@@ -1,4 +1,4 @@
-use crate::style::values::computed::{ComputeContext, ToComputedValue, Percentage};
+use crate::style::values::computed::{ComputeContext, Percentage, ToComputedValue};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
@@ -82,14 +82,14 @@ impl CSSPixelLength {
 
     /// Return the containing pixel value.
     #[inline]
-    pub fn px(&self) -> CSSFloat {
+    pub fn px(self) -> CSSFloat {
         self.0
     }
 
     /// Return the length with app_unit i32 type.
     #[inline]
-    pub fn to_i32_au(&self) -> i32 {
-        Au::from(*self).0
+    pub fn to_i32_au(self) -> i32 {
+        Au::from(self).0
     }
 
     /// Return the absolute value of this length.
@@ -126,12 +126,14 @@ impl CSSPixelLength {
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum LengthPercentageOrAuto {
     LengthPercentage(LengthPercentage),
-    Auto
+    Auto,
 }
 
 impl LengthPercentageOrAuto {
     pub fn new_len(px_len: f32) -> LengthPercentageOrAuto {
-        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(CSSPixelLength::new(px_len)))
+        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(CSSPixelLength::new(
+            px_len,
+        )))
     }
 }
 
@@ -145,7 +147,7 @@ impl From<CSSPixelLength> for LengthPercentageOrAuto {
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum LengthPercentage {
     Length(CSSPixelLength),
-    Percentage(Percentage)
+    Percentage(Percentage),
 }
 
 impl ToComputedValue for specified::AbsoluteLength {

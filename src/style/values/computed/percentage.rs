@@ -20,7 +20,7 @@ impl Percentage {
 
     /// Returns the absolute value for this percentage.
     #[inline]
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         Percentage(self.0.abs())
     }
 

@@ -7,7 +7,8 @@ use crate::layout::BoxType::Anonymous;
 use crate::style::values::computed::Display;
 use std::mem::discriminant;
 
-/// Takes a DOM node and builds the corresponding layout tree of it and its children.
+/// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
+/// `None` if `node` is a `Display::None`.
 pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
     let computed_values = &*node.computed_values();
     let mut layout_box = match computed_values.display {
@@ -21,22 +22,25 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
     for child in node.children() {
         let child_computed_values = &*child.computed_values();
         match child_computed_values.display {
-            Display::Block => match build_layout_tree(child.clone()) {
-                // TODO: We don't handle the case where a block-flow child box is added to an inline
-                // box.  This current behavior is wrong.  To fix, see: https://www.w3.org/TR/CSS2/visuren.html#box-gen
-                // Namely, the paragraph that begins with "When an inline box contains an in-flow block-level box"
-                // This concept _might_ be called "fragmenting".
-                Some(child_box) => layout_box.children.push(child_box),
-                None => {}
-            },
-            Display::Inline => match build_layout_tree(child.clone()) {
-                Some(child_box) => layout_box.get_inline_container().children.push(child_box),
-                None => {}
-            },
+            Display::Block => {
+                if let Some(child_box) = build_layout_tree(child.clone()) {
+                    // TODO: We don't handle the case where a block-flow child box is added to an inline box.
+                    // This current behavior is wrong — we should be checking if `node` is an `Display::Inline` and
+                    // doing something different here.  To fix, see: https://www.w3.org/TR/CSS2/visuren.html#box-gen
+                    // Namely, the paragraph that begins with "When an inline box contains an in-flow block-level box"
+                    // This concept _might_ be called "fragmenting".
+                    layout_box.children.push(child_box)
+                }
+            }
+            Display::Inline => {
+                if let Some(child_box) = build_layout_tree(child.clone()) {
+                    layout_box.get_inline_container().children.push(child_box)
+                }
+            }
             Display::None => {}
         }
     }
-    return Some(layout_box);
+    Some(layout_box)
 }
 
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#box-model
@@ -138,11 +142,11 @@ impl LayoutBox {
         self.calculate_block_height();
     }
 
-    fn calculate_block_width(&mut self, containing_block: Dimensions) {}
+    fn calculate_block_width(&mut self, _containing_block: Dimensions) {}
 
     fn calculate_block_height(&mut self) {}
 
-    fn calculate_block_position(&mut self, containing_block: Dimensions) {}
+    fn calculate_block_position(&mut self, _containing_block: Dimensions) {}
 
     fn layout_block_children(&mut self) {}
 }

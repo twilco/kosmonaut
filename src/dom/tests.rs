@@ -33,8 +33,8 @@ fn text_nodes() {
     assert_eq!(&*texts[2].borrow(), " data");
     {
         let mut x = texts[0].borrow_mut();
-        &x.truncate(0);
-        &x.push_str("Content doesn't contain ");
+        x.truncate(0);
+        x.push_str("Content doesn't contain ");
     }
     assert_eq!(&*texts[0].borrow(), "Content doesn't contain ");
 }

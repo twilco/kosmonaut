@@ -247,7 +247,7 @@ impl NodeRef {
             } else {
                 None
             },
-            name: name,
+            name,
             attributes: RefCell::new(Attributes {
                 map: attributes.into_iter().collect(),
             }),
@@ -345,7 +345,7 @@ impl Node {
 
     #[inline]
     pub fn add_decl(&self, new_decl: ContextualPropertyDeclaration) {
-        &self.contextual_decls.borrow_mut().add(new_decl);
+        self.contextual_decls.borrow_mut().add(new_decl);
     }
 
     /// If this node is an element, return a reference to element-specific data.

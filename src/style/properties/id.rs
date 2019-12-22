@@ -417,7 +417,8 @@ pub enum LonghandId {
 }
 
 impl LonghandId {
-    pub fn value_default(&self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
+    #[allow(unreachable_patterns)]
+    pub fn value_default(self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
         match self {
             LonghandId::Display => {
                 cv_builder.display(computed::Display::value_default(ctx));

@@ -16,9 +16,7 @@ impl MarginBottom {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginBottom {
-                lp_or_auto,
-            })
+            .map(|lp_or_auto| MarginBottom { lp_or_auto })
     }
 }
 
@@ -36,9 +34,7 @@ impl MarginLeft {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginLeft {
-                lp_or_auto,
-            })
+            .map(|lp_or_auto| MarginLeft { lp_or_auto })
     }
 }
 
@@ -56,9 +52,7 @@ impl MarginRight {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginRight {
-                lp_or_auto,
-            })
+            .map(|lp_or_auto| MarginRight { lp_or_auto })
     }
 }
 
@@ -76,8 +70,6 @@ impl MarginTop {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginTop {
-                lp_or_auto,
-            })
+            .map(|lp_or_auto| MarginTop { lp_or_auto })
     }
 }

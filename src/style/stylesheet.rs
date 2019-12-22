@@ -15,13 +15,13 @@ pub fn parse_css_to_stylesheet(
 ) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
     let input = &mut ParserInput::new(css_str);
     let parser = &mut Parser::new(input);
-    let mut rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
+    let rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
     let mut sheet = if let Some(name) = sheet_name {
         Stylesheet::new_with_name(name)
     } else {
         Stylesheet::new()
     };
-    while let Some(rule) = rule_parser.next() {
+    for rule in rule_parser {
         sheet.add_rule(rule?);
     }
     Ok(sheet)

@@ -20,7 +20,7 @@ use std::fmt;
 /// The definition of whitespace per CSS Selectors Level 3 § 4.
 ///
 /// Copied from rust-selectors.
-static SELECTOR_WHITESPACE: &'static [char] = &[' ', '\t', '\n', '\r', '\x0C'];
+static SELECTOR_WHITESPACE: &[char] = &[' ', '\t', '\n', '\r', '\x0C'];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct KosmonautSelectors;
@@ -198,11 +198,11 @@ impl selectors::Element for NodeDataRef<ElementData> {
     }
 
     #[inline]
-    fn local_name<'a>(&'a self) -> &'a LocalName {
+    fn local_name(&self) -> &LocalName {
         &self.name.local
     }
     #[inline]
-    fn namespace<'a>(&'a self) -> &'a Namespace {
+    fn namespace(&self) -> &Namespace {
         &self.name.ns
     }
 
@@ -258,7 +258,7 @@ impl selectors::Element for NodeDataRef<ElementData> {
                 .any(|(name, attr)| name.local == *local_name && operation.eval_str(&attr.value)),
             NamespaceConstraint::Specific(ref ns_url) => attrs
                 .map
-                .get(&ExpandedName::new(ns_url.clone(), local_name.clone()))
+                .get(&ExpandedName::new(&(*ns_url).clone(), local_name.clone()))
                 .map_or(false, |attr| operation.eval_str(&attr.value)),
         }
     }
@@ -370,7 +370,7 @@ impl Selectors {
                 }
             }
         });
-        return highest_matching_spec_opt;
+        highest_matching_spec_opt
     }
 
     /// Filter an element iterator, yielding those matching this list of selectors.
@@ -380,7 +380,7 @@ impl Selectors {
         I: Iterator<Item = NodeDataRef<ElementData>>,
     {
         Select {
-            iter: iter,
+            iter,
             selectors: self,
         }
     }
@@ -449,9 +449,7 @@ impl fmt::Debug for Selectors {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dom::parser::parse_html;
-    use crate::dom::traits::TendrilSink;
-    use crate::dom::tree::debug_recursive;
+
     use crate::style::test_utils::get_div;
 
     #[test]

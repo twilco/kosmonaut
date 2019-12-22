@@ -49,8 +49,8 @@ pub enum AbsoluteLength {
 }
 
 impl AbsoluteLength {
-    fn is_zero(&self) -> bool {
-        match *self {
+    fn is_zero(self) -> bool {
+        match self {
             AbsoluteLength::Px(v)
             | AbsoluteLength::In(v)
             | AbsoluteLength::Cm(v)
@@ -63,10 +63,10 @@ impl AbsoluteLength {
 
     /// Convert this into a pixel value.
     #[inline]
-    pub fn to_px(&self) -> CSSFloat {
+    pub fn to_px(self) -> CSSFloat {
         use std::f32;
 
-        let pixel = match *self {
+        let pixel = match self {
             AbsoluteLength::Px(value) => value,
             AbsoluteLength::In(value) => value * (AU_PER_IN / AU_PER_PX),
             AbsoluteLength::Cm(value) => value * (AU_PER_CM / AU_PER_PX),
@@ -118,17 +118,13 @@ impl LengthPercentage {
         match *token {
             Token::Dimension {
                 value, ref unit, ..
-            } => {
-                return NoCalcLength::parse_dimension(value, unit)
-                    .map(LengthPercentage::Length)
-                    .map_err(|()| location.new_unexpected_token_error(token.clone()));
-            }
-            Token::Percentage { unit_value, .. } => {
-                return Ok(LengthPercentage::Percentage(computed::Percentage(
-                    unit_value,
-                )));
-            }
-            _ => return Err(location.new_unexpected_token_error(token.clone())),
+            } => NoCalcLength::parse_dimension(value, unit)
+                .map(LengthPercentage::Length)
+                .map_err(|()| location.new_unexpected_token_error(token.clone())),
+            Token::Percentage { unit_value, .. } => Ok(LengthPercentage::Percentage(
+                computed::Percentage(unit_value),
+            )),
+            _ => Err(location.new_unexpected_token_error(token.clone())),
         }
     }
 }
@@ -136,10 +132,10 @@ impl LengthPercentage {
 /// A `<length-percentage>` value, or the `auto` keyword.
 ///
 /// Some details on `auto`: https://www.w3.org/TR/css-sizing-3/#sizing-values
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LengthPercentageOrAuto {
     LengthPercentage(LengthPercentage),
-    Auto
+    Auto,
 }
 
 impl LengthPercentageOrAuto {
@@ -152,18 +148,18 @@ impl LengthPercentageOrAuto {
         match *token {
             Token::Dimension {
                 value, ref unit, ..
-            } => {
-                match NoCalcLength::parse_dimension(value, unit) {
-                    Ok(no_calc_len) => {
-                        return Ok(LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(no_calc_len)))
-                    },
-                    Err(_) => return Err(location.new_unexpected_token_error(token.clone()))
+            } => match NoCalcLength::parse_dimension(value, unit) {
+                Ok(no_calc_len) => {
+                    return Ok(LengthPercentageOrAuto::LengthPercentage(
+                        LengthPercentage::Length(no_calc_len),
+                    ))
                 }
-            }
+                Err(_) => return Err(location.new_unexpected_token_error(token.clone())),
+            },
             Token::Percentage { unit_value, .. } => {
-                return Ok(LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Percentage(computed::Percentage(
-                    unit_value,
-                ))));
+                return Ok(LengthPercentageOrAuto::LengthPercentage(
+                    LengthPercentage::Percentage(computed::Percentage(unit_value)),
+                ));
             }
             _ => {}
         };
@@ -173,4 +169,3 @@ impl LengthPercentageOrAuto {
         }
     }
 }
-

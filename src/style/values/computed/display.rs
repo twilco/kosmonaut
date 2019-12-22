@@ -1,4 +1,4 @@
-use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
+use crate::style::values::computed::{ComputeContext, ValueDefault};
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 

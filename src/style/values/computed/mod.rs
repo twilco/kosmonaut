@@ -60,7 +60,6 @@ pub trait ToComputedValue {
 
     /// When starting from a specified value (e.g. when the cascade provides one), convert a
     /// specified value to a computed value, using itself and the data inside the `Context`.
-    #[inline]
     fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue;
 }
 
@@ -76,7 +75,6 @@ pub trait ValueDefault {
     type ComputedValue;
 
     /// Perform the value-default.
-    #[inline]
     fn value_default(context: &ComputeContext) -> Self::ComputedValue;
 }
 

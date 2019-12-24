@@ -11,9 +11,11 @@ use std::mem::discriminant;
 /// `None` if `node` is a `Display::None`.
 pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
     let computed_values = &*node.computed_values();
+    // TODO: We need to think about the validity of making strong-ref clones to nodes here (and elsewhere).
+    // Will things get properly dropped?  Maybe LayoutBox should store a `Weak` ref?
     let mut layout_box = match computed_values.display {
-        Display::Block => LayoutBox::new(BoxType::Block(node.clone())),
-        Display::Inline => LayoutBox::new(BoxType::Inline(node.clone())),
+        Display::Block => LayoutBox::new(BoxType::Block, node.clone()),
+        Display::Inline => LayoutBox::new(BoxType::Inline, node.clone()),
         Display::None => {
             return None;
         }
@@ -76,14 +78,23 @@ pub struct LayoutBox {
     dimensions: Dimensions,
     box_type: BoxType,
     children: Vec<LayoutBox>,
+    /// Reference to the closest non-anonymous node.  This distinction only matters for anonymous
+    /// boxes, since anonymous boxes are by definition not associated with a node, but need access
+    /// to a node to get computed values during layout.  If the box is a block, inline, or any other
+    /// non-anonymous box, this field is simply the actual DOM node associated with this box.
+    node: NodeRef,
 }
 
 impl LayoutBox {
-    fn new(box_type: BoxType) -> LayoutBox {
+    /// Creates a new layout box.  The passed in node should be the DOM node associated with
+    /// the box, assuming it is a non-anonymous box.  If creating an anonymous box, `node`
+    /// should be the DOM node associated with the closest non-anonymous box.
+    fn new(box_type: BoxType, node: NodeRef) -> LayoutBox {
         LayoutBox {
             box_type,
             dimensions: Default::default(), // initially set all fields to 0.0
             children: Vec::new(),
+            node,
         }
     }
 
@@ -95,13 +106,15 @@ impl LayoutBox {
     /// children.  Otherwise, find or create an anonymous box.
     fn get_inline_container(&mut self) -> &mut LayoutBox {
         match self.box_type {
-            BoxType::Inline(_) | BoxType::Anonymous => self,
-            BoxType::Block(_) => {
+            BoxType::Inline | BoxType::Anonymous => self,
+            BoxType::Block => {
                 match self.children.last() {
                     Some(last_child)
                         if discriminant(&last_child.box_type)
                             == discriminant(&BoxType::Anonymous) => {}
-                    _ => self.children.push(LayoutBox::new(BoxType::Anonymous)),
+                    _ => self
+                        .children
+                        .push(LayoutBox::new(BoxType::Anonymous, self.node.clone())),
                 }
                 self.children
                     .last_mut()
@@ -119,8 +132,8 @@ impl LayoutBox {
     /// based on the constraint of our environment.
     fn layout(&mut self, containing_block: Dimensions) {
         match self.box_type {
-            BoxType::Block(_) => self.layout_block(containing_block),
-            BoxType::Inline(_) => unimplemented!("layout inline box types"),
+            BoxType::Block => self.layout_block(containing_block),
+            BoxType::Inline => unimplemented!("layout inline box types"),
             BoxType::Anonymous => unimplemented!("layout anonymous box types"),
         }
     }
@@ -142,7 +155,9 @@ impl LayoutBox {
         self.calculate_block_height();
     }
 
-    fn calculate_block_width(&mut self, _containing_block: Dimensions) {}
+    fn calculate_block_width(&mut self, containing_block: Dimensions) {
+        let cvs = self.node.computed_values();
+    }
 
     fn calculate_block_height(&mut self) {}
 
@@ -153,7 +168,7 @@ impl LayoutBox {
 
 #[derive(Clone, Debug)]
 pub enum BoxType {
-    Block(NodeRef),
-    Inline(NodeRef),
+    Block,
+    Inline,
     Anonymous,
 }

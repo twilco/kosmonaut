@@ -40,9 +40,8 @@ pub fn get_div(classes: &str, text: &str) -> NodeRef {
         .inclusive_descendants()
         .for_each(|node| {
             if let NodeData::Element(data) = node.data() {
-                match data.name.local {
-                    local_name!("div") => ret = Some(node),
-                    _ => {}
+                if let local_name!("div") = data.name.local {
+                    ret = Some(node)
                 }
             }
         });

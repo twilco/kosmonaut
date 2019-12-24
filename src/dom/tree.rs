@@ -87,7 +87,7 @@ impl DocumentData {
 
 /// A strong reference to a node.
 ///
-/// A node is destroyed when the last strong reference to it dropped.
+/// A node is destroyed when the last strong reference to it is dropped.
 ///
 /// Each node holds a strong reference to its first child and next sibling (if any),
 /// but only a weak reference to its last child, previous sibling, and parent.

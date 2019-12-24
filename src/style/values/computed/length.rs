@@ -139,7 +139,7 @@ impl LengthPercentageOrAuto {
 
 impl From<CSSPixelLength> for LengthPercentageOrAuto {
     fn from(px_length: CSSPixelLength) -> Self {
-        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(px_length))
+        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::from(px_length))
     }
 }
 
@@ -148,6 +148,18 @@ impl From<CSSPixelLength> for LengthPercentageOrAuto {
 pub enum LengthPercentage {
     Length(CSSPixelLength),
     Percentage(Percentage),
+}
+
+impl LengthPercentage {
+    pub fn new_len(px_len: f32) -> LengthPercentage {
+        LengthPercentage::Length(CSSPixelLength::new(px_len))
+    }
+}
+
+impl From<CSSPixelLength> for LengthPercentage {
+    fn from(px_length: CSSPixelLength) -> Self {
+        LengthPercentage::Length(px_length)
+    }
 }
 
 impl ToComputedValue for specified::AbsoluteLength {

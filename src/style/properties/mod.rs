@@ -12,8 +12,8 @@ use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
 use crate::style::values::computed::Display;
 use crate::style::values::specified::{
-    FontSize, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
-    PaddingRight, PaddingTop,
+    FontSize, Height, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
+    PaddingRight, PaddingTop, Width,
 };
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -164,6 +164,9 @@ impl PropertyDeclaration {
                 LonghandId::FontSize => {
                     declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
                 }
+                LonghandId::Height => {
+                    declarations.push(PropertyDeclaration::Height(Height::parse(input)?));
+                }
                 LonghandId::MarginBottom => {
                     declarations.push(PropertyDeclaration::MarginBottom(MarginBottom::parse(
                         input,
@@ -194,6 +197,9 @@ impl PropertyDeclaration {
                 LonghandId::PaddingTop => {
                     declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
                 }
+                LonghandId::Width => {
+                    declarations.push(PropertyDeclaration::Width(Width::parse(input)?));
+                }
                 _ => unimplemented!(
                     "{}",
                     format!("value default by longhand for id: {:?}", longhand)
@@ -211,8 +217,7 @@ pub enum PropertyDeclaration {
     // Property(value)
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
-    // TODO: Margin properties should be LengthPercentageOrAuto, but we currently don't handle the `auto` keyword - https://www.w3.org/TR/css-box-3/#property-index
-    // For some example of changes that might be required in layout with `auto`, see: https://www.w3.org/TR/CSS2/visudet.html#blockwidth
+    Height(crate::style::values::specified::Height),
     MarginBottom(crate::style::values::specified::MarginBottom),
     MarginLeft(crate::style::values::specified::MarginLeft),
     MarginRight(crate::style::values::specified::MarginRight),
@@ -221,6 +226,7 @@ pub enum PropertyDeclaration {
     PaddingLeft(crate::style::values::specified::PaddingLeft),
     PaddingRight(crate::style::values::specified::PaddingRight),
     PaddingTop(crate::style::values::specified::PaddingTop),
+    Width(crate::style::values::specified::Width),
 }
 
 pub struct ComputedPropertyDeclarations {}

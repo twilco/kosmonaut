@@ -18,12 +18,16 @@ pub struct FontSize {
 
 impl FontSize {
     #[inline]
-    /// Get default value of font size.
     pub fn medium() -> Self {
         Self {
             size: Au::from_px(specified::FONT_MEDIUM_PX).into(),
             keyword_size: Some(KeywordSize::Medium),
         }
+    }
+
+    #[inline]
+    pub fn initial_value() -> Self {
+        FontSize::medium()
     }
 }
 

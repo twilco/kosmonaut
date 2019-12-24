@@ -1,10 +1,14 @@
 pub mod font;
+pub mod height;
 pub mod length;
 pub mod margin;
 pub mod padding;
+pub mod width;
 
 pub use font::FontSize;
 pub use font::FONT_MEDIUM_PX;
+
+pub use height::Height;
 
 pub use length::AbsoluteLength;
 pub use length::LengthPercentage;
@@ -20,3 +24,5 @@ pub use padding::PaddingBottom;
 pub use padding::PaddingLeft;
 pub use padding::PaddingRight;
 pub use padding::PaddingTop;
+
+pub use width::Width;

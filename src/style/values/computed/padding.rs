@@ -135,9 +135,9 @@ fn computed_padding_size(
     context: &ComputeContext,
 ) -> LengthPercentage {
     match lp {
-        specified::LengthPercentage::Length(no_calc_length) => match no_calc_length {
-            specified::NoCalcLength::Absolute(abs_len) => abs_len.to_computed_value(context).into(),
-        },
+        specified::LengthPercentage::Length(no_calc_length) => {
+            no_calc_length.to_computed_value(context).into()
+        }
         specified::LengthPercentage::Percentage(percentage) => {
             LengthPercentage::Percentage(*percentage)
         }

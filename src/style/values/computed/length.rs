@@ -169,3 +169,13 @@ impl ToComputedValue for specified::AbsoluteLength {
         CSSPixelLength(self.to_px())
     }
 }
+
+impl ToComputedValue for specified::NoCalcLength {
+    type ComputedValue = CSSPixelLength;
+
+    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+        match self {
+            specified::NoCalcLength::Absolute(abs_len) => abs_len.to_computed_value(context).into(),
+        }
+    }
+}

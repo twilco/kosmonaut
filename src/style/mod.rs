@@ -101,6 +101,9 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
                             // Computing display might not be straightforward — see: https://github.com/w3c/csswg-drafts/issues/1716
                             cv_builder.display(display.clone());
                         }
+                        PropertyDeclaration::Height(height) => {
+                            cv_builder.height(height.to_computed_value(&context));
+                        }
                         PropertyDeclaration::FontSize(font_size) => {
                             cv_builder.font_size(font_size.to_computed_value(&context));
                         }
@@ -127,6 +130,9 @@ pub fn cascade_and_compute(start_node: &NodeRef) {
                         }
                         PropertyDeclaration::PaddingTop(padding_top) => {
                             cv_builder.padding_top(padding_top.to_computed_value(&context));
+                        }
+                        PropertyDeclaration::Width(width) => {
+                            cv_builder.width(width.to_computed_value(&context));
                         }
                     }
                 }

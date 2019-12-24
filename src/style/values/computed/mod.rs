@@ -2,15 +2,19 @@
 /// Kosmonaut complies Servo's license, the Mozilla Public License 2.0.
 pub mod display;
 pub mod font;
+pub mod height;
 pub mod length;
 pub mod margin;
 pub mod padding;
 pub mod percentage;
+pub mod width;
 
+use crate::style::values::computed::height::Height;
 use crate::style::values::computed::margin::{MarginBottom, MarginLeft, MarginRight, MarginTop};
 use crate::style::values::computed::padding::{
     PaddingBottom, PaddingLeft, PaddingRight, PaddingTop,
 };
+use crate::style::values::computed::width::Width;
 pub use display::Display;
 pub use font::FontSize;
 pub use percentage::Percentage;
@@ -22,6 +26,7 @@ pub use percentage::Percentage;
 pub struct ComputedValues {
     pub display: Display,
     pub font_size: FontSize,
+    pub height: Height,
     pub margin_bottom: MarginBottom,
     pub margin_left: MarginLeft,
     pub margin_right: MarginRight,
@@ -30,6 +35,7 @@ pub struct ComputedValues {
     pub padding_left: PaddingLeft,
     pub padding_right: PaddingRight,
     pub padding_top: PaddingTop,
+    pub width: Width,
 }
 
 /// Create a default set of computed values.  Likely most useful for the case in which we're working
@@ -40,7 +46,8 @@ impl Default for ComputedValues {
     fn default() -> Self {
         ComputedValues {
             display: Display::initial_value(),
-            font_size: FontSize::medium(),
+            font_size: FontSize::initial_value(),
+            height: Height::initial_value(),
             margin_bottom: MarginBottom::initial_value(),
             margin_left: MarginLeft::initial_value(),
             margin_right: MarginRight::initial_value(),
@@ -49,6 +56,7 @@ impl Default for ComputedValues {
             padding_left: PaddingLeft::initial_value(),
             padding_right: PaddingRight::initial_value(),
             padding_top: PaddingTop::initial_value(),
+            width: Width::initial_value(),
         }
     }
 }

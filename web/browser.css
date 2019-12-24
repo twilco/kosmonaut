@@ -4,4 +4,5 @@ div.main, div.main.main.div {
   margin-bottom: auto;
   padding-bottom: 216px;
   display: block;
+  width: 70px;
 }

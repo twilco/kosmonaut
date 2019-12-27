@@ -16,6 +16,21 @@ pub fn border_side_initial_style() -> LineStyle {
     LineStyle::None
 }
 
+pub fn compute_border_side_color(
+    self_color: specified::ColorUnit,
+    context: &ComputeContext,
+) -> RGBA {
+    match self_color {
+        specified::ColorUnit::CurrentColor => {
+            context
+                .computed_color
+                .expect("border-color property computed before the color property")
+                .0
+        }
+        specified::ColorUnit::Numeric(rgba) => rgba,
+    }
+}
+
 /// Computed `border-bottom-color`.
 ///
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
@@ -38,14 +53,8 @@ impl ComputeValueWithContext for specified::BorderBottomColor {
     type ComputedValue = BorderBottomColor;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        match self.color {
-            specified::ColorUnit::CurrentColor => BorderBottomColor {
-                color: context
-                    .computed_color
-                    .expect("border-bottom-color computed before the color property")
-                    .0,
-            },
-            specified::ColorUnit::Numeric(rgba) => BorderBottomColor { color: rgba },
+        BorderBottomColor {
+            color: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -85,14 +94,8 @@ impl ComputeValueWithContext for specified::BorderLeftColor {
     type ComputedValue = BorderLeftColor;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        match self.color {
-            specified::ColorUnit::CurrentColor => BorderLeftColor {
-                color: context
-                    .computed_color
-                    .expect("border-bottom-color computed before the color property")
-                    .0,
-            },
-            specified::ColorUnit::Numeric(rgba) => BorderLeftColor { color: rgba },
+        BorderLeftColor {
+            color: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -132,14 +135,8 @@ impl ComputeValueWithContext for specified::BorderRightColor {
     type ComputedValue = BorderRightColor;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        match self.color {
-            specified::ColorUnit::CurrentColor => BorderRightColor {
-                color: context
-                    .computed_color
-                    .expect("border-right-color computed before the color property")
-                    .0,
-            },
-            specified::ColorUnit::Numeric(rgba) => BorderRightColor { color: rgba },
+        BorderRightColor {
+            color: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -179,14 +176,8 @@ impl ComputeValueWithContext for specified::BorderTopColor {
     type ComputedValue = BorderTopColor;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        match self.color {
-            specified::ColorUnit::CurrentColor => BorderTopColor {
-                color: context
-                    .computed_color
-                    .expect("border-top-color computed before the color property")
-                    .0,
-            },
-            specified::ColorUnit::Numeric(rgba) => BorderTopColor { color: rgba },
+        BorderTopColor {
+            color: compute_border_side_color(self.color, context),
         }
     }
 }

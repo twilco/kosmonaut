@@ -1,5 +1,7 @@
 use crate::style::properties::{ContextualPropertyDeclaration, PropertyDeclaration};
-use crate::style::values::computed::{ComputeContext, ComputedValuesBuilder, ValueDefault};
+use crate::style::values::computed::{
+    ComputeContext, ComputedValuesBuilder, LineStyle, ValueDefault,
+};
 use crate::style::values::{computed, specified};
 
 /// Representation of a CSS property, that is, either a longhand, a
@@ -21,12 +23,24 @@ impl PropertyId {
     pub fn parse(prop_name: &str) -> Option<PropertyId> {
         let id = match prop_name {
             // Longhands
+            "border-bottom-color" => PropertyId::Longhand(LonghandId::BorderBottomColor),
+            "border-left-color" => PropertyId::Longhand(LonghandId::BorderLeftColor),
+            "border-right-color" => PropertyId::Longhand(LonghandId::BorderRightColor),
+            "border-top-color" => PropertyId::Longhand(LonghandId::BorderTopColor),
+            "border-bottom-style" => PropertyId::Longhand(LonghandId::BorderBottomStyle),
+            "border-left-style" => PropertyId::Longhand(LonghandId::BorderLeftStyle),
+            "border-right-style" => PropertyId::Longhand(LonghandId::BorderRightStyle),
+            "border-top-style" => PropertyId::Longhand(LonghandId::BorderTopStyle),
+            "border-bottom-width" => PropertyId::Longhand(LonghandId::BorderBottomWidth),
+            "border-left-width" => PropertyId::Longhand(LonghandId::BorderLeftWidth),
+            "border-right-width" => PropertyId::Longhand(LonghandId::BorderRightWidth),
+            "border-top-width" => PropertyId::Longhand(LonghandId::BorderTopWidth),
+            "color" => PropertyId::Longhand(LonghandId::Color),
             "display" => PropertyId::Longhand(LonghandId::Display),
             //            "float" => PropertyId::Longhand(LonghandId::Float),
             //            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
             //            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
             //            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
-            //            "color" => PropertyId::Longhand(LonghandId::Color),
             "font-size" => PropertyId::Longhand(LonghandId::FontSize),
             "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
             "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
@@ -166,18 +180,18 @@ pub enum LonghandId {
     //    BorderBlockEndStyle = 51,
     //    /// border-block-start-style
     //    BorderBlockStartStyle = 52,
-    //    /// border-bottom-style
-    //    BorderBottomStyle = 53,
+    /// border-bottom-style
+    BorderBottomStyle = 53,
     //    /// border-inline-end-style
     //    BorderInlineEndStyle = 54,
     //    /// border-inline-start-style
     //    BorderInlineStartStyle = 55,
-    //    /// border-left-style
-    //    BorderLeftStyle = 56,
-    //    /// border-right-style
-    //    BorderRightStyle = 57,
-    //    /// border-top-style
-    //    BorderTopStyle = 58,
+    /// border-left-style
+    BorderLeftStyle = 56,
+    /// border-right-style
+    BorderRightStyle = 57,
+    /// border-top-style
+    BorderTopStyle = 58,
     //    /// animation-delay
     //    AnimationDelay = 59,
     //    /// animation-direction
@@ -224,8 +238,8 @@ pub enum LonghandId {
     //    BoxShadow = 80,
     //    /// clip
     //    Clip = 81,
-    //    /// color
-    //    Color = 82,
+    /// color
+    Color = 82,
     //    /// column-gap
     //    ColumnGap = 83,
     //    /// column-width
@@ -348,18 +362,18 @@ pub enum LonghandId {
     //    BorderBlockEndWidth = 142,
     //    /// border-block-start-width
     //    BorderBlockStartWidth = 143,
-    //    /// border-bottom-width
-    //    BorderBottomWidth = 144,
+    /// border-bottom-width
+    BorderBottomWidth = 144,
     //    /// border-inline-end-width
     //    BorderInlineEndWidth = 145,
     //    /// border-inline-start-width
     //    BorderInlineStartWidth = 146,
-    //    /// border-left-width
-    //    BorderLeftWidth = 147,
-    //    /// border-right-width
-    //    BorderRightWidth = 148,
-    //    /// border-top-width
-    //    BorderTopWidth = 149,
+    /// border-left-width
+    BorderLeftWidth = 147,
+    /// border-right-width
+    BorderRightWidth = 148,
+    /// border-top-width
+    BorderTopWidth = 149,
     //    /// outline-width
     //    OutlineWidth = 150,
     //    /// background-color
@@ -368,18 +382,18 @@ pub enum LonghandId {
     //    BorderBlockEndColor = 152,
     //    /// border-block-start-color
     //    BorderBlockStartColor = 153,
-    //    /// border-bottom-color
-    //    BorderBottomColor = 154,
+    /// border-bottom-color
+    BorderBottomColor = 154,
     //    /// border-inline-end-color
     //    BorderInlineEndColor = 155,
     //    /// border-inline-start-color
     //    BorderInlineStartColor = 156,
-    //    /// border-left-color
-    //    BorderLeftColor = 157,
-    //    /// border-right-color
-    //    BorderRightColor = 158,
-    //    /// border-top-color
-    //    BorderTopColor = 159,
+    /// border-left-color
+    BorderLeftColor = 157,
+    /// border-right-color
+    BorderRightColor = 158,
+    /// border-top-color
+    BorderTopColor = 159,
     //    /// outline-color
     //    OutlineColor = 160,
     //    /// bottom
@@ -420,6 +434,45 @@ impl LonghandId {
     #[allow(unreachable_patterns)]
     pub fn value_default(self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
         match self {
+            LonghandId::BorderBottomColor => {
+                cv_builder.border_bottom_color(specified::BorderBottomColor::value_default(ctx));
+            }
+            LonghandId::BorderLeftColor => {
+                cv_builder.border_left_color(specified::BorderLeftColor::value_default(ctx));
+            }
+            LonghandId::BorderRightColor => {
+                cv_builder.border_right_color(specified::BorderRightColor::value_default(ctx));
+            }
+            LonghandId::BorderTopColor => {
+                cv_builder.border_top_color(specified::BorderTopColor::value_default(ctx));
+            }
+            LonghandId::BorderBottomStyle => {
+                cv_builder.border_bottom_style(LineStyle::None);
+            }
+            LonghandId::BorderLeftStyle => {
+                cv_builder.border_left_style(LineStyle::None);
+            }
+            LonghandId::BorderRightStyle => {
+                cv_builder.border_right_style(LineStyle::None);
+            }
+            LonghandId::BorderTopStyle => {
+                cv_builder.border_top_style(LineStyle::None);
+            }
+            LonghandId::BorderBottomWidth => {
+                cv_builder.border_bottom_width(specified::BorderBottomWidth::value_default(ctx));
+            }
+            LonghandId::BorderLeftWidth => {
+                cv_builder.border_left_width(specified::BorderLeftWidth::value_default(ctx));
+            }
+            LonghandId::BorderRightWidth => {
+                cv_builder.border_right_width(specified::BorderRightWidth::value_default(ctx));
+            }
+            LonghandId::BorderTopWidth => {
+                cv_builder.border_top_width(specified::BorderTopWidth::value_default(ctx));
+            }
+            LonghandId::Color => {
+                cv_builder.color(specified::Color::value_default(ctx));
+            }
             LonghandId::Display => {
                 cv_builder.display(computed::Display::value_default(ctx));
             }
@@ -467,6 +520,19 @@ impl LonghandId {
 impl From<&PropertyDeclaration> for LonghandId {
     fn from(prop_decl: &PropertyDeclaration) -> Self {
         match prop_decl {
+            PropertyDeclaration::BorderBottomColor(_) => LonghandId::BorderBottomColor,
+            PropertyDeclaration::BorderLeftColor(_) => LonghandId::BorderLeftColor,
+            PropertyDeclaration::BorderRightColor(_) => LonghandId::BorderRightColor,
+            PropertyDeclaration::BorderTopColor(_) => LonghandId::BorderTopColor,
+            PropertyDeclaration::BorderBottomStyle(_) => LonghandId::BorderBottomStyle,
+            PropertyDeclaration::BorderLeftStyle(_) => LonghandId::BorderLeftStyle,
+            PropertyDeclaration::BorderRightStyle(_) => LonghandId::BorderRightStyle,
+            PropertyDeclaration::BorderTopStyle(_) => LonghandId::BorderTopStyle,
+            PropertyDeclaration::BorderBottomWidth(_) => LonghandId::BorderBottomWidth,
+            PropertyDeclaration::BorderLeftWidth(_) => LonghandId::BorderLeftWidth,
+            PropertyDeclaration::BorderRightWidth(_) => LonghandId::BorderRightWidth,
+            PropertyDeclaration::BorderTopWidth(_) => LonghandId::BorderTopWidth,
+            PropertyDeclaration::Color(_) => LonghandId::Color,
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
             PropertyDeclaration::Height(_) => LonghandId::Height,

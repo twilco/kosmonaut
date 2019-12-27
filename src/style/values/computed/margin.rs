@@ -1,5 +1,7 @@
 use crate::style::values::computed::length::{LengthPercentage, LengthPercentageOrAuto};
-use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
+use crate::style::values::computed::{
+    ComputeContext, ComputeValue, ComputeValueWithContext, ValueDefault,
+};
 use crate::style::values::specified;
 
 /// Computed value of a `margin-bottom`.
@@ -16,12 +18,12 @@ impl MarginBottom {
     }
 }
 
-impl ToComputedValue for specified::MarginBottom {
+impl ComputeValueWithContext for specified::MarginBottom {
     type ComputedValue = MarginBottom;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         MarginBottom {
-            size: computed_margin_size(&self.lp_or_auto, &context),
+            size: computed_margin_size(&self.lp_or_auto),
         }
     }
 }
@@ -48,12 +50,12 @@ impl MarginLeft {
     }
 }
 
-impl ToComputedValue for specified::MarginLeft {
+impl ComputeValueWithContext for specified::MarginLeft {
     type ComputedValue = MarginLeft;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         MarginLeft {
-            size: computed_margin_size(&self.lp_or_auto, &context),
+            size: computed_margin_size(&self.lp_or_auto),
         }
     }
 }
@@ -80,12 +82,12 @@ impl MarginRight {
     }
 }
 
-impl ToComputedValue for specified::MarginRight {
+impl ComputeValueWithContext for specified::MarginRight {
     type ComputedValue = MarginRight;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         MarginRight {
-            size: computed_margin_size(&self.lp_or_auto, &context),
+            size: computed_margin_size(&self.lp_or_auto),
         }
     }
 }
@@ -112,12 +114,12 @@ impl MarginTop {
     }
 }
 
-impl ToComputedValue for specified::MarginTop {
+impl ComputeValueWithContext for specified::MarginTop {
     type ComputedValue = MarginTop;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         MarginTop {
-            size: computed_margin_size(&self.lp_or_auto, &context),
+            size: computed_margin_size(&self.lp_or_auto),
         }
     }
 }
@@ -130,15 +132,12 @@ impl ValueDefault for specified::MarginTop {
     }
 }
 
-fn computed_margin_size(
-    lp_auto: &specified::LengthPercentageOrAuto,
-    context: &ComputeContext,
-) -> LengthPercentageOrAuto {
+fn computed_margin_size(lp_auto: &specified::LengthPercentageOrAuto) -> LengthPercentageOrAuto {
     match lp_auto {
         specified::LengthPercentageOrAuto::Auto => LengthPercentageOrAuto::Auto,
         specified::LengthPercentageOrAuto::LengthPercentage(lp) => match lp {
             specified::LengthPercentage::Length(no_calc_length) => {
-                no_calc_length.to_computed_value(context).into()
+                no_calc_length.compute_value().into()
             }
             specified::LengthPercentage::Percentage(percentage) => {
                 LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Percentage(*percentage))

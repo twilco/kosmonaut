@@ -5,4 +5,8 @@ div.main, div.main.main.div {
   padding-bottom: 216px;
   display: block;
   width: 70px;
+  color: rgb(120, 14, 16);
+  border-bottom-color: currentColor;
+  border-top-style: dashed;
+  border-left-width: 88px;
 }

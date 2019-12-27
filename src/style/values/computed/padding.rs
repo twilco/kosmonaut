@@ -1,5 +1,7 @@
 use crate::style::values::computed::length::LengthPercentage;
-use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
+use crate::style::values::computed::{
+    ComputeContext, ComputeValue, ComputeValueWithContext, ValueDefault,
+};
 use crate::style::values::specified;
 
 /// Computed value of a `padding-bottom`.
@@ -16,12 +18,12 @@ impl PaddingBottom {
     }
 }
 
-impl ToComputedValue for specified::PaddingBottom {
+impl ComputeValueWithContext for specified::PaddingBottom {
     type ComputedValue = PaddingBottom;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         PaddingBottom {
-            size: computed_padding_size(&self.length_percentage, &context),
+            size: computed_padding_size(&self.length_percentage),
         }
     }
 }
@@ -48,12 +50,12 @@ impl PaddingLeft {
     }
 }
 
-impl ToComputedValue for specified::PaddingLeft {
+impl ComputeValueWithContext for specified::PaddingLeft {
     type ComputedValue = PaddingLeft;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         PaddingLeft {
-            size: computed_padding_size(&self.length_percentage, &context),
+            size: computed_padding_size(&self.length_percentage),
         }
     }
 }
@@ -80,12 +82,12 @@ impl PaddingRight {
     }
 }
 
-impl ToComputedValue for specified::PaddingRight {
+impl ComputeValueWithContext for specified::PaddingRight {
     type ComputedValue = PaddingRight;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         PaddingRight {
-            size: computed_padding_size(&self.length_percentage, &context),
+            size: computed_padding_size(&self.length_percentage),
         }
     }
 }
@@ -112,12 +114,12 @@ impl PaddingTop {
     }
 }
 
-impl ToComputedValue for specified::PaddingTop {
+impl ComputeValueWithContext for specified::PaddingTop {
     type ComputedValue = PaddingTop;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
         PaddingTop {
-            size: computed_padding_size(&self.length_percentage, &context),
+            size: computed_padding_size(&self.length_percentage),
         }
     }
 }
@@ -130,13 +132,10 @@ impl ValueDefault for specified::PaddingTop {
     }
 }
 
-fn computed_padding_size(
-    lp: &specified::LengthPercentage,
-    context: &ComputeContext,
-) -> LengthPercentage {
+fn computed_padding_size(lp: &specified::LengthPercentage) -> LengthPercentage {
     match lp {
         specified::LengthPercentage::Length(no_calc_length) => {
-            no_calc_length.to_computed_value(context).into()
+            no_calc_length.compute_value().into()
         }
         specified::LengthPercentage::Percentage(percentage) => {
             LengthPercentage::Percentage(*percentage)

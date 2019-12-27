@@ -17,6 +17,6 @@ impl Width {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| Width::LengthPercentageOrAuto(lp_or_auto))
+            .map(Width::LengthPercentageOrAuto)
     }
 }

@@ -1,5 +1,7 @@
 use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::computed::{ComputeContext, ToComputedValue, ValueDefault};
+use crate::style::values::computed::{
+    ComputeContext, ComputeValue, ComputeValueWithContext, ValueDefault,
+};
 use crate::style::values::specified;
 use crate::style::values::specified::font::KeywordSize;
 use crate::style::values::specified::{LengthPercentage, NoCalcLength};
@@ -39,18 +41,18 @@ impl ValueDefault for specified::FontSize {
     }
 }
 
-impl ToComputedValue for specified::FontSize {
+impl ComputeValueWithContext for specified::FontSize {
     type ComputedValue = FontSize;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         let (size_px, keyword_size) = match self {
             specified::FontSize::Keyword(keyword_size) => (
-                keyword_size.to_computed_value(&context),
+                keyword_size.compute_value_with_context(&context),
                 Some(*keyword_size),
             ),
             specified::FontSize::Length(LengthPercentage::Length(NoCalcLength::Absolute(
                 abs_len,
-            ))) => (abs_len.to_computed_value(context), None),
+            ))) => (abs_len.compute_value(), None),
             specified::FontSize::Length(specified::LengthPercentage::Percentage(percentage)) => {
                 let parent_font = context.parent_computed_values.font_size;
                 (
@@ -70,11 +72,11 @@ impl ToComputedValue for specified::FontSize {
 /// The default font size.
 pub const FONT_MEDIUM_PX: i32 = 16;
 
-impl ToComputedValue for KeywordSize {
+impl ComputeValueWithContext for KeywordSize {
     // TODO: This should be a NonNegativeLength
     type ComputedValue = CSSPixelLength;
     #[inline]
-    fn to_computed_value(&self, _: &ComputeContext) -> CSSPixelLength {
+    fn compute_value_with_context(&self, _: &ComputeContext) -> CSSPixelLength {
         // https://drafts.csswg.org/css-fonts-3/#font-size-prop
         match *self {
             KeywordSize::XXSmall => Au::from_px(FONT_MEDIUM_PX) * 3 / 5,

@@ -10,10 +10,14 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
-use crate::style::values::computed::Display;
+use crate::style::values::computed::{Display, LineStyle};
+use crate::style::values::specified::border::{
+    BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
+};
 use crate::style::values::specified::{
-    FontSize, Height, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
-    PaddingRight, PaddingTop, Width,
+    BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color, FontSize, Height,
+    MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft, PaddingRight,
+    PaddingTop, Width,
 };
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -158,6 +162,45 @@ impl PropertyDeclaration {
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
             PropertyId::Longhand(longhand) => match longhand {
+                LonghandId::BorderBottomColor => declarations.push(
+                    PropertyDeclaration::BorderBottomColor(BorderBottomColor::parse(input)?),
+                ),
+                LonghandId::BorderLeftColor => declarations.push(
+                    PropertyDeclaration::BorderLeftColor(BorderLeftColor::parse(input)?),
+                ),
+                LonghandId::BorderRightColor => declarations.push(
+                    PropertyDeclaration::BorderRightColor(BorderRightColor::parse(input)?),
+                ),
+                LonghandId::BorderTopColor => declarations.push(
+                    PropertyDeclaration::BorderTopColor(BorderTopColor::parse(input)?),
+                ),
+                LonghandId::BorderBottomStyle => declarations.push(
+                    PropertyDeclaration::BorderBottomStyle(LineStyle::parse(input)?),
+                ),
+                LonghandId::BorderLeftStyle => declarations.push(
+                    PropertyDeclaration::BorderLeftStyle(LineStyle::parse(input)?),
+                ),
+                LonghandId::BorderRightStyle => declarations.push(
+                    PropertyDeclaration::BorderRightStyle(LineStyle::parse(input)?),
+                ),
+                LonghandId::BorderTopStyle => declarations.push(
+                    PropertyDeclaration::BorderTopStyle(LineStyle::parse(input)?),
+                ),
+                LonghandId::BorderBottomWidth => declarations.push(
+                    PropertyDeclaration::BorderBottomWidth(BorderBottomWidth::parse(input)?),
+                ),
+                LonghandId::BorderLeftWidth => declarations.push(
+                    PropertyDeclaration::BorderLeftWidth(BorderLeftWidth::parse(input)?),
+                ),
+                LonghandId::BorderRightWidth => declarations.push(
+                    PropertyDeclaration::BorderRightWidth(BorderRightWidth::parse(input)?),
+                ),
+                LonghandId::BorderTopWidth => declarations.push(
+                    PropertyDeclaration::BorderTopWidth(BorderTopWidth::parse(input)?),
+                ),
+                LonghandId::Color => {
+                    declarations.push(PropertyDeclaration::Color(Color::parse(input)?))
+                }
                 LonghandId::Display => {
                     declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
                 }
@@ -214,7 +257,19 @@ impl PropertyDeclaration {
 #[derive(Clone, Debug)]
 #[repr(u16)]
 pub enum PropertyDeclaration {
-    // Property(value)
+    BorderBottomColor(crate::style::values::specified::BorderBottomColor),
+    BorderLeftColor(crate::style::values::specified::BorderLeftColor),
+    BorderRightColor(crate::style::values::specified::BorderRightColor),
+    BorderTopColor(crate::style::values::specified::BorderTopColor),
+    BorderBottomStyle(crate::style::values::computed::LineStyle),
+    BorderLeftStyle(crate::style::values::computed::LineStyle),
+    BorderRightStyle(crate::style::values::computed::LineStyle),
+    BorderTopStyle(crate::style::values::computed::LineStyle),
+    BorderBottomWidth(crate::style::values::specified::BorderBottomWidth),
+    BorderLeftWidth(crate::style::values::specified::BorderLeftWidth),
+    BorderRightWidth(crate::style::values::specified::BorderRightWidth),
+    BorderTopWidth(crate::style::values::specified::BorderTopWidth),
+    Color(crate::style::values::specified::Color),
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     Height(crate::style::values::specified::Height),

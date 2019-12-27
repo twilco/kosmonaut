@@ -1,9 +1,23 @@
+pub mod border;
+pub mod color;
 pub mod font;
 pub mod height;
 pub mod length;
 pub mod margin;
 pub mod padding;
 pub mod width;
+
+pub use border::BorderBottomColor;
+pub use border::BorderBottomWidth;
+pub use border::BorderLeftColor;
+pub use border::BorderLeftWidth;
+pub use border::BorderRightColor;
+pub use border::BorderRightWidth;
+pub use border::BorderTopColor;
+pub use border::BorderTopWidth;
+
+pub use color::Color;
+pub use color::ColorUnit;
 
 pub use font::FontSize;
 pub use font::FONT_MEDIUM_PX;

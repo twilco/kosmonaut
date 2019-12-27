@@ -1,4 +1,4 @@
-use crate::style::values::computed::{ComputeContext, Percentage, ToComputedValue};
+use crate::style::values::computed::{ComputeValue, Percentage};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
@@ -162,20 +162,20 @@ impl From<CSSPixelLength> for LengthPercentage {
     }
 }
 
-impl ToComputedValue for specified::AbsoluteLength {
+impl ComputeValue for specified::AbsoluteLength {
     type ComputedValue = CSSPixelLength;
 
-    fn to_computed_value(&self, _context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value(&self) -> Self::ComputedValue {
         CSSPixelLength(self.to_px())
     }
 }
 
-impl ToComputedValue for specified::NoCalcLength {
+impl ComputeValue for specified::NoCalcLength {
     type ComputedValue = CSSPixelLength;
 
-    fn to_computed_value(&self, context: &ComputeContext) -> Self::ComputedValue {
+    fn compute_value(&self) -> Self::ComputedValue {
         match self {
-            specified::NoCalcLength::Absolute(abs_len) => abs_len.to_computed_value(context).into(),
+            specified::NoCalcLength::Absolute(abs_len) => abs_len.compute_value(),
         }
     }
 }

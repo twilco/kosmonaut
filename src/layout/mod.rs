@@ -157,6 +157,12 @@ impl LayoutBox {
 
     fn calculate_block_width(&mut self, containing_block: Dimensions) {
         let cvs = self.node.computed_values();
+
+        let margin_left = cvs.margin_left;
+        let margin_right = cvs.margin_right;
+
+        let padding_left = cvs.padding_left;
+        let padding_right = cvs.padding_right;
     }
 
     fn calculate_block_height(&mut self) {}

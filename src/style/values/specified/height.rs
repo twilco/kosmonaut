@@ -17,6 +17,6 @@ impl Height {
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| Height::LengthPercentageOrAuto(lp_or_auto))
+            .map(Height::LengthPercentageOrAuto)
     }
 }

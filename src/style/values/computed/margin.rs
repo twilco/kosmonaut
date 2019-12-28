@@ -7,7 +7,7 @@ use crate::style::values::specified;
 /// Computed value of a `margin-bottom`.
 #[derive(Clone, Copy, Debug)]
 pub struct MarginBottom {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl MarginBottom {
@@ -39,7 +39,7 @@ impl ValueDefault for specified::MarginBottom {
 /// Computed value of a `margin-left`.
 #[derive(Clone, Copy, Debug)]
 pub struct MarginLeft {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl MarginLeft {
@@ -71,7 +71,7 @@ impl ValueDefault for specified::MarginLeft {
 /// Computed value of a `margin-right`.
 #[derive(Clone, Copy, Debug)]
 pub struct MarginRight {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl MarginRight {
@@ -103,7 +103,7 @@ impl ValueDefault for specified::MarginRight {
 /// Computed value of a `margin-top`.
 #[derive(Clone, Copy, Debug)]
 pub struct MarginTop {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl MarginTop {

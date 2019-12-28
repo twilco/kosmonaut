@@ -4,7 +4,7 @@ use app_units::Au;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 /// The computed `<length>` value.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 pub struct CSSPixelLength(CSSFloat);
 
 impl From<CSSPixelLength> for Au {
@@ -18,6 +18,12 @@ impl From<Au> for CSSPixelLength {
     #[inline]
     fn from(len: Au) -> Self {
         CSSPixelLength::new(len.to_f32_px())
+    }
+}
+
+impl From<f32> for CSSPixelLength {
+    fn from(val: f32) -> Self {
+        CSSPixelLength::new(val)
     }
 }
 
@@ -134,6 +140,10 @@ impl LengthPercentageOrAuto {
         LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(CSSPixelLength::new(
             px_len,
         )))
+    }
+
+    pub fn new_len_px(px_len: CSSPixelLength) -> LengthPercentageOrAuto {
+        LengthPercentageOrAuto::LengthPercentage(LengthPercentage::Length(px_len))
     }
 }
 

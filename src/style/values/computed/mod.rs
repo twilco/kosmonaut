@@ -12,8 +12,10 @@ pub mod percentage;
 pub mod width;
 
 use crate::style::values::computed::height::Height;
-use crate::style::values::computed::margin::{MarginBottom, MarginLeft, MarginRight, MarginTop};
-use crate::style::values::computed::padding::{
+pub use crate::style::values::computed::margin::{
+    MarginBottom, MarginLeft, MarginRight, MarginTop,
+};
+pub use crate::style::values::computed::padding::{
     PaddingBottom, PaddingLeft, PaddingRight, PaddingTop,
 };
 use crate::style::values::computed::width::Width;

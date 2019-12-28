@@ -7,7 +7,7 @@ use crate::style::values::specified;
 /// Computed value of a `width`.
 #[derive(Clone, Copy, Debug)]
 pub struct Width {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl Width {

@@ -7,7 +7,7 @@ use crate::style::values::specified;
 /// Computed value of a `padding-bottom`.
 #[derive(Clone, Copy, Debug)]
 pub struct PaddingBottom {
-    size: LengthPercentage,
+    pub size: LengthPercentage,
 }
 
 impl PaddingBottom {
@@ -39,7 +39,7 @@ impl ValueDefault for specified::PaddingBottom {
 /// Computed value of a `padding-left`.
 #[derive(Clone, Copy, Debug)]
 pub struct PaddingLeft {
-    size: LengthPercentage,
+    pub size: LengthPercentage,
 }
 
 impl PaddingLeft {
@@ -71,7 +71,7 @@ impl ValueDefault for specified::PaddingLeft {
 /// Computed value of a `padding-right`.
 #[derive(Clone, Copy, Debug)]
 pub struct PaddingRight {
-    size: LengthPercentage,
+    pub size: LengthPercentage,
 }
 
 impl PaddingRight {
@@ -103,7 +103,7 @@ impl ValueDefault for specified::PaddingRight {
 /// Computed value of a `padding-top`.
 #[derive(Clone, Copy, Debug)]
 pub struct PaddingTop {
-    size: LengthPercentage,
+    pub size: LengthPercentage,
 }
 
 impl PaddingTop {

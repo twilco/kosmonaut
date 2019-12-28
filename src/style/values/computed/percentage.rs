@@ -1,11 +1,14 @@
-/* This file was taken directly from Servo. https://github.com/servo/servo/blob/master/components/style/values/computed/percentage.rs
-Kosmonaut matches Servo's license, MPL 2.0: https://mozilla.org/MPL/2.0/ */
+/* This file was taken directly from Servo and has since been modified slightly to fit Kosmonaut's needs.
+https://github.com/servo/servo/blob/master/components/style/values/computed/percentage.rs
+Kosmonaut matches Servo's license, MPL 2.0. https://mozilla.org/MPL/2.0/ */
 
 //! Computed percentages.
 //! TODO: We don't yet have a specified::Percentage.  As far as I can tell, specified::Percentages
 //! deal with calc expressions, which we don't yet support.
 
+use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::CSSFloat;
+use app_units::Au;
 
 /// A computed percentage.
 #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
@@ -28,5 +31,10 @@ impl Percentage {
     #[inline]
     pub fn clamp_to_non_negative(self) -> Self {
         Percentage(self.0.max(0.))
+    }
+
+    /// Calculates the absolute pixel length of this percentage relative to `val`.
+    pub fn px_relative_to(self, val: CSSPixelLength) -> CSSPixelLength {
+        CSSPixelLength::from(Au::from(val).scale_by(self.0.clone()))
     }
 }

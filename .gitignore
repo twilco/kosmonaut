@@ -2,3 +2,4 @@
 /.idea/
 **/*.rs.bk
 notes.md
+.DS_Store

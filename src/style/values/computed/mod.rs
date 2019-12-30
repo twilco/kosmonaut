@@ -322,7 +322,8 @@ pub fn compute_values(node: NodeRef) {
             }
         };
     });
-    *node.computed_values_mut() = dbg!(cv_builder.build())
+    *node.computed_values_mut() = cv_builder
+        .build()
         .expect("couldn't build computed values - maybe a field wasn't given to the builder?");
 }
 

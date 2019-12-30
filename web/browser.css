@@ -1,12 +1,21 @@
 /* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
 div.main, div.main.main.div {
-  font-size: 12px !important;
-  margin-bottom: auto;
-  padding-bottom: 216px;
-  display: block;
-  width: 70px;
-  color: rgb(120, 14, 16);
-  border-bottom-color: currentColor;
-  border-top-style: dashed;
-  border-left-width: 88px;
+  /*font-size: 12px !important;*/
+  /*margin-bottom: auto;*/
+  /*padding-bottom: 216px;*/
+  /*display: block;*/
+  /*width: 70px;*/
+  /*color: rgb(120, 14, 16);*/
+  /*border-bottom-color: currentColor;*/
+  /*border-top-style: dashed;*/
+  /*border-left-width: 88px;*/
 }
+
+div { display: block; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; }
+.a { color: #ff0000; }
+.b { color: #ffa500; }
+.c { color: #ffff00; }
+.d { color: #008000; }
+.e { color: #0000ff; }
+.f { color: #4b0082; }
+.g { color: #800080; }

@@ -20,7 +20,9 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 
+use crate::layout::{build_layout_tree, Dimensions, Rect};
 use crate::style::apply_styles;
+use crate::style::values::computed::length::CSSPixelLength;
 
 pub mod dom;
 #[allow(unused_imports)]
@@ -45,7 +47,7 @@ fn main() {
     application.connect_activate(|app| {
         let window = ApplicationWindow::new(app);
         window.set_title("Kosmonaut");
-        window.set_default_size(800, 800);
+        window.set_default_size(1440, 1440);
 
         let url_entry_container = Box::new(Orientation::Vertical, 32);
         url_entry_container.add(&Entry::new());
@@ -55,7 +57,7 @@ fn main() {
 
     let dom = parse_html()
         .from_utf8()
-        .read_from(&mut File::open("web/basic.html").unwrap())
+        .read_from(&mut File::open("web/rainbow-divs.html").unwrap())
         .unwrap();
 
     let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
@@ -64,7 +66,20 @@ fn main() {
     )
     .expect("parse stylesheet fail");
 
-    apply_styles(dom, vec![ua_sheet], Vec::new(), Vec::new());
+    apply_styles(dom.clone(), vec![ua_sheet], Vec::new(), Vec::new());
+    let mut layout_tree = build_layout_tree(dom).unwrap();
+    layout_tree.layout(Dimensions {
+        content: Rect {
+            start_x: 0.0,
+            start_y: 0.0,
+            width: CSSPixelLength::new(1440.),
+            height: CSSPixelLength::new(1440.),
+        },
+        padding: Default::default(),
+        border: Default::default(),
+        margin: Default::default(),
+    });
+    dbg!(layout_tree.nodeless_dbg());
 
     application.run(&[]);
 }

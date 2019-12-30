@@ -1,6 +1,7 @@
 use crate::style::values::computed::{ComputeValue, Percentage};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
+use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 /// The computed `<length>` value.
@@ -21,9 +22,15 @@ impl From<Au> for CSSPixelLength {
     }
 }
 
-impl From<f32> for CSSPixelLength {
+impl From<CSSFloat> for CSSPixelLength {
     fn from(val: f32) -> Self {
         CSSPixelLength::new(val)
+    }
+}
+
+impl From<CSSPixelLength> for CSSFloat {
+    fn from(val: CSSPixelLength) -> Self {
+        val.0
     }
 }
 
@@ -33,6 +40,22 @@ impl Add for CSSPixelLength {
     #[inline]
     fn add(self, other: Self) -> Self {
         Self::new(self.px() + other.px())
+    }
+}
+
+impl Add<CSSFloat> for CSSPixelLength {
+    type Output = CSSPixelLength;
+
+    fn add(self, rhs: CSSFloat) -> Self::Output {
+        (self.0 + rhs).into()
+    }
+}
+
+impl Add<CSSPixelLength> for CSSFloat {
+    type Output = CSSPixelLength;
+
+    fn add(self, rhs: CSSPixelLength) -> Self::Output {
+        (self + rhs.0).into()
     }
 }
 
@@ -76,6 +99,35 @@ impl Sub for CSSPixelLength {
     #[inline]
     fn sub(self, other: Self) -> Self {
         Self::new(self.px() - other.px())
+    }
+}
+
+impl Sub<CSSFloat> for CSSPixelLength {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, other: CSSFloat) -> Self {
+        Self::new(self.px() - other)
+    }
+}
+
+impl Sub<CSSPixelLength> for CSSFloat {
+    type Output = CSSPixelLength;
+
+    fn sub(self, rhs: CSSPixelLength) -> Self::Output {
+        CSSPixelLength::new(self - rhs.px())
+    }
+}
+
+impl PartialOrd<CSSFloat> for CSSPixelLength {
+    fn partial_cmp(&self, other: &CSSFloat) -> Option<Ordering> {
+        self.0.partial_cmp(other)
+    }
+}
+
+impl PartialEq<CSSFloat> for CSSPixelLength {
+    fn eq(&self, other: &CSSFloat) -> bool {
+        self.0 == *other
     }
 }
 

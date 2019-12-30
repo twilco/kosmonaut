@@ -7,7 +7,7 @@ use crate::style::values::specified;
 /// Computed value of a `height`.
 #[derive(Clone, Copy, Debug)]
 pub struct Height {
-    size: LengthPercentageOrAuto,
+    pub size: LengthPercentageOrAuto,
 }
 
 impl Height {

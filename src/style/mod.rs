@@ -60,12 +60,7 @@ pub fn apply_styles(
             }
         }
     });
-
     cascade_and_compute(&dom);
-    debug_recursive(&dom);
-
-    // 5. Formatting the document yields the used value. An element only has a used value for a given property if that property applies to the element.
-    // 6. Finally, the used value is transformed to the actual value based on constraints of the display environment. As with the used value, there may or may not be an actual value for a given property on an element.
 }
 
 /// Performs steps 2-4 of https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages.

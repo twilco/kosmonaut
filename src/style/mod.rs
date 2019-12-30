@@ -5,7 +5,7 @@ use cssparser::{
 };
 use selectors::parser::SelectorParseErrorKind;
 
-use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
+use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};

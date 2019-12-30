@@ -15,9 +15,9 @@ use crate::style::values::specified::border::{
     BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
 };
 use crate::style::values::specified::{
-    BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color, FontSize, Height,
-    MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft, PaddingRight,
-    PaddingTop, Width,
+    BackgroundColor, BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color,
+    FontSize, Height, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
+    PaddingRight, PaddingTop, Width,
 };
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
@@ -162,6 +162,9 @@ impl PropertyDeclaration {
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
             PropertyId::Longhand(longhand) => match longhand {
+                LonghandId::BackgroundColor => declarations.push(
+                    PropertyDeclaration::BackgroundColor(BackgroundColor::parse(input)?),
+                ),
                 LonghandId::BorderBottomColor => declarations.push(
                     PropertyDeclaration::BorderBottomColor(BorderBottomColor::parse(input)?),
                 ),
@@ -257,6 +260,7 @@ impl PropertyDeclaration {
 #[derive(Clone, Debug)]
 #[repr(u16)]
 pub enum PropertyDeclaration {
+    BackgroundColor(crate::style::values::specified::BackgroundColor),
     BorderBottomColor(crate::style::values::specified::BorderBottomColor),
     BorderLeftColor(crate::style::values::specified::BorderLeftColor),
     BorderRightColor(crate::style::values::specified::BorderRightColor),

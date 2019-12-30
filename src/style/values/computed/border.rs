@@ -21,12 +21,10 @@ pub fn compute_border_side_color(
     context: &ComputeContext,
 ) -> RGBA {
     match self_color {
-        specified::ColorUnit::CurrentColor => {
-            context
-                .computed_color
-                .expect("border-color property computed before the color property")
-                .0
-        }
+        specified::ColorUnit::CurrentColor => context
+            .computed_color
+            .expect("border-color property computed before the color property")
+            .rgba(),
         specified::ColorUnit::Numeric(rgba) => rgba,
     }
 }
@@ -77,7 +75,7 @@ impl ValueDefault for specified::BorderBottomColor {
             context
                 .computed_color
                 .expect("color should've been computed before border-bottom-color value default")
-                .0,
+                .rgba(),
         )
     }
 }
@@ -118,7 +116,7 @@ impl ValueDefault for specified::BorderLeftColor {
             context
                 .computed_color
                 .expect("color should've been computed before border-left-color value default")
-                .0,
+                .rgba(),
         )
     }
 }
@@ -159,7 +157,7 @@ impl ValueDefault for specified::BorderRightColor {
             context
                 .computed_color
                 .expect("color should've been computed before border-right-color value default")
-                .0,
+                .rgba(),
         )
     }
 }
@@ -200,7 +198,7 @@ impl ValueDefault for specified::BorderTopColor {
             context
                 .computed_color
                 .expect("color should've been computed before border-top-color value default")
-                .0,
+                .rgba(),
         )
     }
 }

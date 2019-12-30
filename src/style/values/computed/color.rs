@@ -2,15 +2,30 @@ use crate::style::values::computed::{ComputeContext, ComputeValueWithContext, Va
 use crate::style::values::specified;
 use cssparser::RGBA;
 
+impl ComputeValueWithContext for specified::ColorUnit {
+    type ComputedValue = RGBA;
+
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
+        match self {
+            specified::ColorUnit::CurrentColor => context.parent_computed_values.color.rgba(),
+            specified::ColorUnit::Numeric(rgba) => *rgba,
+        }
+    }
+}
+
 /// Computed value for the `color` property.
 ///
 /// https://www.w3.org/TR/css-color-3/#foreground
 #[derive(Clone, Copy, Debug)]
-pub struct Color(pub RGBA);
+pub struct Color(RGBA);
 
 impl Color {
     pub fn initial_value() -> Color {
         Color::black()
+    }
+
+    pub fn rgba(self) -> RGBA {
+        self.0
     }
 
     pub fn black() -> Color {
@@ -29,10 +44,9 @@ impl ComputeValueWithContext for specified::Color {
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         match self {
             specified::Color::Inherit => context.parent_computed_values.color,
-            specified::Color::Unit(color_unit) => match color_unit {
-                specified::ColorUnit::CurrentColor => context.parent_computed_values.color,
-                specified::ColorUnit::Numeric(rgba) => Color(*rgba),
-            },
+            specified::Color::Unit(color_unit) => {
+                Color(color_unit.compute_value_with_context(context))
+            }
         }
     }
 }

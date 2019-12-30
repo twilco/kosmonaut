@@ -23,6 +23,7 @@ impl PropertyId {
     pub fn parse(prop_name: &str) -> Option<PropertyId> {
         let id = match prop_name {
             // Longhands
+            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
             "border-bottom-color" => PropertyId::Longhand(LonghandId::BorderBottomColor),
             "border-left-color" => PropertyId::Longhand(LonghandId::BorderLeftColor),
             "border-right-color" => PropertyId::Longhand(LonghandId::BorderRightColor),
@@ -376,8 +377,8 @@ pub enum LonghandId {
     BorderTopWidth = 149,
     //    /// outline-width
     //    OutlineWidth = 150,
-    //    /// background-color
-    //    BackgroundColor = 151,
+    /// background-color
+    BackgroundColor = 151,
     //    /// border-block-end-color
     //    BorderBlockEndColor = 152,
     //    /// border-block-start-color
@@ -434,6 +435,9 @@ impl LonghandId {
     #[allow(unreachable_patterns)]
     pub fn value_default(self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
         match self {
+            LonghandId::BackgroundColor => {
+                cv_builder.background_color(specified::BackgroundColor::value_default(ctx));
+            }
             LonghandId::BorderBottomColor => {
                 cv_builder.border_bottom_color(specified::BorderBottomColor::value_default(ctx));
             }
@@ -520,6 +524,7 @@ impl LonghandId {
 impl From<&PropertyDeclaration> for LonghandId {
     fn from(prop_decl: &PropertyDeclaration) -> Self {
         match prop_decl {
+            PropertyDeclaration::BackgroundColor(_) => LonghandId::BackgroundColor,
             PropertyDeclaration::BorderBottomColor(_) => LonghandId::BorderBottomColor,
             PropertyDeclaration::BorderLeftColor(_) => LonghandId::BorderLeftColor,
             PropertyDeclaration::BorderRightColor(_) => LonghandId::BorderRightColor,

@@ -1,3 +1,4 @@
+pub mod background;
 pub mod border;
 pub mod color;
 pub mod font;
@@ -6,6 +7,8 @@ pub mod length;
 pub mod margin;
 pub mod padding;
 pub mod width;
+
+pub use background::BackgroundColor;
 
 pub use border::BorderBottomColor;
 pub use border::BorderBottomWidth;

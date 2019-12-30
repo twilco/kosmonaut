@@ -20,6 +20,7 @@ use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 
+use crate::dom::tree::debug_recursive;
 use crate::layout::{build_layout_tree, Dimensions, Rect};
 use crate::style::apply_styles;
 use crate::style::values::computed::length::CSSPixelLength;
@@ -67,7 +68,7 @@ fn main() {
     .expect("parse stylesheet fail");
 
     apply_styles(dom.clone(), vec![ua_sheet], Vec::new(), Vec::new());
-    let mut layout_tree = build_layout_tree(dom).unwrap();
+    let mut layout_tree = build_layout_tree(dom.clone()).unwrap();
     layout_tree.layout(Dimensions {
         content: Rect {
             start_x: 0.0,
@@ -79,7 +80,7 @@ fn main() {
         border: Default::default(),
         margin: Default::default(),
     });
-    dbg!(layout_tree.nodeless_dbg());
-
+    //    dbg!(layout_tree.nodeless_dbg());
+    debug_recursive(&dom);
     application.run(&[]);
 }

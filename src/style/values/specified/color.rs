@@ -77,6 +77,15 @@ impl ColorUnit {
             alpha: 1,
         })
     }
+
+    pub fn transparent() -> ColorUnit {
+        ColorUnit::Numeric(RGBA {
+            red: 0,
+            green: 0,
+            blue: 0,
+            alpha: 0,
+        })
+    }
 }
 
 struct ComponentParser;

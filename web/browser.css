@@ -12,10 +12,10 @@ div.main, div.main.main.div {
 }
 
 div { display: block; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; }
-.a { color: #ff0000; }
-.b { color: #ffa500; }
-.c { color: #ffff00; }
-.d { color: #008000; }
-.e { color: #0000ff; }
-.f { color: #4b0082; }
-.g { color: #800080; }
+.a { background-color: #ff0000; }
+.b { background-color: #ffa500; }
+.c { background-color: #ffff00; }
+.d { background-color: #008000; }
+.e { background-color: #0000ff; }
+.f { background-color: #4b0082; }
+.g { background-color: #800080; }

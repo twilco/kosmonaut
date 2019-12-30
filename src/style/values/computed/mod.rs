@@ -1,5 +1,6 @@
 /// Some of this code was taken from Servo: https://github.com/servo/servo
 /// Kosmonaut complies with Servo's license, the Mozilla Public License 2.0.
+pub mod background;
 pub mod border;
 pub mod color;
 pub mod display;
@@ -24,6 +25,8 @@ use crate::dom::tree::NodeRef;
 use crate::style::properties::id::LonghandId;
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
+
+pub use background::BackgroundColor;
 pub use border::LineStyle;
 pub use border::{
     border_side_initial_style, BorderBottomColor, BorderBottomWidth, BorderLeftColor,
@@ -76,6 +79,7 @@ pub trait ValueDefault {
 /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#computed-value
 #[derive(Debug, Clone, Builder)]
 pub struct ComputedValues {
+    pub background_color: BackgroundColor,
     pub border_bottom_color: BorderBottomColor,
     pub border_left_color: BorderLeftColor,
     pub border_right_color: BorderRightColor,
@@ -112,10 +116,11 @@ impl Default for ComputedValues {
         let initial_color_prop = Color::initial_value();
         let initial_border_style = border_side_initial_style();
         ComputedValues {
-            border_bottom_color: BorderBottomColor::initial_value(initial_color_prop.0),
-            border_left_color: BorderLeftColor::initial_value(initial_color_prop.0),
-            border_right_color: BorderRightColor::initial_value(initial_color_prop.0),
-            border_top_color: BorderTopColor::initial_value(initial_color_prop.0),
+            background_color: BackgroundColor::initial_value(initial_color_prop.rgba()),
+            border_bottom_color: BorderBottomColor::initial_value(initial_color_prop.rgba()),
+            border_left_color: BorderLeftColor::initial_value(initial_color_prop.rgba()),
+            border_right_color: BorderRightColor::initial_value(initial_color_prop.rgba()),
+            border_top_color: BorderTopColor::initial_value(initial_color_prop.rgba()),
             border_bottom_style: initial_border_style,
             border_left_style: initial_border_style,
             border_right_style: initial_border_style,
@@ -218,6 +223,11 @@ pub fn compute_values(node: NodeRef) {
         match node.contextual_decls().get_by_longhand(longhand) {
             Some(contextual_decl) => {
                 match &contextual_decl.inner_decl {
+                    PropertyDeclaration::BackgroundColor(background_color) => {
+                        cv_builder.background_color(
+                            background_color.compute_value_with_context(&context),
+                        );
+                    }
                     PropertyDeclaration::BorderBottomColor(border_bottom_color) => {
                         cv_builder.border_bottom_color(
                             border_bottom_color.compute_value_with_context(&context),

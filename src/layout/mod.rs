@@ -200,7 +200,11 @@ impl LayoutBox {
         // this box is greater than that of the containing one.
         let underflow = containing_width - total_size;
 
-        match (width.size == auto, margin_left.size == auto, margin_right.size == auto) {
+        match (
+            width.size == auto,
+            margin_left.size == auto,
+            margin_right.size == auto,
+        ) {
             // If all of the above have a computed value other than 'auto', the values are said to be
             // "over-constrained" and one of the used values will have to be different from its computed
             // value. If the 'direction' property of the containing block has the value 'ltr', the
@@ -238,7 +242,9 @@ impl LayoutBox {
                     // Width cannot be negative, adjust `margin-right` instead
                     // TODO: Support `direction: rtl` property/value
                     width.size = LengthPercentageOrAuto::new_len(0.);
-                    margin_right.size = LengthPercentageOrAuto::new_len_px(margin_right.size.to_px(containing_width) + underflow);
+                    margin_right.size = LengthPercentageOrAuto::new_len_px(
+                        margin_right.size.to_px(containing_width) + underflow,
+                    );
                 }
             }
         }

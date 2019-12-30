@@ -31,6 +31,16 @@ pub fn compute_border_side_color(
     }
 }
 
+pub fn compute_border_side_width(
+    self_line_width: LineWidth,
+    computed_side_style: LineStyle,
+) -> CSSPixelLength {
+    match computed_side_style {
+        LineStyle::None | LineStyle::Hidden => CSSPixelLength::new(0.),
+        _ => self_line_width.compute_value(),
+    }
+}
+
 /// Computed `border-bottom-color`.
 ///
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
@@ -204,17 +214,22 @@ pub struct BorderBottomWidth {
 }
 
 impl BorderBottomWidth {
-    pub fn initial_value() -> BorderBottomWidth {
-        specified::BorderBottomWidth::initial_value().compute_value()
+    pub fn initial_value(computed_bottom_style: LineStyle) -> BorderBottomWidth {
+        BorderBottomWidth {
+            size: compute_border_side_width(
+                specified::BorderBottomWidth::initial_value().line_width,
+                computed_bottom_style,
+            ),
+        }
     }
 }
 
-impl ComputeValue for specified::BorderBottomWidth {
+impl ComputeValueWithContext for specified::BorderBottomWidth {
     type ComputedValue = BorderBottomWidth;
 
-    fn compute_value(&self) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderBottomWidth {
-            size: self.line_width.compute_value(),
+            size: compute_border_side_width(self.line_width, context.border_bottom_style()),
         }
     }
 }
@@ -222,8 +237,8 @@ impl ComputeValue for specified::BorderBottomWidth {
 impl ValueDefault for specified::BorderBottomWidth {
     type ComputedValue = BorderBottomWidth;
 
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        BorderBottomWidth::initial_value()
+    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+        BorderBottomWidth::initial_value(context.border_bottom_style())
     }
 }
 
@@ -236,17 +251,22 @@ pub struct BorderLeftWidth {
 }
 
 impl BorderLeftWidth {
-    pub fn initial_value() -> BorderLeftWidth {
-        specified::BorderLeftWidth::initial_value().compute_value()
+    pub fn initial_value(computed_left_style: LineStyle) -> BorderLeftWidth {
+        BorderLeftWidth {
+            size: compute_border_side_width(
+                specified::BorderLeftWidth::initial_value().line_width,
+                computed_left_style,
+            ),
+        }
     }
 }
 
-impl ComputeValue for specified::BorderLeftWidth {
+impl ComputeValueWithContext for specified::BorderLeftWidth {
     type ComputedValue = BorderLeftWidth;
 
-    fn compute_value(&self) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderLeftWidth {
-            size: self.line_width.compute_value(),
+            size: compute_border_side_width(self.line_width, context.border_left_style()),
         }
     }
 }
@@ -254,8 +274,8 @@ impl ComputeValue for specified::BorderLeftWidth {
 impl ValueDefault for specified::BorderLeftWidth {
     type ComputedValue = BorderLeftWidth;
 
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        BorderLeftWidth::initial_value()
+    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+        BorderLeftWidth::initial_value(context.border_left_style())
     }
 }
 
@@ -268,17 +288,22 @@ pub struct BorderRightWidth {
 }
 
 impl BorderRightWidth {
-    pub fn initial_value() -> BorderRightWidth {
-        specified::BorderRightWidth::initial_value().compute_value()
+    pub fn initial_value(computed_right_style: LineStyle) -> BorderRightWidth {
+        BorderRightWidth {
+            size: compute_border_side_width(
+                specified::BorderRightWidth::initial_value().line_width,
+                computed_right_style,
+            ),
+        }
     }
 }
 
-impl ComputeValue for specified::BorderRightWidth {
+impl ComputeValueWithContext for specified::BorderRightWidth {
     type ComputedValue = BorderRightWidth;
 
-    fn compute_value(&self) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderRightWidth {
-            size: self.line_width.compute_value(),
+            size: compute_border_side_width(self.line_width, context.border_right_style()),
         }
     }
 }
@@ -286,8 +311,8 @@ impl ComputeValue for specified::BorderRightWidth {
 impl ValueDefault for specified::BorderRightWidth {
     type ComputedValue = BorderRightWidth;
 
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        BorderRightWidth::initial_value()
+    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+        BorderRightWidth::initial_value(context.border_right_style())
     }
 }
 
@@ -300,17 +325,22 @@ pub struct BorderTopWidth {
 }
 
 impl BorderTopWidth {
-    pub fn initial_value() -> BorderTopWidth {
-        specified::BorderTopWidth::initial_value().compute_value()
+    pub fn initial_value(computed_top_style: LineStyle) -> BorderTopWidth {
+        BorderTopWidth {
+            size: compute_border_side_width(
+                specified::BorderTopWidth::initial_value().line_width,
+                computed_top_style,
+            ),
+        }
     }
 }
 
-impl ComputeValue for specified::BorderTopWidth {
+impl ComputeValueWithContext for specified::BorderTopWidth {
     type ComputedValue = BorderTopWidth;
 
-    fn compute_value(&self) -> Self::ComputedValue {
+    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderTopWidth {
-            size: self.line_width.compute_value(),
+            size: compute_border_side_width(self.line_width, context.border_top_style()),
         }
     }
 }
@@ -318,8 +348,8 @@ impl ComputeValue for specified::BorderTopWidth {
 impl ValueDefault for specified::BorderTopWidth {
     type ComputedValue = BorderTopWidth;
 
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        BorderTopWidth::initial_value()
+    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
+        BorderTopWidth::initial_value(context.border_top_style())
     }
 }
 

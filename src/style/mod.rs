@@ -6,18 +6,10 @@ use cssparser::{
 use selectors::parser::SelectorParseErrorKind;
 
 use crate::dom::tree::{debug_recursive, NodeData, NodeRef};
-use crate::style::properties::id::LonghandId;
-use crate::style::properties::{
-    parse_property_declaration_list, PropertyDeclaration, PropertyDeclarationBlock,
-};
+use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
 use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use crate::style::values::computed::{
-    ComputeContext, ComputeValue, ComputeValueWithContext, ComputedValues,
-};
-use crate::style::values::computed::{ComputedValuesBuilder, ValueDefault};
-use crate::style::values::specified;
-use strum::IntoEnumIterator;
+use crate::style::values::computed::compute_values;
 
 #[macro_use]
 mod macros;
@@ -85,140 +77,10 @@ pub fn apply_styles(
 /// 4) Resolving specified values to computed values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#computed
 pub fn cascade_and_compute(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
+        // Step 2
         node.contextual_decls_mut().cascade_sort();
-        let mut cv_builder = ComputedValuesBuilder::default();
-        let parent = node.parent();
-        // If this is the root node (aka there is no parent to inherit properties from), just default all properties to
-        // their initial values.
-        let parent_computed_values = parent.map_or(ComputedValues::default(), |p| {
-            // TODO: This _could_ be an expensive clone when we actually support all CSS properties.
-            p.computed_values().clone()
-        });
-        let mut context = ComputeContext {
-            parent_computed_values: &parent_computed_values,
-            computed_color: None,
-        };
-
-        if let Some(contextual_decl) = node.contextual_decls().get_by_longhand(LonghandId::Color) {
-            context.computed_color = match &contextual_decl.inner_decl {
-                PropertyDeclaration::Color(color) => {
-                    Some(color.compute_value_with_context(&context))
-                }
-                _ => panic!("needed color property declaration"),
-            }
-        } else {
-            context.computed_color = Some(specified::Color::value_default(&context));
-        }
-
-        LonghandId::iter().for_each(|longhand: LonghandId| {
-            match node.contextual_decls().get_by_longhand(longhand) {
-                Some(contextual_decl) => {
-                    match &contextual_decl.inner_decl {
-                        PropertyDeclaration::BorderBottomColor(border_bottom_color) => {
-                            cv_builder.border_bottom_color(
-                                border_bottom_color.compute_value_with_context(&context),
-                            );
-                        }
-                        PropertyDeclaration::BorderLeftColor(border_left_color) => {
-                            cv_builder.border_left_color(
-                                border_left_color.compute_value_with_context(&context),
-                            );
-                        }
-                        PropertyDeclaration::BorderRightColor(border_right_color) => {
-                            cv_builder.border_right_color(
-                                border_right_color.compute_value_with_context(&context),
-                            );
-                        }
-                        PropertyDeclaration::BorderTopColor(border_top_color) => {
-                            cv_builder.border_top_color(
-                                border_top_color.compute_value_with_context(&context),
-                            );
-                        }
-                        PropertyDeclaration::BorderBottomStyle(line_style) => {
-                            cv_builder.border_bottom_style(*line_style);
-                        }
-                        PropertyDeclaration::BorderLeftStyle(line_style) => {
-                            cv_builder.border_left_style(*line_style);
-                        }
-                        PropertyDeclaration::BorderRightStyle(line_style) => {
-                            cv_builder.border_right_style(*line_style);
-                        }
-                        PropertyDeclaration::BorderTopStyle(line_style) => {
-                            cv_builder.border_top_style(*line_style);
-                        }
-                        PropertyDeclaration::BorderBottomWidth(border_bottom_width) => {
-                            cv_builder.border_bottom_width(border_bottom_width.compute_value());
-                        }
-                        PropertyDeclaration::BorderLeftWidth(border_left_width) => {
-                            cv_builder.border_left_width(border_left_width.compute_value());
-                        }
-                        PropertyDeclaration::BorderRightWidth(border_right_width) => {
-                            cv_builder.border_right_width(border_right_width.compute_value());
-                        }
-                        PropertyDeclaration::BorderTopWidth(border_top_width) => {
-                            cv_builder.border_top_width(border_top_width.compute_value());
-                        }
-                        PropertyDeclaration::Color(_) => {
-                            cv_builder.color(context.computed_color.expect(
-                                "color should've been computed before trying to add it to builder",
-                            ));
-                        }
-                        PropertyDeclaration::Display(display) => {
-                            // TODO: Should we cloning here (taking the specified value), rather than computing the value?
-                            // There is currently no `specified/display.rs`, so that would need to be remedied.
-                            // Computing display might not be straightforward — see: https://github.com/w3c/csswg-drafts/issues/1716
-                            cv_builder.display(display.clone());
-                        }
-                        PropertyDeclaration::Height(height) => {
-                            cv_builder.height(height.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::FontSize(font_size) => {
-                            cv_builder.font_size(font_size.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::MarginBottom(margin_bottom) => {
-                            cv_builder
-                                .margin_bottom(margin_bottom.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::MarginLeft(margin_left) => {
-                            cv_builder
-                                .margin_left(margin_left.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::MarginRight(margin_right) => {
-                            cv_builder
-                                .margin_right(margin_right.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::MarginTop(margin_top) => {
-                            cv_builder.margin_top(margin_top.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::PaddingBottom(padding_bottom) => {
-                            cv_builder.padding_bottom(
-                                padding_bottom.compute_value_with_context(&context),
-                            );
-                        }
-                        PropertyDeclaration::PaddingLeft(padding_left) => {
-                            cv_builder
-                                .padding_left(padding_left.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::PaddingRight(padding_right) => {
-                            cv_builder
-                                .padding_right(padding_right.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::PaddingTop(padding_top) => {
-                            cv_builder
-                                .padding_top(padding_top.compute_value_with_context(&context));
-                        }
-                        PropertyDeclaration::Width(width) => {
-                            cv_builder.width(width.compute_value_with_context(&context));
-                        }
-                    }
-                }
-                None => {
-                    longhand.value_default(&mut cv_builder, &context);
-                }
-            };
-        });
-        *node.computed_values_mut() = dbg!(cv_builder.build())
-            .expect("couldn't build computed values - maybe a field wasn't given to the builder?");
+        // Step 3 and 4
+        compute_values(node);
     });
 }
 

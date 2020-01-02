@@ -10,19 +10,13 @@ Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicl
 
 ### Build
 
-Kosmonaut is built with Rust using bindings to [GTK](https://www.gtk.org/) via [gtk-rs](https://gtk-rs.org/).
+Kosmonaut is built with Rust using [winit](https://github.com/rust-windowing/winit) for window management, Servo's [html5ever](https://github.com/servo/html5ever) and [cssparser](https://github.com/servo/rust-cssparser) for HTML and CSS parsing, and various other auxiliary libraries.
+
+To build from source:
 
 1. Install Rust: https://www.rust-lang.org/tools/install
-2. Install GTK: `brew install gtk+3` on MacOS, `sudo apt install libgtk-3-dev` on Linux
-3. Attempt a `cargo build`.  If presented with an error message about `libffi` not being found in the pkg-config search path, run:
+2. `cargo build`
  
- ```bash
-brew install libffi 
-# Change this if your path is different.  
-# Run `brew info libffi` for more information.
-export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
- ```
-
 ### License and credits
 
 Kosmonaut's current implementation is heavily inspired by [Servo](https://github.com/servo/servo), sometimes taking code directly from it.  Thus, Kosmonaut is licensed with the [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/).

@@ -13,10 +13,6 @@ extern crate derive_builder;
 
 use std::fs::File;
 
-use gio::prelude::*;
-use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Box, Entry, Orientation};
-
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
 
@@ -48,20 +44,6 @@ pub use common::Side;
 
 #[allow(unused_variables)]
 fn main() {
-    let application = Application::new(Some("com.kosmonaut.main"), Default::default())
-        .expect("failed to initialize GTK application");
-
-    application.connect_activate(|app| {
-        let window = ApplicationWindow::new(app);
-        window.set_title("Kosmonaut");
-        window.set_default_size(1440, 1440);
-
-        let url_entry_container = Box::new(Orientation::Vertical, 32);
-        url_entry_container.add(&Entry::new());
-        window.add(&url_entry_container);
-        window.show_all();
-    });
-
     let dom = parse_html()
         .from_utf8()
         .read_from(&mut File::open("web/rainbow-divs.html").unwrap())
@@ -89,5 +71,4 @@ fn main() {
     //    dbg!(layout_tree.nodeless_dbg());
     //    debug_recursive(&dom);
     let display_list = dbg!(build_display_list(&layout_tree));
-    application.run(&[]);
 }

@@ -11,7 +11,21 @@ div.main, div.main.main.div {
   /*border-left-width: 88px;*/
 }
 
-div { display: block; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; }
+div {
+    display: block;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    border-bottom-style: solid;
+    border-bottom-color: fuchsia;
+    border-left-style: solid;
+    border-left-color: fuchsia;
+    border-right-style: solid;
+    border-right-color: fuchsia;
+    border-top-style: solid;
+    border-top-color: fuchsia;
+}
 .a { background-color: #ff0000; }
 .b { background-color: #ffa500; }
 .c { background-color: #ffff00; }

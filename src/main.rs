@@ -25,10 +25,16 @@ use crate::layout::{build_layout_tree, Dimensions, Rect};
 use crate::style::apply_styles;
 use crate::style::values::computed::length::CSSPixelLength;
 
+pub mod common;
 pub mod dom;
+pub mod gfx;
 #[allow(unused_imports)]
 pub mod layout;
+pub mod paint;
 pub mod style;
+
+use crate::paint::build_display_list;
+pub use common::Side;
 
 /// Algorithm:
 ///  1. Upon enter button of URL textbox, make request to URL (or local FS file)
@@ -68,7 +74,7 @@ fn main() {
     .expect("parse stylesheet fail");
 
     apply_styles(dom.clone(), vec![ua_sheet], Vec::new(), Vec::new());
-    let mut layout_tree = build_layout_tree(dom.clone()).unwrap();
+    let mut layout_tree = build_layout_tree(dom).unwrap();
     layout_tree.layout(Dimensions {
         content: Rect {
             start_x: 0.0,
@@ -81,6 +87,7 @@ fn main() {
         margin: Default::default(),
     });
     //    dbg!(layout_tree.nodeless_dbg());
-    debug_recursive(&dom);
+    //    debug_recursive(&dom);
+    let display_list = dbg!(build_display_list(&layout_tree));
     application.run(&[]);
 }

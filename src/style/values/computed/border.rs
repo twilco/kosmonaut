@@ -44,15 +44,15 @@ pub fn compute_border_side_width(
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderBottomColor {
-    pub color: RGBA,
+    pub rgba: RGBA,
 }
 
 impl BorderBottomColor {
     /// Note `current_color` refers to `currentColor` from the specification.
     /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(current_color_property: RGBA) -> Self {
+    pub fn initial_value(computed_color_prop: RGBA) -> Self {
         BorderBottomColor {
-            color: current_color_property,
+            rgba: computed_color_prop,
         }
     }
 }
@@ -62,7 +62,7 @@ impl ComputeValueWithContext for specified::BorderBottomColor {
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderBottomColor {
-            color: compute_border_side_color(self.color, context),
+            rgba: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -85,15 +85,15 @@ impl ValueDefault for specified::BorderBottomColor {
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderLeftColor {
-    pub color: RGBA,
+    pub rgba: RGBA,
 }
 
 impl BorderLeftColor {
     /// Note `current_color` refers to `currentColor` from the specification.
     /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(current_color_property: RGBA) -> Self {
+    pub fn initial_value(computed_color_prop: RGBA) -> Self {
         BorderLeftColor {
-            color: current_color_property,
+            rgba: computed_color_prop,
         }
     }
 }
@@ -103,7 +103,7 @@ impl ComputeValueWithContext for specified::BorderLeftColor {
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderLeftColor {
-            color: compute_border_side_color(self.color, context),
+            rgba: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -126,15 +126,15 @@ impl ValueDefault for specified::BorderLeftColor {
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderRightColor {
-    pub color: RGBA,
+    pub rgba: RGBA,
 }
 
 impl BorderRightColor {
     /// Note `current_color` refers to `currentColor` from the specification.
     /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(current_color_property: RGBA) -> Self {
+    pub fn initial_value(computed_color_prop: RGBA) -> Self {
         BorderRightColor {
-            color: current_color_property,
+            rgba: computed_color_prop,
         }
     }
 }
@@ -144,7 +144,7 @@ impl ComputeValueWithContext for specified::BorderRightColor {
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderRightColor {
-            color: compute_border_side_color(self.color, context),
+            rgba: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -167,15 +167,15 @@ impl ValueDefault for specified::BorderRightColor {
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderTopColor {
-    pub color: RGBA,
+    pub rgba: RGBA,
 }
 
 impl BorderTopColor {
     /// Note `current_color` refers to `currentColor` from the specification.
     /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(current_color_property: RGBA) -> Self {
+    pub fn initial_value(computed_color_prop: RGBA) -> Self {
         BorderTopColor {
-            color: current_color_property,
+            rgba: computed_color_prop,
         }
     }
 }
@@ -185,7 +185,7 @@ impl ComputeValueWithContext for specified::BorderTopColor {
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
         BorderTopColor {
-            color: compute_border_side_color(self.color, context),
+            rgba: compute_border_side_color(self.color, context),
         }
     }
 }
@@ -354,7 +354,7 @@ impl ValueDefault for specified::BorderTopWidth {
 /// The border `<line-style>` type.
 ///
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#typedef-line-style
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LineStyle {
     None,
     Hidden,

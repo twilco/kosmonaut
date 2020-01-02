@@ -12,6 +12,7 @@ use crate::style::values::computed::width::Width;
 use crate::style::values::computed::Display;
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
+use crate::Side;
 use std::mem::discriminant;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
@@ -65,19 +66,28 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
+    pub fn border_size(self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.border.bottom,
+            Side::Left => self.border.left,
+            Side::Right => self.border.right,
+            Side::Top => self.border.top,
+        }
+    }
+
     /// The area covered by the content area plus its padding.
-    fn padding_box(self) -> Rect {
+    pub fn padding_box(self) -> Rect {
         self.content.expanded_by(self.padding)
     }
 
     /// The area covered by the content area plus padding and borders.
-    fn border_box(self) -> Rect {
+    pub fn border_box(self) -> Rect {
         self.padding_box().expanded_by(self.border)
     }
 
     /// The area covered by the content area plus padding, borders, and margin.
     // TODO: This will need to change when we implement margin collapsing: http://www.w3.org/TR/CSS2/box.html#collapsing-margins
-    fn margin_box(self) -> Rect {
+    pub fn margin_box(self) -> Rect {
         self.border_box().expanded_by(self.margin)
     }
 }

@@ -26,6 +26,7 @@ use crate::style::properties::id::LonghandId;
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
 
+use crate::Side;
 pub use background::BackgroundColor;
 pub use border::LineStyle;
 pub use border::{
@@ -33,6 +34,7 @@ pub use border::{
     BorderLeftWidth, BorderRightColor, BorderRightWidth, BorderTopColor, BorderTopWidth,
 };
 pub use color::Color;
+use cssparser::RGBA;
 pub use display::Display;
 pub use font::FontSize;
 pub use percentage::Percentage;
@@ -107,6 +109,26 @@ pub struct ComputedValues {
     pub width: Width,
 }
 
+impl ComputedValues {
+    pub fn border_style(&self, side: Side) -> LineStyle {
+        match side {
+            Side::Bottom => self.border_bottom_style,
+            Side::Left => self.border_left_style,
+            Side::Right => self.border_right_style,
+            Side::Top => self.border_top_style,
+        }
+    }
+
+    pub fn border_color_rgba(&self, side: Side) -> RGBA {
+        match side {
+            Side::Bottom => self.border_bottom_color.rgba,
+            Side::Left => self.border_left_color.rgba,
+            Side::Right => self.border_right_color.rgba,
+            Side::Top => self.border_top_color.rgba,
+        }
+    }
+}
+
 /// Create a default set of computed values.  Likely most useful for the case in which we're working
 /// with the root node of a DOM, which has no parent to inherit from.
 impl Default for ComputedValues {
@@ -177,7 +199,6 @@ impl ComputeContext<'_> {
     pub fn border_bottom_style(&self) -> LineStyle {
         self.border_styles().bottom
     }
-
     pub fn border_left_style(&self) -> LineStyle {
         self.border_styles().left
     }

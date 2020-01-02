@@ -3,7 +3,9 @@ use crate::layout::Dimensions;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
+use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
+use std::cell::Ref;
 use std::mem::discriminant;
 
 #[derive(Clone, Debug)]
@@ -29,6 +31,11 @@ impl LayoutBox {
             children: Vec::new(),
             node,
         }
+    }
+
+    /// Retrieve the computed values of the node associated with this layout box.
+    pub fn computed_values(&self) -> Ref<ComputedValues> {
+        self.node.computed_values()
     }
 
     /// Gets the proper `LayoutBox` container to insert inline-children in to.

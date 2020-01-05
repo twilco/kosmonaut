@@ -20,7 +20,10 @@ use crate::dom::tree::debug_recursive;
 use crate::layout::{build_layout_tree, Dimensions, Rect};
 use crate::style::apply_styles;
 use crate::style::values::computed::length::CSSPixelLength;
-
+use glutin::event::{Event, WindowEvent};
+use glutin::event_loop::{ControlFlow, EventLoop};
+use glutin::window::WindowBuilder;
+use glutin::{Context, ContextBuilder, PossiblyCurrent, WindowedContext};
 pub mod common;
 pub mod dom;
 pub mod gfx;
@@ -71,4 +74,47 @@ fn main() {
     //    dbg!(layout_tree.nodeless_dbg());
     //    debug_recursive(&dom);
     let display_list = dbg!(build_display_list(&layout_tree));
+
+    let (windowed_context, event_loop) = init_main_window_and_gl();
+    run_event_loop(windowed_context, event_loop);
+}
+
+fn init_main_window_and_gl() -> (WindowedContext<PossiblyCurrent>, EventLoop<()>) {
+    let el = EventLoop::new();
+    let wb = WindowBuilder::new().with_title("Kosmonaut");
+    let windowed_context = ContextBuilder::new().build_windowed(wb, &el).unwrap();
+    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
+    println!(
+        "Pixel format of the window's GL context: {:?}",
+        windowed_context.get_pixel_format()
+    );
+    let gl_context = windowed_context.context();
+    gl::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
+    (windowed_context, el)
+}
+
+fn run_event_loop(windowed_context: WindowedContext<PossiblyCurrent>, event_loop: EventLoop<()>) {
+    event_loop.run(move |event, _, control_flow| {
+        *control_flow = ControlFlow::Wait;
+        match event {
+            Event::LoopDestroyed => return,
+            Event::WindowEvent { ref event, .. } => match event {
+                WindowEvent::Resized(logical_size) => {
+                    let dpi_factor = windowed_context.window().hidpi_factor();
+                    windowed_context.resize(logical_size.to_physical(dpi_factor));
+                }
+                WindowEvent::RedrawRequested => {
+                    unsafe {
+                        gl::ClearColor(0.1, 0.9, 0.3, 1.0);
+                        gl::Clear(gl::COLOR_BUFFER_BIT);
+                        gl::DrawArrays(gl::TRIANGLES, 0, 3);
+                    }
+                    windowed_context.swap_buffers().unwrap();
+                }
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                _ => (),
+            },
+            _ => (),
+        }
+    });
 }

@@ -1,0 +1,13 @@
+[package]
+name = "gl"
+version = "0.1.0"
+description = "Generated OpenGL bindings for use by Kosmonaut.  Also contains other utilities and wrappers for and over OpenGL."
+authors = ["Tyler Wilcock <tyler.l.wilcock@gmail.com>"]
+edition = "2018"
+publish = false
+
+[build-dependencies]
+gl_generator = "0.14.0"
+
+[features]
+debug = []

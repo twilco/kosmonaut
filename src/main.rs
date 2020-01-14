@@ -28,8 +28,7 @@ pub mod layout;
 pub mod paint;
 pub mod style;
 
-use crate::gfx::kgl::print_gl_info;
-use crate::gfx::{init_main_window_and_gl, run_event_loop};
+use crate::gfx::{init_main_window_and_gl, print_gl_info, run_event_loop};
 use crate::paint::build_display_list;
 pub use common::Side;
 
@@ -77,7 +76,7 @@ fn main() {
 }
 
 fn launch_kosmonaut() {
-    let (windowed_context, event_loop) = init_main_window_and_gl();
-    print_gl_info(&windowed_context);
-    run_event_loop(windowed_context, event_loop);
+    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
+    print_gl_info(&windowed_context, &gl);
+    run_event_loop(windowed_context, event_loop, gl);
 }

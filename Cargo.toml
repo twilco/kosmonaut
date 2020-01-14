@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 app_units = "0.7.1"
 cssparser = "0.25.8"
-gl = "0.14.0"
+gl = { path = "crates/gl" }
 glutin = "0.22.0-alpha4"
 html5ever = "0.24.0"
 matches = "0.1.8"
@@ -18,3 +18,6 @@ strum = "0.16.0"
 strum_macros = "0.16.0"
 tempdir = "0.3.7"
 derive_builder = "0.8.1"
+
+[features]
+gl_debug = ["gl/debug"]

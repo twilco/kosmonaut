@@ -1,8 +1,12 @@
-use crate::gfx::kgl::bool_from_glint;
-use crate::gfx::kgl::info_log::{info_log_for, InfoLogKind};
+use crate::info_log::{info_log_for, InfoLogKind};
+use crate::util::bool_from_glint;
+use crate::{
+    types, Gl, COMPILE_STATUS, DELETE_STATUS, FRAGMENT_SHADER, GEOMETRY_SHADER, INFO_LOG_LENGTH,
+    SHADER_SOURCE_LENGTH, SHADER_TYPE, VERTEX_SHADER,
+};
 use std::ffi::CStr;
 
-pub type ShaderId = gl::types::GLuint;
+pub type ShaderId = types::GLuint;
 
 /// A `Shader` is a program that allows manipulation of the OpenGL graphics pipeline via arbitrary
 /// GLSL code.  There are several different `kind`s of shaders, each with their own well-defined
@@ -13,6 +17,7 @@ pub type ShaderId = gl::types::GLuint;
 pub struct Shader {
     id: ShaderId,
     kind: ShaderKind,
+    gl: Gl,
 }
 
 impl Shader {
@@ -21,20 +26,21 @@ impl Shader {
     }
 
     /// Create `Shader` from a literal `CStr` of the sourcecode.
-    pub fn from_source(source: &CStr, kind: ShaderKind) -> Result<Shader, String> {
+    pub fn from_source(source: &CStr, kind: ShaderKind, gl: &Gl) -> Result<Shader, String> {
         let new_shader = Shader {
-            id: unsafe { gl::CreateShader(kind.into()) },
+            id: unsafe { gl.CreateShader(kind.into()) },
             kind,
+            gl: gl.clone(),
         };
         unsafe {
-            gl::ShaderSource(new_shader.id(), 1, &source.as_ptr(), std::ptr::null());
-            gl::CompileShader(new_shader.id());
+            gl.ShaderSource(new_shader.id(), 1, &source.as_ptr(), std::ptr::null());
+            gl.CompileShader(new_shader.id());
         }
 
         if new_shader.compilation_successful() {
             Ok(new_shader)
         } else {
-            Err(info_log_for(InfoLogKind::Shader(new_shader.id()))
+            Err(info_log_for(InfoLogKind::Shader(new_shader.id()), &gl)
                 .to_string_lossy()
                 .into_owned())
         }
@@ -42,9 +48,9 @@ impl Shader {
 
     /// Uses the OpenGL state machine to determine if this shader compiled successfully.
     fn compilation_successful(&self) -> bool {
-        let mut compilation_successful: gl::types::GLint = 1;
+        let mut compilation_successful: types::GLint = 1;
         unsafe {
-            gl::GetShaderiv(
+            self.gl.GetShaderiv(
                 self.id(),
                 ShaderParameter::CompileStatus.into(),
                 &mut compilation_successful,
@@ -57,15 +63,13 @@ impl Shader {
 impl Drop for Shader {
     fn drop(&mut self) {
         unsafe {
-            gl::DeleteShader(self.id);
+            self.gl.DeleteShader(self.id);
         }
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 pub enum ShaderKind {
-    /// https://www.khronos.org/opengl/wiki/Compute_Shader
-    Compute,
     /// Processes a fragment (sort of like a pixel) produced by rasterization into a set of colors
     /// and a single depth value.
     ///
@@ -73,10 +77,6 @@ pub enum ShaderKind {
     Fragment,
     /// https://www.khronos.org/opengl/wiki/Geometry_Shader
     Geometry,
-    /// https://www.khronos.org/opengl/wiki/Tessellation_Control_Shader
-    TessControl,
-    /// https://www.khronos.org/opengl/wiki/Tessellation_Evaluation_Shader
-    TessEvaluation,
     /// Calculates the `gl_PerVertex` values one-by-one for each vertex.  These are `gl_Postion`,
     /// `gl_PointSize`, and `gl_ClipDistance`.
     ///
@@ -84,15 +84,12 @@ pub enum ShaderKind {
     Vertex,
 }
 
-impl From<ShaderKind> for gl::types::GLuint {
+impl From<ShaderKind> for types::GLuint {
     fn from(shader_kind: ShaderKind) -> Self {
         match shader_kind {
-            ShaderKind::Compute => gl::COMPUTE_SHADER,
-            ShaderKind::Fragment => gl::FRAGMENT_SHADER,
-            ShaderKind::Geometry => gl::GEOMETRY_SHADER,
-            ShaderKind::TessControl => gl::TESS_CONTROL_SHADER,
-            ShaderKind::TessEvaluation => gl::TESS_EVALUATION_SHADER,
-            ShaderKind::Vertex => gl::VERTEX_SHADER,
+            ShaderKind::Fragment => FRAGMENT_SHADER,
+            ShaderKind::Geometry => GEOMETRY_SHADER,
+            ShaderKind::Vertex => VERTEX_SHADER,
         }
     }
 }
@@ -106,14 +103,14 @@ pub enum ShaderParameter {
     ShaderType,
 }
 
-impl From<ShaderParameter> for gl::types::GLuint {
+impl From<ShaderParameter> for types::GLuint {
     fn from(shader_parameter: ShaderParameter) -> Self {
         match shader_parameter {
-            ShaderParameter::CompileStatus => gl::COMPILE_STATUS,
-            ShaderParameter::DeleteStatus => gl::DELETE_STATUS,
-            ShaderParameter::InfoLogLength => gl::INFO_LOG_LENGTH,
-            ShaderParameter::ShaderSourceLength => gl::SHADER_SOURCE_LENGTH,
-            ShaderParameter::ShaderType => gl::SHADER_TYPE,
+            ShaderParameter::CompileStatus => COMPILE_STATUS,
+            ShaderParameter::DeleteStatus => DELETE_STATUS,
+            ShaderParameter::InfoLogLength => INFO_LOG_LENGTH,
+            ShaderParameter::ShaderSourceLength => SHADER_SOURCE_LENGTH,
+            ShaderParameter::ShaderType => SHADER_TYPE,
         }
     }
 }

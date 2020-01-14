@@ -1,6 +1,7 @@
-use crate::gfx::kgl::create_whitespace_cstring;
-use crate::gfx::program::{ProgramId, ProgramParameter};
-use crate::gfx::shader::{ShaderId, ShaderParameter};
+use crate::program::{ProgramId, ProgramParameter};
+use crate::shader::{ShaderId, ShaderParameter};
+use crate::util::create_whitespace_cstring;
+use crate::{types, Gl};
 use std::convert::TryInto;
 use std::ffi::CString;
 
@@ -13,15 +14,15 @@ pub enum InfoLogKind {
 
 /// Gets info logs for the specified `kind`.  OpenGL may generate an info log in many scenarios,
 /// such as failed shader compilation.
-pub fn info_log_for(kind: InfoLogKind) -> CString {
-    let mut info_log_len: gl::types::GLint = 0;
+pub fn info_log_for(kind: InfoLogKind, gl: &Gl) -> CString {
+    let mut info_log_len: types::GLint = 0;
     unsafe {
         match kind {
             InfoLogKind::Program(id) => {
-                gl::GetProgramiv(id, ShaderParameter::InfoLogLength.into(), &mut info_log_len);
+                gl.GetProgramiv(id, ShaderParameter::InfoLogLength.into(), &mut info_log_len);
             }
             InfoLogKind::Shader(id) => {
-                gl::GetShaderiv(
+                gl.GetShaderiv(
                     id,
                     ProgramParameter::InfoLogLength.into(),
                     &mut info_log_len,
@@ -34,19 +35,19 @@ pub fn info_log_for(kind: InfoLogKind) -> CString {
     unsafe {
         match kind {
             InfoLogKind::Program(id) => {
-                gl::GetProgramInfoLog(
+                gl.GetProgramInfoLog(
                     id,
                     info_log_len,
                     std::ptr::null_mut(),
-                    info_log.as_ptr() as *mut gl::types::GLchar,
+                    info_log.as_ptr() as *mut types::GLchar,
                 );
             }
             InfoLogKind::Shader(id) => {
-                gl::GetShaderInfoLog(
+                gl.GetShaderInfoLog(
                     id,
                     info_log_len,
                     std::ptr::null_mut(),
-                    info_log.as_ptr() as *mut gl::types::GLchar,
+                    info_log.as_ptr() as *mut types::GLchar,
                 );
             }
         }

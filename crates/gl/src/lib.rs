@@ -4,12 +4,18 @@ use std::fmt::{Debug, Error, Formatter};
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[allow(clippy::too_many_arguments, clippy::unused_unit, clippy::unreadable_literal)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::unused_unit,
+    clippy::unreadable_literal
+)]
 mod bindings;
 pub mod info_log;
 pub mod program;
 pub mod shader;
 pub mod util;
+pub mod vao;
+pub mod vbo;
 
 // This crate generates `gl_bindings.rs` in the `target` folder.  I have copy-pasted this file
 // to `bindings.rs` in the local `src` directory to get autocomplete working, since my editor
@@ -54,4 +60,15 @@ impl Debug for Gl {
             opengl_version(self)
         )
     }
+}
+
+/// Trait to represent behavior of OpenGL buffers (like a vertex buffer object, VBO).
+pub trait Buffer {
+    /// Binds this buffer to the specified OpenGL instance.
+    fn bind_to(&self, gl: &Gl);
+}
+
+/// Unbinds whatever buffer is currently bound to the specified OpenGL instance.
+pub fn unbind_buffer_from(gl: &Gl) {
+    unsafe { gl.BindBuffer(ARRAY_BUFFER, 0) }
 }

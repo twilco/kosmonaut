@@ -19,7 +19,7 @@ impl VertexBufferObject {
             gl.GenBuffers(1, &mut vbo_name);
         }
 
-        let mut vbo = VertexBufferObject {
+        let vbo = VertexBufferObject {
             name: vbo_name,
             gl: gl.clone(),
         };

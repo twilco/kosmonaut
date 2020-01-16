@@ -1,8 +1,6 @@
 use crate::bindings::types::GLuint;
-use crate::types::GLint;
 use crate::vbo::VertexBufferObject;
-use crate::{unbind_buffer_from, Buffer, Gl, ARRAY_BUFFER};
-use std::convert::TryInto;
+use crate::{unbind_buffer_from, Buffer, Gl};
 
 /// Represents an OpenGL vertex array object (VAO).
 ///
@@ -24,25 +22,22 @@ impl VertexArrayObject {
     /// before and after your config function.
     ///
     /// This function is unsafe because it relies on you implementing `config_vao_fn` correctly to
-    /// get proper functionality and safety.
+    /// get proper functionality and safety.  It also uses some GL methods directly, which
+    /// themselves require care to use correctly.
     pub unsafe fn new(
         vbo_to_bind: VertexBufferObject,
         config_vao_fn: impl Fn(&Gl),
         gl: &Gl,
     ) -> VertexArrayObject {
         let mut vao_name: GLuint = 0;
-        unsafe {
-            gl.GenVertexArrays(1, &mut vao_name);
-            gl.BindVertexArray(vao_name);
-        }
+        gl.GenVertexArrays(1, &mut vao_name);
+        gl.BindVertexArray(vao_name);
         vbo_to_bind.bind_to(gl);
 
         config_vao_fn(gl);
 
         unbind_buffer_from(gl);
-        unsafe {
-            gl.BindVertexArray(0);
-        }
+        gl.BindVertexArray(0);
 
         VertexArrayObject {
             bound_buffer: Some(vbo_to_bind),

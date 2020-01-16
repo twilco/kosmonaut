@@ -10,7 +10,7 @@ Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicl
 
 ### Build
 
-Kosmonaut is built with Rust using [winit](https://github.com/rust-windowing/winit) for window management, Servo's [html5ever](https://github.com/servo/html5ever) and [cssparser](https://github.com/servo/rust-cssparser) for HTML and CSS parsing, and various other auxiliary libraries.
+Kosmonaut is built with Rust using OpenGL bindings via [gl-rs](https://github.com/brendanzab/gl-rs), [Glutin](https://github.com/rust-windowing/glutin) for window management and OpenGL context creation, Servo's [html5ever](https://github.com/servo/html5ever) and [cssparser](https://github.com/servo/rust-cssparser) for HTML and CSS parsing, and various other auxiliary libraries.
 
 To build from source:
 

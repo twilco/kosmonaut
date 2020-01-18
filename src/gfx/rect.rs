@@ -1,6 +1,6 @@
 use gl::program::Program;
 use gl::shader::{Shader, ShaderKind};
-use gl::types::GLint;
+use gl::types::{GLint, GLvoid};
 use gl::vao::VertexArrayObject;
 use gl::vbo::VertexBufferObject;
 use gl::Gl;
@@ -27,8 +27,18 @@ impl RectPainter {
                     3,         // the number of components per generic vertex attribute
                     gl::FLOAT, // data type
                     gl::FALSE, // normalized (int-to-float conversion)
-                    (3 * std::mem::size_of::<f32>()) as GLint, // stride (byte offset between consecutive attributes)
+                    (7 * std::mem::size_of::<f32>()) as GLint, // stride (byte offset between consecutive attributes)
                     std::ptr::null(),                          // offset of the first component
+                );
+
+                gl.EnableVertexAttribArray(1); // this is "layout (location = 1)" in vertex shader
+                gl.VertexAttribPointer(
+                    1,         // index of the generic vertex attribute ("layout (location = 1)")
+                    4,         // the number of components per generic vertex attribute
+                    gl::FLOAT, // data type
+                    gl::FALSE, // normalized (int-to-float conversion)
+                    (7 * std::mem::size_of::<f32>()) as GLint, // stride (byte offset between consecutive attributes)
+                    (3 * std::mem::size_of::<f32>()) as *const GLvoid, // offset of the first component
                 );
             }
         };
@@ -41,16 +51,19 @@ impl RectPainter {
         })
     }
 
-    //    pub fn paint(&self, rect: Rect, rgba: RGBA) {
-    pub fn paint(&mut self, data: &[f32]) {
+    pub fn paint(&mut self, vertices: &[f32]) {
+        // Panic rather than truncate data.
+        assert!(vertices.len() <= i32::max_value() as usize);
+
         self.program.use_globally();
-        self.vao.store_vertex_data(&data[..]);
+        self.vao.store_vertex_data(&vertices[..]);
         unsafe {
             self.gl.BindVertexArray(self.vao.name());
             self.gl.DrawArrays(
-                gl::TRIANGLES, // mode
-                0,             // starting index in the enabled arrays
-                6,             // number of vertices to be rendered
+                gl::TRIANGLES,
+                0,
+                // Safe because of the assert above.
+                vertices.len() as i32,
             );
             self.gl.BindVertexArray(0);
         }

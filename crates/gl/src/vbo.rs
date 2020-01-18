@@ -19,11 +19,10 @@ impl VertexBufferObject {
             gl.GenBuffers(1, &mut vbo_name);
         }
 
-        let vbo = VertexBufferObject {
+        VertexBufferObject {
             name: vbo_name,
             gl: gl.clone(),
-        };
-        vbo
+        }
     }
 
     pub fn name(&self) -> GLuint {

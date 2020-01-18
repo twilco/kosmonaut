@@ -29,7 +29,7 @@ pub mod paint;
 pub mod style;
 
 use crate::gfx::{init_main_window_and_gl, print_gl_info, run_event_loop};
-use crate::paint::build_display_list;
+use crate::paint::{build_display_list, DisplayList};
 pub use common::Side;
 
 /// Algorithm:
@@ -70,13 +70,16 @@ fn main() {
     });
     //    dbg!(layout_tree.nodeless_dbg());
     //    debug_recursive(&dom);
-    let display_list = dbg!(build_display_list(&layout_tree));
+    let display_list = build_display_list(&layout_tree);
 
-    launch_kosmonaut();
+    launch_kosmonaut(display_list);
 }
 
-fn launch_kosmonaut() {
+fn launch_kosmonaut(display_list: DisplayList) {
     let (windowed_context, event_loop, gl) = init_main_window_and_gl();
     print_gl_info(&windowed_context, &gl);
-    run_event_loop(windowed_context, event_loop, gl);
+    // TODO: Passing the display list here isn't ideal, but works fine while Kosmonaut is essentially
+    // a static document viewer.  When DOM nodes, styles, etc, can change dynamically, e.g. via JavaScript,
+    // we'll need to generate the display list somewhere else, probably in the event loop.
+    run_event_loop(windowed_context, event_loop, gl, display_list);
 }

@@ -21,6 +21,8 @@ impl VertexArrayObject {
     /// it can to set you up for your configuration, such as binding and unbinding the new VAO
     /// before and after your config function.
     ///
+    /// # Safety
+    ///
     /// This function is unsafe because it relies on you implementing `config_vao_fn` correctly to
     /// get proper functionality and safety.  It also uses some GL methods directly, which
     /// themselves require care to use correctly.
@@ -56,14 +58,16 @@ impl VertexArrayObject {
     /// the data is added into this new VBO.  Otherwise, if a VBO is already bound, the data is
     /// added to this existing VBO.
     pub fn store_vertex_data(&mut self, data: &[f32]) {
-        self.store_vertex_data_fallible(data)
-            .map_err(|err| match err {
+        match self.store_vertex_data_fallible(data) {
+            Ok(()) => {}
+            Err(err) => match err {
                 VaoErr::NoVboBound => {
                     let mut vbo = VertexBufferObject::new(&self.gl);
                     vbo.store_vertex_data(data);
                     self.bound_buffer = Some(vbo);
                 }
-            });
+            },
+        }
     }
 
     /// Stores the input vertex data in the VBO associated with this VAO.

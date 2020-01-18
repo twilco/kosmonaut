@@ -1,3 +1,4 @@
+use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::layout::Rect;
 use crate::style::values::computed::LineStyle;
@@ -23,12 +24,67 @@ pub fn build_display_list(layout_box: &LayoutBox) -> DisplayList {
 /// printer.
 ///
 /// https://en.wikipedia.org/wiki/Display_list
-type DisplayList = Vec<DisplayCommand>;
+pub type DisplayList = Vec<DisplayCommand>;
 
 /// A command to perform a graphics operation.
 #[derive(Clone, Copy, Debug)]
 pub enum DisplayCommand {
     SolidColor(RGBA, Rect),
+}
+
+impl DisplayCommand {
+    pub fn to_vertices(&self, viewport: Rect) -> Vec<f32> {
+        let mut vertices = Vec::new();
+        match self {
+            DisplayCommand::SolidColor(rgba, rect) => {
+                let rect_colors = &[
+                    rgba.red_f32(),
+                    rgba.green_f32(),
+                    rgba.blue_f32(),
+                    rgba.alpha_f32(),
+                ];
+                // TODO: Should there be a trait called `ToVertices` that Rect and other things impl?
+
+                // Top-left vertex.
+                vertices.extend_from_slice(&[
+                    ndc_x(rect.start_x, viewport.width.px()),
+                    ndc_y(rect.start_y, viewport.height.px()),
+                    // TODO: Implement z-indexing.
+                    0.0,
+                ]);
+                vertices.extend_from_slice(rect_colors);
+
+                let top_right_vertex = &[
+                    ndc_x((rect.start_x + rect.width).px(), viewport.width.px()),
+                    ndc_y(rect.start_y, viewport.height.px()),
+                    0.0,
+                ];
+                let bottom_left_vertex = &[
+                    ndc_x(rect.start_x, viewport.width.px()),
+                    ndc_y((rect.start_y + rect.height).px(), viewport.height.px()),
+                    0.0,
+                ];
+                vertices.extend_from_slice(top_right_vertex);
+                vertices.extend_from_slice(rect_colors);
+                vertices.extend_from_slice(bottom_left_vertex);
+                vertices.extend_from_slice(rect_colors);
+
+                // Second triangle.
+                vertices.extend_from_slice(bottom_left_vertex);
+                vertices.extend_from_slice(rect_colors);
+                vertices.extend_from_slice(top_right_vertex);
+                vertices.extend_from_slice(rect_colors);
+                // Bottom-right vertex.
+                vertices.extend_from_slice(&[
+                    ndc_x((rect.start_x + rect.width).px(), viewport.width.px()),
+                    ndc_y((rect.start_y + rect.height).px(), viewport.height.px()),
+                    0.0,
+                ]);
+                vertices.extend_from_slice(rect_colors);
+            }
+        }
+        vertices
+    }
 }
 
 /// Renders a layout box in the correct order.  The order in which each part of a box is painted is

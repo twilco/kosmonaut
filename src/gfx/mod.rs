@@ -1,6 +1,6 @@
 use crate::gfx::rect::RectPainter;
 use crate::layout::Rect;
-use crate::paint::DisplayList;
+use crate::paint::{DisplayCommand, DisplayList};
 use crate::style::values::computed::length::CSSPixelLength;
 use gl::util::opengl_version;
 use gl::Gl;
@@ -61,7 +61,7 @@ pub fn run_event_loop(
 pub fn redraw(
     windowed_context: &WindowedContext<PossiblyCurrent>,
     gl: &Gl,
-    display_list: &DisplayList,
+    display_list: &[DisplayCommand],
     rect_painter: &mut RectPainter,
 ) {
     let viewport = Rect {

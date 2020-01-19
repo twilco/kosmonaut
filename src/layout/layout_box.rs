@@ -1,4 +1,4 @@
-use crate::dom::tree::NodeRef;
+use crate::dom::tree::{ElementData, Node, NodeData, NodeRef};
 use crate::layout::Dimensions;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -38,6 +38,11 @@ impl LayoutBox {
         self.node.computed_values()
     }
 
+    /// Determines if this layout box is associated with the root DOM node.
+    pub fn is_root(&self) -> bool {
+        self.node.parent().is_none()
+    }
+
     /// Gets the proper `LayoutBox` container to insert inline-children in to.
     ///
     /// If a block box contains inline-children, an anonymous box must be used to contain them.
@@ -74,8 +79,20 @@ impl LayoutBox {
         match self.box_type {
             BoxType::Block => self.layout_block(containing_block),
             BoxType::Inline => {
-                println!("layout inline box types not implemented");
-                layout_non_block_because_only_block_is_impl(self, containing_block);
+                // TODO: The root element is an inline box-type, so when we can actually layout
+                // inline boxes, make sure to handle the root element.  This current implementation
+                // is a quite a hack.
+                if self.is_root() {
+                    println!("laying out root element, which is an inline box type");
+                    // The root element takes the dimensions of the containing block, which is the viewport.
+                    self.dimensions = containing_block;
+                    for child in &mut self.children {
+                        child.layout(self.dimensions);
+                    }
+                } else {
+                    println!("layout inline box types not implemented");
+                    layout_non_block_because_only_block_is_impl(self, containing_block);
+                }
             }
             BoxType::Anonymous => {
                 println!("layout anonymous box types not implemented");
@@ -96,17 +113,17 @@ impl LayoutBox {
     /// Custom debug implementation for when you don't want to print out information about the node,
     /// as that can be quite noisy.
     pub fn nodeless_dbg(&self) {
-        if self.box_type == BoxType::Block {
-            println!("dimensions: {:?}", self.dimensions);
-            println!("box_type: {:?}", self.box_type);
-            println!("children: [");
-        }
+        //        if self.box_type == BoxType::Block {
+        dbg!(&self.dimensions);
+        dbg!(&self.box_type);
+        //            println!("children: [");
+        //        }
 
-        self.children.iter().for_each(|child| child.nodeless_dbg());
+        //        self.children.iter().for_each(|child| child.nodeless_dbg());
 
-        if self.box_type == BoxType::Block {
-            println!("]");
-        }
+        //        if self.box_type == BoxType::Block {
+        //            println!("]");
+        //        }
     }
 
     /// Assuming `self` is a block-box, calculate the dimensions of this box and any children.

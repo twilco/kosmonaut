@@ -1,11 +1,10 @@
 use crate::gfx::rect::RectPainter;
 use crate::layout::Rect;
-use crate::paint::{DisplayCommand, DisplayList};
+use crate::paint::DisplayCommand;
 use crate::style::values::computed::length::CSSPixelLength;
 use gl::util::opengl_version;
 use gl::Gl;
-use glutin::event::{Event, WindowEvent};
-use glutin::event_loop::{ControlFlow, EventLoop};
+use glutin::event_loop::EventLoop;
 use glutin::window::WindowBuilder;
 use glutin::{ContextBuilder, GlProfile, PossiblyCurrent, WindowedContext};
 
@@ -26,36 +25,6 @@ pub fn init_main_window_and_gl() -> (WindowedContext<PossiblyCurrent>, EventLoop
     let gl_context = windowed_context.context();
     let gl = Gl::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
     (windowed_context, el, gl)
-}
-
-pub fn run_event_loop(
-    windowed_context: WindowedContext<PossiblyCurrent>,
-    event_loop: EventLoop<()>,
-    gl: Gl,
-    display_list: DisplayList,
-) {
-    let mut rect_painter = RectPainter::new(&gl).unwrap();
-    event_loop.run(move |event, _, control_flow| {
-        //        println!("{:?}", event);
-        *control_flow = ControlFlow::Wait;
-        match event {
-            Event::LoopDestroyed => {}
-            Event::WindowEvent { ref event, .. } => match event {
-                WindowEvent::Resized(logical_size) => {
-                    let dpi_factor = windowed_context.window().hidpi_factor();
-                    let physical_size = logical_size.to_physical(dpi_factor);
-                    windowed_context.resize(physical_size);
-                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
-                }
-                WindowEvent::RedrawRequested => {
-                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
-                }
-                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                _ => (),
-            },
-            _ => (),
-        }
-    });
 }
 
 pub fn redraw(

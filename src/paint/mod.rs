@@ -90,7 +90,11 @@ impl DisplayCommand {
 /// Renders a layout box in the correct order.  The order in which each part of a box is painted is
 /// defined here: https://www.w3.org/TR/CSS22/zindex.html
 fn render_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox) {
-    // TODO: Implement step 1 of painting order for root element
+    // Step 1 of painting order
+    if layout_box.is_root() {
+        // Step 1.1
+        // TODO: Implement
+    }
 
     match layout_box.box_type {
         BoxType::Block => {
@@ -99,7 +103,7 @@ fn render_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &Layout
         }
         _ => {
             // TODO: Implement other steps of paining order, 3 -> 10
-            println!("skipping render of non-block box")
+            //            println!("skipping render of non-block box")
         }
     }
 

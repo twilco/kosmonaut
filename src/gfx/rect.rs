@@ -16,6 +16,7 @@ pub struct RectPainter {
     gl: Gl,
 }
 
+// TODO: Should this be in the paint module?
 impl RectPainter {
     pub fn new(gl: &Gl) -> Result<RectPainter, String> {
         let vbo = VertexBufferObject::new(gl);

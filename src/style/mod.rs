@@ -22,9 +22,9 @@ pub mod values;
 
 pub fn apply_styles(
     dom: NodeRef,
-    ua_sheets: Vec<Stylesheet>,
-    user_sheets: Vec<Stylesheet>,
-    author_sheets: Vec<Stylesheet>,
+    ua_sheets: &[Stylesheet],
+    user_sheets: &[Stylesheet],
+    author_sheets: &[Stylesheet],
 ) {
     // https://www.w3.org/TR/css-cascade-3/#value-stages
     // The final value of a CSS property for a given element or box is the result of a multi-step calculation:

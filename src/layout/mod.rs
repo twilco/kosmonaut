@@ -13,6 +13,7 @@ use crate::style::values::computed::Display;
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
 use crate::Side;
+use glutin::window::Window;
 use std::mem::discriminant;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
@@ -51,6 +52,22 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
         }
     }
     Some(layout_box)
+}
+
+/// Given a `window` and what probably should be the root of a `layout_tree`, perform a layout
+/// with the dimensions of the `window`.
+pub fn global_layout(layout_tree: &mut LayoutBox, window: &Window) {
+    layout_tree.layout(Dimensions {
+        content: Rect {
+            start_x: 0.0,
+            start_y: 0.0,
+            width: CSSPixelLength::new(window.inner_size().width as f32),
+            height: CSSPixelLength::new(window.inner_size().height as f32),
+        },
+        padding: Default::default(),
+        border: Default::default(),
+        margin: Default::default(),
+    });
 }
 
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#box-model

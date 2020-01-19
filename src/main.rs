@@ -15,11 +15,13 @@ use std::fs::File;
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
+use crate::gfx::rect::RectPainter;
+use glutin::event::{Event, WindowEvent};
+use glutin::event_loop::EventLoop;
 
-use crate::dom::tree::debug_recursive;
-use crate::layout::{build_layout_tree, Dimensions, Rect};
+use crate::dom::tree::{debug_recursive, NodeRef};
+use crate::layout::{build_layout_tree, global_layout};
 use crate::style::apply_styles;
-use crate::style::values::computed::length::CSSPixelLength;
 pub mod common;
 pub mod dom;
 pub mod gfx;
@@ -28,58 +30,75 @@ pub mod layout;
 pub mod paint;
 pub mod style;
 
-use crate::gfx::{init_main_window_and_gl, print_gl_info, run_event_loop};
-use crate::paint::{build_display_list, DisplayList};
+use crate::gfx::{init_main_window_and_gl, print_gl_info, redraw};
+use crate::paint::build_display_list;
 pub use common::Side;
+use gl::Gl;
+use glutin::event_loop::ControlFlow;
+use glutin::{PossiblyCurrent, WindowedContext};
 
-/// Algorithm:
-///  1. Upon enter button of URL textbox, make request to URL (or local FS file)
-///  2. Construct render tree with HTML received from response - https://developers.google.com/web/fundamentals/performance/critical-rendering-path/render-tree-construction?hl=en
-///  3. Perform layout step using render tree.  Turn all the things into boxes!
+/// Welcome to Kosmonaut.
 ///
-/// Useful resources:
-///     * https://developer.mozilla.org/en-US/docs/Learn/CSS/Introduction_to_CSS/Cascade_and_inheritance
-///     * https://html.spec.whatwg.org/#introduction
-///     * https://dom.spec.whatwg.org/#goals
-
+/// > The path of a kosmonaut is not an easy, triumphant march to glory. You have to get to know the
+/// > meaning not just of joy but also of grief before being allowed in the spacecraft cabin.
+///     - Yuri Gagarin
 #[allow(unused_variables)]
 fn main() {
+    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
+    print_gl_info(&windowed_context, &gl);
+
     let dom = parse_html()
         .from_utf8()
         .read_from(&mut File::open("web/rainbow-divs.html").unwrap())
         .unwrap();
-
     let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
         Some("browser.css".to_owned()),
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
+    apply_styles(dom.clone(), &vec![ua_sheet], &Vec::new(), &Vec::new());
 
-    apply_styles(dom.clone(), vec![ua_sheet], Vec::new(), Vec::new());
-    let mut layout_tree = build_layout_tree(dom).unwrap();
-    layout_tree.layout(Dimensions {
-        content: Rect {
-            start_x: 0.0,
-            start_y: 0.0,
-            width: CSSPixelLength::new(1440.),
-            height: CSSPixelLength::new(1440.),
-        },
-        padding: Default::default(),
-        border: Default::default(),
-        margin: Default::default(),
-    });
-    //    dbg!(layout_tree.nodeless_dbg());
-    //    debug_recursive(&dom);
-    let display_list = build_display_list(&layout_tree);
-
-    launch_kosmonaut(display_list);
+    run_event_loop(windowed_context, event_loop, gl, dom);
 }
 
-fn launch_kosmonaut(display_list: DisplayList) {
-    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
-    print_gl_info(&windowed_context, &gl);
-    // TODO: Passing the display list here isn't ideal, but works fine while Kosmonaut is essentially
-    // a static document viewer.  When DOM nodes, styles, etc, can change dynamically, e.g. via JavaScript,
-    // we'll need to generate the display list somewhere else, probably in the event loop.
-    run_event_loop(windowed_context, event_loop, gl, display_list);
+pub fn run_event_loop(
+    windowed_context: WindowedContext<PossiblyCurrent>,
+    event_loop: EventLoop<()>,
+    gl: Gl,
+    styled_dom: NodeRef,
+) {
+    let mut rect_painter = RectPainter::new(&gl).unwrap();
+    // An un-laid-out tree of boxes, to be cloned from whenever a global layout is required.
+    // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
+    // instead only needing a clone.
+    let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
+
+    let mut dirty_layout_tree = clean_layout_tree.clone();
+    global_layout(&mut dirty_layout_tree, windowed_context.window());
+    let mut display_list = build_display_list(&dirty_layout_tree);
+    event_loop.run(move |event, _, control_flow| {
+        //        println!("{:?}", event);
+        *control_flow = ControlFlow::Wait;
+        match event {
+            Event::LoopDestroyed => {}
+            Event::WindowEvent { ref event, .. } => match event {
+                WindowEvent::Resized(logical_size) => {
+                    let dpi_factor = windowed_context.window().hidpi_factor();
+                    let physical_size = logical_size.to_physical(dpi_factor);
+                    windowed_context.resize(physical_size);
+                    // Refresh layout tree state to a clean slate.
+                    dirty_layout_tree = clean_layout_tree.clone();
+                    global_layout(&mut dirty_layout_tree, windowed_context.window());
+                    display_list = build_display_list(&dirty_layout_tree);
+                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
+                }
+                WindowEvent::RedrawRequested => {
+                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
+                }
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                _ => (),
+            },
+            _ => (),
+        }
+    });
 }

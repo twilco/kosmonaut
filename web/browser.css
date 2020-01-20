@@ -1,4 +1,14 @@
 /* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
+
+/*\
+TODO:
+ 1. Kosmonaut does not currently parse the :root pseudoelement, so this does nothing.
+ 2. The viewport background should come from system colors, not :root CSS rules.
+\*/
+:root {
+    background-color: white;
+}
+
 div.main, div.main.main.div {
   /*font-size: 12px !important;*/
   /*margin-bottom: auto;*/

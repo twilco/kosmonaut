@@ -28,6 +28,15 @@ impl Color {
         self.0
     }
 
+    pub fn white() -> Color {
+        Color(RGBA {
+            red: 255,
+            green: 255,
+            blue: 255,
+            alpha: 1,
+        })
+    }
+
     pub fn black() -> Color {
         Color(RGBA {
             red: 0,

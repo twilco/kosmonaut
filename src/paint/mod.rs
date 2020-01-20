@@ -1,7 +1,7 @@
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::layout::Rect;
-use crate::style::values::computed::LineStyle;
+use crate::style::values::computed::{Color, LineStyle};
 use crate::Side;
 use cssparser::RGBA;
 
@@ -29,62 +29,11 @@ pub type DisplayList = Vec<DisplayCommand>;
 /// A command to perform a graphics operation.
 #[derive(Clone, Copy, Debug)]
 pub enum DisplayCommand {
-    SolidColor(RGBA, Rect),
-}
-
-impl DisplayCommand {
-    pub fn to_vertices(&self, viewport: Rect) -> Vec<f32> {
-        let mut vertices = Vec::new();
-        match self {
-            DisplayCommand::SolidColor(rgba, rect) => {
-                let rect_colors = &[
-                    rgba.red_f32(),
-                    rgba.green_f32(),
-                    rgba.blue_f32(),
-                    rgba.alpha_f32(),
-                ];
-                // TODO: Should there be a trait called `ToVertices` that Rect and other things impl?
-
-                // Top-left vertex.
-                vertices.extend_from_slice(&[
-                    ndc_x(rect.start_x, viewport.width.px()),
-                    ndc_y(rect.start_y, viewport.height.px()),
-                    // TODO: Implement z-indexing.
-                    0.0,
-                ]);
-                vertices.extend_from_slice(rect_colors);
-
-                let top_right_vertex = &[
-                    ndc_x((rect.start_x + rect.width).px(), viewport.width.px()),
-                    ndc_y(rect.start_y, viewport.height.px()),
-                    0.0,
-                ];
-                let bottom_left_vertex = &[
-                    ndc_x(rect.start_x, viewport.width.px()),
-                    ndc_y((rect.start_y + rect.height).px(), viewport.height.px()),
-                    0.0,
-                ];
-                vertices.extend_from_slice(top_right_vertex);
-                vertices.extend_from_slice(rect_colors);
-                vertices.extend_from_slice(bottom_left_vertex);
-                vertices.extend_from_slice(rect_colors);
-
-                // Second triangle.
-                vertices.extend_from_slice(bottom_left_vertex);
-                vertices.extend_from_slice(rect_colors);
-                vertices.extend_from_slice(top_right_vertex);
-                vertices.extend_from_slice(rect_colors);
-                // Bottom-right vertex.
-                vertices.extend_from_slice(&[
-                    ndc_x((rect.start_x + rect.width).px(), viewport.width.px()),
-                    ndc_y((rect.start_y + rect.height).px(), viewport.height.px()),
-                    0.0,
-                ]);
-                vertices.extend_from_slice(rect_colors);
-            }
-        }
-        vertices
-    }
+    RectSolidColor(RGBA, Rect),
+    /// This _could_ be represented as [`RectSolidColor`], but graphics APIs sometimes have a
+    /// special background painting capabilities that are more idiomatic, such as OpenGL's
+    /// `Clear(COLOR_BUFFER_BIT)` and `ClearColor(r, g, b, a)` APIs.
+    ViewportBackground(RGBA),
 }
 
 /// Renders a layout box in the correct order.  The order in which each part of a box is painted is
@@ -93,17 +42,24 @@ fn render_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &Layout
     // Step 1 of painting order
     if layout_box.is_root() {
         // Step 1.1
-        // TODO: Implement
+        // TODO: This would work if we properly parsed and applied rules for the CSS pseudoelement `:root`, but we currently don't.
+        // let cvs = layout_box.computed_values();
+        // display_list.push(DisplayCommand::ViewportBackground(cvs.background_color.rgba()));
+        // For now, apply the computed color of white manually.
+        display_list.push(DisplayCommand::ViewportBackground(Color::white().rgba()));
+
+        // TODO: Step 1.2, painting background images
     }
 
+    #[allow(clippy::single_match)]
     match layout_box.box_type {
         BoxType::Block => {
             // Step 2 of painting order
             render_block_listitem_block_equiv(display_list, layout_box)
         }
-        _ => {
+        BoxType::Anonymous | BoxType::Inline => {
             // TODO: Implement other steps of paining order, 3 -> 10
-            //            println!("skipping render of non-block box")
+            // println!("skipping render of non-block box")
         }
     }
 
@@ -125,7 +81,7 @@ fn render_block_listitem_block_equiv(
 fn render_background(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox) {
     let bg_color = layout_box.computed_values().background_color.rgba();
     if bg_color != RGBA::transparent() {
-        display_list.push(DisplayCommand::SolidColor(
+        display_list.push(DisplayCommand::RectSolidColor(
             bg_color,
             layout_box.dimensions.border_box(),
         ))
@@ -159,7 +115,7 @@ fn render_border(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox,
 
     let border_box = d.border_box();
     match side {
-        Side::Bottom => display_list.push(DisplayCommand::SolidColor(
+        Side::Bottom => display_list.push(DisplayCommand::RectSolidColor(
             border_color_rgba,
             Rect {
                 start_x: border_box.start_x,
@@ -168,7 +124,7 @@ fn render_border(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox,
                 height: border_size_px,
             },
         )),
-        Side::Left => display_list.push(DisplayCommand::SolidColor(
+        Side::Left => display_list.push(DisplayCommand::RectSolidColor(
             border_color_rgba,
             Rect {
                 start_x: border_box.start_x,
@@ -177,7 +133,7 @@ fn render_border(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox,
                 height: border_box.height,
             },
         )),
-        Side::Right => display_list.push(DisplayCommand::SolidColor(
+        Side::Right => display_list.push(DisplayCommand::RectSolidColor(
             border_color_rgba,
             Rect {
                 start_x: (border_box.start_x + border_box.width - border_size_px).px(),
@@ -186,7 +142,7 @@ fn render_border(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox,
                 height: border_box.height,
             },
         )),
-        Side::Top => display_list.push(DisplayCommand::SolidColor(
+        Side::Top => display_list.push(DisplayCommand::RectSolidColor(
             border_color_rgba,
             Rect {
                 start_x: border_box.start_x,

@@ -56,7 +56,7 @@ fn main() {
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    apply_styles(dom.clone(), &vec![ua_sheet], &Vec::new(), &Vec::new());
+    apply_styles(dom.clone(), &[ua_sheet], &Vec::new(), &Vec::new());
 
     run_event_loop(windowed_context, event_loop, gl, dom);
 }

@@ -542,7 +542,7 @@ impl From<&PropertyDeclaration> for LonghandId {
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
             PropertyDeclaration::Height(_) => LonghandId::Height,
             PropertyDeclaration::MarginBottom(_) => LonghandId::MarginBottom,
-            PropertyDeclaration::MarginLeft(_) => LonghandId::PaddingLeft,
+            PropertyDeclaration::MarginLeft(_) => LonghandId::MarginLeft,
             PropertyDeclaration::MarginRight(_) => LonghandId::MarginRight,
             PropertyDeclaration::MarginTop(_) => LonghandId::MarginTop,
             PropertyDeclaration::PaddingBottom(_) => LonghandId::PaddingBottom,

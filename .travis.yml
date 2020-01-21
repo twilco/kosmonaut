@@ -4,7 +4,8 @@ rust:
 os:
   - linux
   - osx
-  - windows
+  # TODO: Uncomment when we can figure out missing DLL resulting in failed compilations.
+  # - windows
 cache: cargo
 
 before_script:

@@ -56,7 +56,12 @@ fn main() {
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    apply_styles(dom.clone(), &[ua_sheet], &Vec::new(), &Vec::new());
+    let author_stylesheet = style::stylesheet::parse_css_to_stylesheet(
+        Some("rainbow-divs.css".to_owned()),
+        &mut std::fs::read_to_string("web/rainbow-divs.css").expect("file fail"),
+    )
+    .expect("parse stylesheet fail");
+    apply_styles(dom.clone(), &[ua_sheet], &[], &[author_stylesheet]);
 
     run_event_loop(windowed_context, event_loop, gl, dom);
 }

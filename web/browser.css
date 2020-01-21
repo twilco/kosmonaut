@@ -1,45 +1,94 @@
-/* UA default styles: https://html.spec.whatwg.org/#the-css-user-agent-style-sheet-and-presentational-hints */
+/*\
+ W3 suggested default UA stylesheet:
+    * https://stackoverflow.com/questions/32875/browsers-default-css-stylesheets
+    * https://www.w3.org/TR/CSS22/sample.html
+ Properties that Kosmonaut does not support are commented out.
+\*/
+html, address,
+blockquote,
+body, dd, div,
+dl, dt, fieldset, form,
+frame, frameset,
+h1, h2, h3, h4,
+h5, h6, noframes,
+ol, p, ul, center,
+dir, hr, menu, pre   {
+    /* FIXME: Uncommenting this display block causes the rainbow div example to render nothing but the background. */
+    /*display: block;*/
+    /*unicode-bidi: embed */
+}
+/*li              { display: list-item }*/
+head            { display: none }
+/*table           { display: table }*/
+/*tr              { display: table-row }*/
+/*thead           { display: table-header-group }*/
+/*tbody           { display: table-row-group }*/
+/*tfoot           { display: table-footer-group }*/
+/*col             { display: table-column }*/
+/*colgroup        { display: table-column-group }*/
+/*td, th          { display: table-cell }*/
+/*caption         { display: table-caption }*/
+/*th              { font-weight: bolder; text-align: center }*/
+/*caption         { text-align: center }*/
 
 /*\
-TODO:
- 1. Kosmonaut does not currently parse the :root pseudoelement, so this does nothing.
- 2. The viewport background should come from system colors, not :root CSS rules.
+  TODO: Replace with margin shorthand.
+  FIXME: Remove the display block in `body` when the FIXME associated with `body` above is fixed.
 \*/
-:root {
-    background-color: white;
-}
+body            { display: block; margin-bottom: 8px; margin-left: 8px; margin-right: 8px; margin-top: 8px }
 
-div.main, div.main.main.div {
-  /*font-size: 12px !important;*/
-  /*margin-bottom: auto;*/
-  /*padding-bottom: 216px;*/
-  /*display: block;*/
-  /*width: 70px;*/
-  /*color: rgb(120, 14, 16);*/
-  /*border-bottom-color: currentColor;*/
-  /*border-top-style: dashed;*/
-  /*border-left-width: 88px;*/
-}
+/*h1              { font-size: 2em; margin: .67em 0  }*/
+/*h2              { font-size: 1.5em; margin: .75em 0  }*/
+/*h3              { font-size: 1.17em; margin: .83em 0  }*/
+/*h4, p,*/
+/*blockquote, ul,*/
+/*fieldset, form,*/
+/*ol, dl, dir,*/
+/*menu            { margin: 1.12em 0 }*/
+/*h5              { font-size: .83em; margin: 1.5em 0 }*/
+/*h6              { font-size: .75em; margin: 1.67em 0 }*/
+/*h1, h2, h3, h4,*/
+/*h5, h6, b,*/
+/*strong          { font-weight: bolder }*/
+blockquote      { margin-left: 40px; margin-right: 40px }
+/*i, cite, em,*/
+/*var, address    { font-style: italic }*/
+/*pre, tt, code,*/
+/*kbd, samp       { font-family: monospace }*/
+/*pre             { white-space: pre }*/
+/*button, textarea,*/
+/*input, select   { display: inline-block }*/
+/*big             { font-size: 1.17em }*/
+/*small, sub, sup { font-size: .83em }*/
+/*sub             { vertical-align: sub }*/
+/*sup             { vertical-align: super }*/
+/*table           { border-spacing: 2px; }*/
+/*thead, tbody,*/
+/*tfoot           { vertical-align: middle }*/
+/*td, th, tr      { vertical-align: inherit }*/
+/*s, strike, del  { text-decoration: line-through }*/
+/*hr              { border: 1px inset }*/
+ol, ul, dir,
+menu, dd        { margin-left: 40px }
+/*ol              { list-style-type: decimal }*/
+/*ol ul, ul ol,*/
+/*ul ul, ol ol    { margin-top: 0; margin-bottom: 0 }*/
+/*u, ins          { text-decoration: underline }*/
+/*br:before       { content: "\A"; white-space: pre-line }*/
+/*center          { text-align: center }*/
+/*:link, :visited { text-decoration: underline }*/
+/*:focus          { outline: thin dotted invert }*/
 
-div {
-    display: block;
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    /*border-bottom-style: solid;*/
-    /*border-bottom-color: fuchsia;*/
-    /*border-left-style: solid;*/
-    /*border-left-color: fuchsia;*/
-    /*border-right-style: solid;*/
-    /*border-right-color: fuchsia;*/
-    /*border-top-style: solid;*/
-    /*border-top-color: fuchsia;*/
-}
-.a { background-color: #ff0000; }
-.b { background-color: #ffa500; }
-.c { background-color: #ffff00; }
-.d { background-color: #008000; }
-.e { background-color: #0000ff; }
-.f { background-color: #4b0082; }
-.g { background-color: #800080; }
+/* Begin bidirectionality settings (do not change) */
+/*BDO[DIR="ltr"]  { direction: ltr; unicode-bidi: bidi-override }*/
+/*BDO[DIR="rtl"]  { direction: rtl; unicode-bidi: bidi-override }*/
+
+/**[DIR="ltr"]    { direction: ltr; unicode-bidi: embed }*/
+/**[DIR="rtl"]    { direction: rtl; unicode-bidi: embed }*/
+
+/*@media print {*/
+/*    h1            { page-break-before: always }*/
+/*    h1, h2, h3,*/
+/*    h4, h5, h6    { page-break-after: avoid }*/
+/*    ul, ol, dl    { page-break-before: avoid }*/
+/*}*/

@@ -1,4 +1,3 @@
-use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::layout::Rect;
 use crate::style::values::computed::{Color, LineStyle};

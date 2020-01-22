@@ -30,7 +30,7 @@ pub mod layout;
 pub mod paint;
 pub mod style;
 
-use crate::gfx::{init_main_window_and_gl, print_gl_info, redraw};
+use crate::gfx::{init_main_window_and_gl, print_gl_info, paint};
 use crate::paint::build_display_list;
 pub use common::Side;
 use gl::Gl;
@@ -95,10 +95,10 @@ pub fn run_event_loop(
                     dirty_layout_tree = clean_layout_tree.clone();
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
                     display_list = build_display_list(&dirty_layout_tree);
-                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
+                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                 }
                 WindowEvent::RedrawRequested => {
-                    redraw(&windowed_context, &gl, &display_list, &mut rect_painter);
+                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),

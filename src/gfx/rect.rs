@@ -10,7 +10,7 @@ use std::ffi::CString;
 pub struct RectPainter {
     /// The OpenGL program that will be used to paint rectangles.
     program: Program,
-    /// The VAO to use to draw rectangles.
+    /// The VAO to use to paint rectangles.
     vao: VertexArrayObject,
     /// An instance of OpenGL.
     gl: Gl,

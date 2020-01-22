@@ -37,7 +37,7 @@ pub fn print_gl_info(windowed_context: &WindowedContext<PossiblyCurrent>, gl: &G
     println!("-------------------------------------------------");
 }
 
-pub fn redraw(
+pub fn paint(
     windowed_context: &WindowedContext<PossiblyCurrent>,
     gl: &Gl,
     display_list: &[DisplayCommand],

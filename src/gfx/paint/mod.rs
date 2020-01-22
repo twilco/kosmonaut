@@ -1,6 +1,7 @@
 use crate::gfx::display::DisplayCommand;
-use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::rect::RectPainter;
+use crate::style::values::CSSFloat;
+use cssparser::RGBA;
 use gl::Gl;
 use glutin::{PossiblyCurrent, WindowedContext};
 
@@ -33,58 +34,13 @@ pub fn paint(
 fn process_display_command(
     command: &DisplayCommand,
     vertex_data: &mut Vec<f32>,
-    viewport_width: f32,
-    viewport_height: f32,
+    viewport_width: CSSFloat,
+    viewport_height: CSSFloat,
     gl: &Gl,
 ) {
     match command {
         DisplayCommand::RectSolidColor(rgba, rect) => {
-            // impl of command::to_vertices should probably be removed and moved into here
-            //                vertex_data.extend(command.to_vertices(viewport));
-            let rect_colors = &[
-                rgba.red_f32(),
-                rgba.green_f32(),
-                rgba.blue_f32(),
-                rgba.alpha_f32(),
-            ];
-            // TODO: Should there be a trait called `ToVertices` that Rect and other things impl?
-
-            // Top-left vertex.
-            vertex_data.extend_from_slice(&[
-                ndc_x(rect.start_x, viewport_width),
-                ndc_y(rect.start_y, viewport_height),
-                // TODO: Implement z-indexing.
-                0.0,
-            ]);
-            vertex_data.extend_from_slice(rect_colors);
-
-            let top_right_vertex = &[
-                ndc_x((rect.start_x + rect.width).px(), viewport_width),
-                ndc_y(rect.start_y, viewport_height),
-                0.0,
-            ];
-            let bottom_left_vertex = &[
-                ndc_x(rect.start_x, viewport_width),
-                ndc_y((rect.start_y + rect.height).px(), viewport_height),
-                0.0,
-            ];
-            vertex_data.extend_from_slice(top_right_vertex);
-            vertex_data.extend_from_slice(rect_colors);
-            vertex_data.extend_from_slice(bottom_left_vertex);
-            vertex_data.extend_from_slice(rect_colors);
-
-            // Second triangle.
-            vertex_data.extend_from_slice(bottom_left_vertex);
-            vertex_data.extend_from_slice(rect_colors);
-            vertex_data.extend_from_slice(top_right_vertex);
-            vertex_data.extend_from_slice(rect_colors);
-            // Bottom-right vertex.
-            vertex_data.extend_from_slice(&[
-                ndc_x((rect.start_x + rect.width).px(), viewport_width),
-                ndc_y((rect.start_y + rect.height).px(), viewport_height),
-                0.0,
-            ]);
-            vertex_data.extend_from_slice(rect_colors);
+            vertex_data.extend((rect, rgba).to_vertices(viewport_width, viewport_height))
         }
         DisplayCommand::ViewportBackground(rgba) => unsafe {
             gl.ClearColor(
@@ -95,5 +51,23 @@ fn process_display_command(
             );
             gl.Clear(gl::COLOR_BUFFER_BIT);
         },
+    }
+}
+
+/// Represents the conversion from some entity to OpenGL vertex data.
+pub trait ToVertices {
+    fn to_vertices(&self, viewport_width: CSSFloat, viewport_height: CSSFloat) -> Vec<f32>;
+}
+
+impl ToVertices for RGBA {
+    fn to_vertices(&self, _viewport_width: f32, _viewport_height: f32) -> Vec<f32> {
+        let mut vertices = Vec::new();
+        vertices.extend_from_slice(&[
+            self.red_f32(),
+            self.green_f32(),
+            self.blue_f32(),
+            self.alpha_f32(),
+        ]);
+        vertices
     }
 }

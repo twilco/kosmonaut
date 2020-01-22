@@ -1,3 +1,7 @@
+use crate::gfx::ndc::{ndc_x, ndc_y};
+use crate::gfx::paint::ToVertices;
+use crate::layout::Rect;
+use cssparser::RGBA;
 use gl::program::Program;
 use gl::shader::{Shader, ShaderKind};
 use gl::types::{GLint, GLvoid};
@@ -91,4 +95,57 @@ fn build_triangle_program(gl: &Gl) -> Result<Program, String> {
     )?;
     let program = Program::from_shaders(&[vertex_shader, fragment_shader], &gl)?;
     Ok(program)
+}
+
+impl ToVertices for (&RGBA, &Rect) {
+    fn to_vertices(&self, viewport_width: f32, viewport_height: f32) -> Vec<f32> {
+        (self.1, self.0).to_vertices(viewport_width, viewport_height)
+    }
+}
+
+impl ToVertices for (&Rect, &RGBA) {
+    fn to_vertices(&self, viewport_width: f32, viewport_height: f32) -> Vec<f32> {
+        let rect = self.0;
+        let rgba_vec = self.1.to_vertices(viewport_width, viewport_height);
+        let rect_colors = rgba_vec.as_slice();
+
+        let mut vertex_data = Vec::new();
+        // Top-left vertex.
+        vertex_data.extend_from_slice(&[
+            ndc_x(rect.start_x, viewport_width),
+            ndc_y(rect.start_y, viewport_height),
+            // TODO: Implement z-indexing.
+            0.0,
+        ]);
+        vertex_data.extend_from_slice(rect_colors);
+
+        let top_right_vertex = &[
+            ndc_x((rect.start_x + rect.width).px(), viewport_width),
+            ndc_y(rect.start_y, viewport_height),
+            0.0,
+        ];
+        let bottom_left_vertex = &[
+            ndc_x(rect.start_x, viewport_width),
+            ndc_y((rect.start_y + rect.height).px(), viewport_height),
+            0.0,
+        ];
+        vertex_data.extend_from_slice(top_right_vertex);
+        vertex_data.extend_from_slice(rect_colors);
+        vertex_data.extend_from_slice(bottom_left_vertex);
+        vertex_data.extend_from_slice(rect_colors);
+
+        // Second triangle.
+        vertex_data.extend_from_slice(bottom_left_vertex);
+        vertex_data.extend_from_slice(rect_colors);
+        vertex_data.extend_from_slice(top_right_vertex);
+        vertex_data.extend_from_slice(rect_colors);
+        // Bottom-right vertex.
+        vertex_data.extend_from_slice(&[
+            ndc_x((rect.start_x + rect.width).px(), viewport_width),
+            ndc_y((rect.start_y + rect.height).px(), viewport_height),
+            0.0,
+        ]);
+        vertex_data.extend_from_slice(rect_colors);
+        vertex_data
+    }
 }

@@ -49,6 +49,7 @@ pub enum AbsoluteLength {
 }
 
 impl AbsoluteLength {
+    #[allow(dead_code)]
     fn is_zero(self) -> bool {
         match self {
             AbsoluteLength::Px(v)

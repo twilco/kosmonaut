@@ -5,16 +5,11 @@ pub mod layout_box;
 
 use crate::dom::tree::NodeRef;
 use crate::layout::layout_box::{BoxType, LayoutBox};
-use crate::layout::BoxType::Anonymous;
 use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::computed::length::{LengthPercentage, LengthPercentageOrAuto};
-use crate::style::values::computed::width::Width;
 use crate::style::values::computed::Display;
-use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
 use crate::Side;
 use glutin::window::Window;
-use std::mem::discriminant;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
 /// `None` if `node` is a `Display::None`.

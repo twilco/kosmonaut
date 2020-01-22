@@ -15,23 +15,22 @@ use std::fs::File;
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
-use crate::gfx::rect::RectPainter;
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
-use crate::dom::tree::{debug_recursive, NodeRef};
+use crate::dom::tree::NodeRef;
 use crate::layout::{build_layout_tree, global_layout};
 use crate::style::apply_styles;
 pub mod common;
 pub mod dom;
 pub mod gfx;
-#[allow(unused_imports)]
 pub mod layout;
-pub mod paint;
 pub mod style;
 
-use crate::gfx::{init_main_window_and_gl, print_gl_info, paint};
-use crate::paint::build_display_list;
+use crate::gfx::display::build_display_list;
+use crate::gfx::paint::paint;
+use crate::gfx::paint::rect::RectPainter;
+use crate::gfx::{init_main_window_and_gl, print_gl_info};
 pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;

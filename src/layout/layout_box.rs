@@ -1,5 +1,5 @@
-use crate::dom::tree::{ElementData, Node, NodeData, NodeRef};
-use crate::layout::{Dimensions, Rect};
+use crate::dom::tree::NodeRef;
+use crate::layout::Dimensions;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };

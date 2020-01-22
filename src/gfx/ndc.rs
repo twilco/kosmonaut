@@ -24,7 +24,7 @@ fn ndc(px_len: CSSFloat, relative_to_px: CSSFloat) -> f32 {
 /// Measures the distance between pixels in a direction, relative to the pixel length of the
 /// dimension in question (width or height).
 #[inline(always)]
-fn distance_between_pixel_locations(relative_to_px: f32) -> f32 {
+fn distance_between_pixel_locations(relative_to_px: CSSFloat) -> f32 {
     1.0 / relative_to_px
 }
 

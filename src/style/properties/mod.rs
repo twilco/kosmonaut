@@ -24,7 +24,6 @@ use crate::style::{CssOrigin, StyleParseErrorKind};
 use std::mem::discriminant;
 
 pub mod id;
-pub mod longhands;
 
 /// Parses raw parser input into a block of property declarations.
 pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclarationBlock {

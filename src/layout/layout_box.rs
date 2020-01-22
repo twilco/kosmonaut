@@ -10,9 +10,9 @@ use std::mem::discriminant;
 
 #[derive(Clone, Debug)]
 pub struct LayoutBox {
-    pub dimensions: Dimensions,
-    pub box_type: BoxType,
-    pub children: Vec<LayoutBox>,
+    dimensions: Dimensions,
+    box_type: BoxType,
+    children: Vec<LayoutBox>,
     /// Reference to the closest non-anonymous node.  This distinction only matters for anonymous
     /// boxes, since anonymous boxes are by definition not associated with a node, but need access
     /// to a node to get computed values during layout.  If the box is a block, inline, or any other
@@ -33,6 +33,18 @@ impl LayoutBox {
         }
     }
 
+    pub fn dimensions(&self) -> Dimensions {
+        self.dimensions
+    }
+
+    pub fn box_type(&self) -> BoxType {
+        self.box_type
+    }
+
+    pub fn children(&self) -> &[LayoutBox] {
+        &self.children
+    }
+
     /// Retrieve the computed values of the node associated with this layout box.
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         self.node.computed_values()
@@ -43,13 +55,23 @@ impl LayoutBox {
         self.node.parent().is_none()
     }
 
+    /// Directly adds `new_child` to this layout box's children.
+    pub fn add_child(&mut self, new_child: LayoutBox) {
+        self.children.push(new_child)
+    }
+
+    /// Adds the `new_child` to the proper inline-container of `self`.
+    pub fn add_child_inline(&mut self, new_child: LayoutBox) {
+        self.get_inline_container().children.push(new_child)
+    }
+
     /// Gets the proper `LayoutBox` container to insert inline-children in to.
     ///
     /// If a block box contains inline-children, an anonymous box must be used to contain them.
     ///
     /// If this box is already an inline or anonymous box, we can use ourself to contain the inline
     /// children.  Otherwise, find or create an anonymous box.
-    pub fn get_inline_container(&mut self) -> &mut LayoutBox {
+    fn get_inline_container(&mut self) -> &mut LayoutBox {
         match self.box_type {
             BoxType::Inline | BoxType::Anonymous => self,
             BoxType::Block => {
@@ -300,7 +322,7 @@ impl LayoutBox {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BoxType {
     Block,
     Inline,

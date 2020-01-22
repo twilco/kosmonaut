@@ -51,7 +51,7 @@ fn prepare_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &Layou
     }
 
     #[allow(clippy::single_match)]
-    match layout_box.box_type {
+    match layout_box.box_type() {
         BoxType::Block => {
             // Step 2 of painting order
             prepare_block_listitem_block_equiv(display_list, layout_box)
@@ -62,7 +62,7 @@ fn prepare_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &Layou
         }
     }
 
-    for child in &layout_box.children {
+    for child in layout_box.children() {
         prepare_layout_box(display_list, child);
     }
 }
@@ -82,7 +82,7 @@ fn prepare_background(display_list: &mut Vec<DisplayCommand>, layout_box: &Layou
     if bg_color != RGBA::transparent() {
         display_list.push(DisplayCommand::RectSolidColor(
             bg_color,
-            layout_box.dimensions.border_box(),
+            layout_box.dimensions().border_box(),
         ))
     }
 }
@@ -98,7 +98,7 @@ fn prepare_borders(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBo
 /// Prepares the border `side` of `layout_box` for display by converting it to a display command.
 fn prepare_border(display_list: &mut Vec<DisplayCommand>, layout_box: &LayoutBox, side: Side) {
     let cvs = layout_box.computed_values();
-    let d = layout_box.dimensions;
+    let d = layout_box.dimensions();
     let border_style = cvs.border_style(side);
     let border_color_rgba = cvs.border_color_rgba(side);
     // The border size has already been calculated during layout, so we don't need to get it from

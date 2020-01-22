@@ -35,12 +35,12 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
                     // doing something different here.  To fix, see: https://www.w3.org/TR/CSS2/visuren.html#box-gen
                     // Namely, the paragraph that begins with "When an inline box contains an in-flow block-level box"
                     // This concept _might_ be called "fragmenting".
-                    layout_box.children.push(child_box)
+                    layout_box.add_child(child_box)
                 }
             }
             Display::Inline => {
                 if let Some(child_box) = build_layout_tree(child.clone()) {
-                    layout_box.get_inline_container().children.push(child_box)
+                    layout_box.add_child_inline(child_box)
                 }
             }
             Display::None => {}

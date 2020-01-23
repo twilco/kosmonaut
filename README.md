@@ -16,6 +16,12 @@ To build from source:
 
 1. Install Rust: https://www.rust-lang.org/tools/install
 2. `cargo build`
+
+### What can Kosmonaut do?
+
+So far, not much.  Only a very limited subset of CSS is currently supported, so most web pages will not work.  However, given very basic HTML and CSS, Kosmonaut does render the right things — see Kosmonaut's rendering of [this code](https://github.com/twilco/kosmonaut/blob/eef5274c252038062049769861d02354cbaa4b2a/web/rainbow-divs-incl-css.html), compared with that of Firefox:
+
+![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](rainbow-divs-vs-firefox.png)
  
 ### License and credits
 

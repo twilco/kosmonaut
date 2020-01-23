@@ -1,9 +1,5 @@
-/*\
-TODO:
- 1. Kosmonaut does not currently parse the :root pseudoelement, so this does nothing.
- 2. The viewport background should come from system colors, not :root CSS rules.
-\*/
-:root {
+/* TODO: The viewport background should come from system colors, not <html> CSS rules. */
+html {
     background-color: white;
 }
 div {

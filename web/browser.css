@@ -13,8 +13,7 @@ h1, h2, h3, h4,
 h5, h6, noframes,
 ol, p, ul, center,
 dir, hr, menu, pre   {
-    /* FIXME: Uncommenting this display block causes the rainbow div example to render nothing but the background. */
-    /*display: block;*/
+    display: block;
     /*unicode-bidi: embed */
 }
 /*li              { display: list-item }*/
@@ -31,11 +30,8 @@ head            { display: none }
 /*th              { font-weight: bolder; text-align: center }*/
 /*caption         { text-align: center }*/
 
-/*\
-  TODO: Replace with margin shorthand.
-  FIXME: Remove the display block in `body` when the FIXME associated with `body` above is fixed.
-\*/
-body            { display: block; margin-bottom: 8px; margin-left: 8px; margin-right: 8px; margin-top: 8px }
+/* TODO: Replace with margin shorthand when shorthands are supported. */
+body            { margin-bottom: 8px; margin-left: 8px; margin-right: 8px; margin-top: 8px }
 
 /*h1              { font-size: 2em; margin: .67em 0  }*/
 /*h2              { font-size: 1.5em; margin: .75em 0  }*/

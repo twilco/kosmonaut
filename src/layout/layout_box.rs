@@ -1,4 +1,4 @@
-use crate::dom::tree::NodeRef;
+use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::Dimensions;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -50,9 +50,12 @@ impl LayoutBox {
         self.node.computed_values()
     }
 
-    /// Determines if this layout box is associated with the root DOM node.
+    /// Determines if this layout box is associated with the root DOM node (<html>).
     pub fn is_root(&self) -> bool {
-        self.node.parent().is_none()
+        match self.node.parent() {
+            None => false,
+            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
+        }
     }
 
     /// Directly adds `new_child` to this layout box's children.

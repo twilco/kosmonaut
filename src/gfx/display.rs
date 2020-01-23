@@ -1,6 +1,6 @@
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::layout::Rect;
-use crate::style::values::computed::{Color, LineStyle};
+use crate::style::values::computed::LineStyle;
 use crate::Side;
 use cssparser::RGBA;
 
@@ -41,12 +41,10 @@ fn prepare_layout_box(display_list: &mut Vec<DisplayCommand>, layout_box: &Layou
     // Step 1 of painting order
     if layout_box.is_root() {
         // Step 1.1
-        // TODO: This would work if we properly parsed and applied rules for the CSS pseudoelement `:root`, but we currently don't.
-        // let cvs = layout_box.computed_values();
-        // display_list.push(DisplayCommand::ViewportBackground(cvs.background_color.rgba()));
-        // For now, apply the computed color of white manually.
-        display_list.push(DisplayCommand::ViewportBackground(Color::white().rgba()));
-
+        let cvs = layout_box.computed_values();
+        display_list.push(DisplayCommand::ViewportBackground(
+            cvs.background_color.rgba(),
+        ));
         // TODO: Step 1.2, painting background images
     }
 

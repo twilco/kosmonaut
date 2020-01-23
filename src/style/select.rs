@@ -193,7 +193,7 @@ impl selectors::Element for NodeDataRef<ElementData> {
 
     #[inline]
     fn is_html_element_in_html_document(&self) -> bool {
-        // FIXME: Have a notion of HTML document v.s. XML document?
+        // TODO: Have a notion of HTML document v.s. XML document?
         self.name.ns == ns!(html)
     }
 

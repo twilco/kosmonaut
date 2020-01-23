@@ -187,8 +187,8 @@ impl TreeSink for Sink {
 
     #[inline]
     fn reparent_children(&mut self, node: &NodeRef, new_parent: &NodeRef) {
-        // FIXME: Can this be done more effciently in rctree,
-        // by moving the whole linked list of children at once?
+        // TODO: Can this be done more efficiently in rctree, by moving the whole linked list of
+        // children at once?
         for child in node.children() {
             new_parent.append(child)
         }
@@ -196,7 +196,7 @@ impl TreeSink for Sink {
 
     #[inline]
     fn mark_script_already_started(&mut self, _node: &NodeRef) {
-        // FIXME: Is this useful outside of a browser?
+        // TODO: Is this useful outside of a browser?
     }
 
     #[inline]

@@ -191,16 +191,24 @@ macro_rules! siblings_next {
     ($next: ident, $next_back: ident, $next_sibling: ident) => {
         fn $next(&mut self) -> Option<NodeRef> {
             #![allow(non_shorthand_field_patterns)]
-            self.0.take().map(|State { $next: next, $next_back: next_back }| {
-                if let Some(sibling) = next.$next_sibling() {
-                    if next != next_back {
-                        self.0 = Some(State { $next: sibling, $next_back: next_back })
+            self.0.take().map(
+                |State {
+                     $next: next,
+                     $next_back: next_back,
+                 }| {
+                    if let Some(sibling) = next.$next_sibling() {
+                        if next != next_back {
+                            self.0 = Some(State {
+                                $next: sibling,
+                                $next_back: next_back,
+                            })
+                        }
                     }
-                }
-                next
-            })
+                    next
+                },
+            )
         }
-    }
+    };
 }
 
 impl Iterator for Siblings {
@@ -240,11 +248,11 @@ macro_rules! descendants_next {
                 match (self.0).$next() {
                     Some(NodeEdge::Start(node)) => return Some(node),
                     Some(NodeEdge::End(_)) => {}
-                    None => return None
+                    None => return None,
                 }
             }
         }
-    }
+    };
 }
 
 impl Iterator for Descendants {
@@ -278,33 +286,40 @@ macro_rules! traverse_next {
     ($next: ident, $next_back: ident, $first_child: ident, $next_sibling: ident, $Start: ident, $End: ident) => {
         fn $next(&mut self) -> Option<NodeEdge<NodeRef>> {
             #![allow(non_shorthand_field_patterns)]
-            self.0.take().map(|State { $next: next, $next_back: next_back }| {
-                if next != next_back {
-                    self.0 = match next {
-                        NodeEdge::$Start(ref node) => {
-                            match node.$first_child() {
-                                Some(child) => {
-                                    Some(State { $next: NodeEdge::$Start(child), $next_back: next_back })
-                                }
-                                None => Some(State { $next: NodeEdge::$End(node.clone()), $next_back: next_back })
-                            }
-                        }
-                        NodeEdge::$End(ref node) => {
-                            match node.$next_sibling() {
-                                Some(sibling) => {
-                                    Some(State { $next: NodeEdge::$Start(sibling), $next_back: next_back })
-                                }
-                                None => node.parent().map(|parent| {
-                                    State { $next: NodeEdge::$End(parent), $next_back: next_back }
-                                })
-                            }
-                        }
-                    };
-                }
-                next
-            })
+            self.0.take().map(
+                |State {
+                     $next: next,
+                     $next_back: next_back,
+                 }| {
+                    if next != next_back {
+                        self.0 = match next {
+                            NodeEdge::$Start(ref node) => match node.$first_child() {
+                                Some(child) => Some(State {
+                                    $next: NodeEdge::$Start(child),
+                                    $next_back: next_back,
+                                }),
+                                None => Some(State {
+                                    $next: NodeEdge::$End(node.clone()),
+                                    $next_back: next_back,
+                                }),
+                            },
+                            NodeEdge::$End(ref node) => match node.$next_sibling() {
+                                Some(sibling) => Some(State {
+                                    $next: NodeEdge::$Start(sibling),
+                                    $next_back: next_back,
+                                }),
+                                None => node.parent().map(|parent| State {
+                                    $next: NodeEdge::$End(parent),
+                                    $next_back: next_back,
+                                }),
+                            },
+                        };
+                    }
+                    next
+                },
+            )
         }
-    }
+    };
 }
 
 impl Iterator for Traverse {

@@ -8,6 +8,12 @@ Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicl
 > 
 > \- Yuri Gagarin
 
+### What can Kosmonaut do?
+
+So far, not much.  Only a very limited subset of CSS is currently supported, so most web pages will not work.  However, given very basic HTML and CSS, Kosmonaut does render the right things — see Kosmonaut's rendering of [this code](https://github.com/twilco/kosmonaut/blob/eef5274c252038062049769861d02354cbaa4b2a/web/rainbow-divs-incl-css.html), compared with that of Firefox:
+
+![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](rainbow-divs-vs-firefox.png)
+
 ### Build
 
 Kosmonaut is built with Rust using OpenGL bindings via [gl-rs](https://github.com/brendanzab/gl-rs), [Glutin](https://github.com/rust-windowing/glutin) for window management and OpenGL context creation, Servo's [html5ever](https://github.com/servo/html5ever) and [cssparser](https://github.com/servo/rust-cssparser) for HTML and CSS parsing, and various other auxiliary libraries.
@@ -17,11 +23,13 @@ To build from source:
 1. Install Rust: https://www.rust-lang.org/tools/install
 2. `cargo build`
 
-### What can Kosmonaut do?
+Kosmonaut does not currently support any networking.  To render HTML and CSS with Kosmonaut, you may instead run the executable you just built passing any number of HTML and CSS files via the `--files` (or `-f`) flag.
 
-So far, not much.  Only a very limited subset of CSS is currently supported, so most web pages will not work.  However, given very basic HTML and CSS, Kosmonaut does render the right things — see Kosmonaut's rendering of [this code](https://github.com/twilco/kosmonaut/blob/eef5274c252038062049769861d02354cbaa4b2a/web/rainbow-divs-incl-css.html), compared with that of Firefox:
+`cargo run -- --files my.html my.css more.css`
 
-![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](rainbow-divs-vs-firefox.png)
+To run the rainbow divs example pictured above, try:
+
+`cargo run -- --files web/rainbow-divs.html web/rainbow-divs.css`
  
 ### License and credits
 

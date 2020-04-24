@@ -21,12 +21,14 @@ use glutin::event_loop::EventLoop;
 use crate::dom::tree::NodeRef;
 use crate::layout::{build_layout_tree, global_layout};
 use crate::style::apply_styles;
+pub mod cli;
 pub mod common;
 pub mod dom;
 pub mod gfx;
 pub mod layout;
 pub mod style;
 
+use crate::cli::{html_file_path_from_files, setup_and_get_cli_args, stylesheets_from_files};
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::paint;
 use crate::gfx::paint::rect::RectPainter;
@@ -46,21 +48,26 @@ fn main() {
     let (windowed_context, event_loop, gl) = init_main_window_and_gl();
     print_gl_info(&windowed_context, &gl);
 
+    let arg_matches = setup_and_get_cli_args();
+    let fallback_local_html = "web/rainbow-divs.html";
+    let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
     let dom = parse_html()
         .from_utf8()
-        .read_from(&mut File::open("web/rainbow-divs.html").unwrap())
+        .read_from(&mut File::open(html_file).unwrap())
         .unwrap();
     let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
         Some("browser.css".to_owned()),
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    let author_stylesheet = style::stylesheet::parse_css_to_stylesheet(
-        Some("rainbow-divs.css".to_owned()),
-        &mut std::fs::read_to_string("web/rainbow-divs.css").expect("file fail"),
-    )
-    .expect("parse stylesheet fail");
-    apply_styles(dom.clone(), &[ua_sheet], &[], &[author_stylesheet]);
+    let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or(vec![
+        style::stylesheet::parse_css_to_stylesheet(
+            Some("rainbow-divs.css".to_owned()),
+            &mut std::fs::read_to_string("web/rainbow-divs.css").expect("file fail"),
+        )
+        .expect("parse stylesheet fail"),
+    ]);
+    apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
 
     run_event_loop(windowed_context, event_loop, gl, dom);
 }

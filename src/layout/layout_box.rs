@@ -1,11 +1,12 @@
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::Dimensions;
+use crate::layout::{Dimensions, DumpLayout};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
 use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
 use std::cell::Ref;
+use std::io::Write;
 use std::mem::discriminant;
 
 #[derive(Clone, Debug)]
@@ -322,6 +323,34 @@ impl LayoutBox {
             // Track the height so each child is laid out below the previous content.
             d.content.height += child.dimensions.margin_box().height;
         }
+    }
+}
+
+/// RenderView at (0,0) size 1166x819 renderer->(0x3055f9250)
+/// B-----L- --    HTML RenderBlock at (0,0) size 1166x6248.50 renderer->(0x3055f9700) node->(0x3055f9550)
+/// B------- --      BODY RenderBody at (0,0) size 1166x6248.50 renderer->(0x3055f9830) node->(0x3055f9670)
+/// B------- --        DIV RenderBlock at (0,0) size 1166x0 renderer->(0x306fcc900) node->(0x305a18480)
+/// B------- --        DIV RenderBlock at (0,0) size 1166x0 renderer->(0x306fcca20) node->(0x305a18700)
+/// B------- --        DIV RenderBlock at (260,0) size 906x6248.50 renderer->(0x306fccb40) node->(0x305a18800)
+/// BX-O--LC --          NAV RenderFlexibleBox at (0,0) size 260x819 renderer->(0x30ddf2e20) node->(0x30dde41c0)
+impl DumpLayout for LayoutBox {
+    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize) {
+        writeln!(
+            write_to,
+            "{:indent_spaces$}{:?} LayoutBox at ({:?}, {:?}) size {:?}x{:?}",
+            "",
+            self.box_type,
+            self.dimensions.content.start_x,
+            self.dimensions.content.start_y,
+            self.dimensions.content.width,
+            self.dimensions.content.height,
+            indent_spaces = indent_spaces,
+        )
+        .expect("error writing layout dump");
+
+        self.children.iter().for_each(|child| {
+            child.dump_layout(write_to, indent_spaces + 2);
+        })
     }
 }
 

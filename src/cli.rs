@@ -1,6 +1,6 @@
 use crate::style;
 use crate::style::stylesheet::Stylesheet;
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     App::new("Kosmonaut")
@@ -14,8 +14,12 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                 .value_name("FILES")
                 .help("Pass files for Kosmonaut to render.")
                 .multiple(true)
-                .takes_value(true),
+                .takes_value(true)
+                .global(true),
         )
+        .subcommand(SubCommand::with_name("dump-layout").about(
+            "Dumps layout-tree as text to stdout after first global layout, exiting afterwards.",
+        ))
         .get_matches()
 }
 
@@ -54,4 +58,8 @@ pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec
             })
             .collect::<Vec<_>>();
     })
+}
+
+pub fn dump_layout_tree(arg_matches: &ArgMatches) -> bool {
+    arg_matches.subcommand_matches("dump-layout").is_some()
 }

@@ -10,6 +10,7 @@ use crate::style::values::computed::Display;
 use crate::style::values::CSSFloat;
 use crate::Side;
 use glutin::window::Window;
+use std::io::Write;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
 /// `None` if `node` is a `Display::None`.
@@ -131,4 +132,10 @@ pub struct EdgeSizes {
     pub right: CSSPixelLength,
     pub top: CSSPixelLength,
     pub bottom: CSSPixelLength,
+}
+
+/// Trait describing behavior necessary for dumping the layout tree, used in the `dump-layout`
+/// tests and debugging.
+pub trait DumpLayout {
+    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize);
 }

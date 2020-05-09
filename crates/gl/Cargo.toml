@@ -2,7 +2,7 @@
 name = "gl"
 version = "0.1.0"
 description = "Generated OpenGL bindings for use by Kosmonaut.  Also contains other utilities and wrappers for and over OpenGL."
-authors = ["Tyler Wilcock <tyler.l.wilcock@gmail.com>"]
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
 edition = "2018"
 publish = false
 

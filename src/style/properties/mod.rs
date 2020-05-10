@@ -401,7 +401,7 @@ impl ContextualPropertyDeclarations {
     #[inline]
     pub fn add(&mut self, new_decl: ContextualPropertyDeclaration) {
         self.longhands
-            .insert(LonghandId::from(&new_decl.inner_decl).clone());
+            .insert(LonghandId::from(&new_decl.inner_decl));
         self.decls.push(new_decl);
         self.is_sorted = false;
     }

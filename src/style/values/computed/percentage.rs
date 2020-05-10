@@ -35,6 +35,6 @@ impl Percentage {
 
     /// Calculates the absolute pixel length of this percentage relative to `val`.
     pub fn px_relative_to(self, val: CSSPixelLength) -> CSSPixelLength {
-        CSSPixelLength::from(Au::from(val).scale_by(self.0.clone()))
+        CSSPixelLength::from(Au::from(val).scale_by(self.0))
     }
 }

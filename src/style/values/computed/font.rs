@@ -56,7 +56,7 @@ impl ComputeValueWithContext for specified::FontSize {
             specified::FontSize::Length(specified::LengthPercentage::Percentage(percentage)) => {
                 let parent_font = context.parent_computed_values.font_size;
                 (
-                    CSSPixelLength::from(Au::from(parent_font.size).scale_by(percentage.0.clone())),
+                    CSSPixelLength::from(Au::from(parent_font.size).scale_by(percentage.0)),
                     None,
                 )
             }

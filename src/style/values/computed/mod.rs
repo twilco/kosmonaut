@@ -305,10 +305,10 @@ pub fn compute_values(node: NodeRef) {
                         cv_builder.color(context.color());
                     }
                     PropertyDeclaration::Display(display) => {
-                        // TODO: Should we cloning here (taking the specified value), rather than computing the value?
+                        // TODO: Should we copying `display` here (taking the specified value), rather than computing the value?
                         // There is currently no `specified/display.rs`, so that would need to be remedied.
                         // Computing display might not be straightforward — see: https://github.com/w3c/csswg-drafts/issues/1716
-                        cv_builder.display(display.clone());
+                        cv_builder.display(*display);
                     }
                     PropertyDeclaration::Height(height) => {
                         cv_builder.height(height.compute_value_with_context(&context));

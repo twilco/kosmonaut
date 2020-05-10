@@ -337,9 +337,7 @@ impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize) {
         let node_name = match self.box_type {
             BoxType::Anonymous => "".to_owned(),
-            BoxType::Block | BoxType::Inline => {
-                format!("{}", self.node.data().dump_layout_format())
-            }
+            BoxType::Block | BoxType::Inline => self.node.data().dump_layout_format(),
         };
         writeln!(
             write_to,

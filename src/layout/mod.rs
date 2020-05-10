@@ -150,8 +150,8 @@ pub trait DumpLayoutFormat {
 impl DumpLayoutFormat for CSSFloat {
     fn dump_layout_format(&self) -> String {
         let px = format!("{:.2}", self);
-        let mut px_trimmed = px.trim_end_matches("0");
-        px_trimmed = px_trimmed.trim_end_matches(".");
+        let mut px_trimmed = px.trim_end_matches('0');
+        px_trimmed = px_trimmed.trim_end_matches('.');
         px_trimmed.to_owned()
     }
 }

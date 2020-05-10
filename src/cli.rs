@@ -28,7 +28,7 @@ pub fn html_file_path_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<
     files_opt
         .map(|mut files| {
             files.find(|file| {
-                let parts = file.split(".");
+                let parts = file.split('.');
                 if let Some(last_part) = parts.last() {
                     return last_part == "html";
                 }
@@ -43,7 +43,7 @@ pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec
     files_opt.map(|files| {
         return files
             .filter(|file| {
-                let parts = file.split(".");
+                let parts = file.split('.');
                 if let Some(last_part) = parts.last() {
                     return last_part == "css";
                 }

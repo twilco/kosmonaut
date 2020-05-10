@@ -41,7 +41,7 @@ pub fn html_file_path_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<
 pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec<Stylesheet>> {
     let files_opt = arg_matches.values_of("files");
     files_opt.map(|files| {
-        return files
+        files
             .filter(|file| {
                 let parts = file.split('.');
                 if let Some(last_part) = parts.last() {
@@ -56,7 +56,7 @@ pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec
                 )
                 .expect("error parsing stylesheet")
             })
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
     })
 }
 

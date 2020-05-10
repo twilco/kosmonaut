@@ -111,9 +111,7 @@ pub fn run_event_loop(
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
                     if dump_layout_tree {
                         *control_flow = ControlFlow::Exit;
-                        let mut layout_dump_bytes = Vec::<u8>::new();
-                        dirty_layout_tree.dump_layout(&mut layout_dump_bytes, 0);
-                        let layout_dump = String::from_utf8(layout_dump_bytes).unwrap();
+                        dirty_layout_tree.dump_layout(&mut std::io::stdout(), 0);
                         return;
                     }
                     display_list = build_display_list(&dirty_layout_tree);

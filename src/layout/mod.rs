@@ -3,7 +3,7 @@
 //  * https://www.w3.org/TR/2018/WD-css-box-3-20181218/#intro
 pub mod layout_box;
 
-use crate::dom::tree::NodeRef;
+use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::Display;
@@ -135,7 +135,45 @@ pub struct EdgeSizes {
 }
 
 /// Trait describing behavior necessary for dumping the layout tree, used in the `dump-layout`
-/// tests and debugging.
+/// tests and debugging.  Should be implemented by "container"-style entities, such as members
+/// of the layout tree, formatting individual struct members via the `DumpLayoutFormat` trait.
 pub trait DumpLayout {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize);
+}
+
+/// Trait describing behavior necessary for formatting ones data in preparation for a layout tree
+/// dump.
+pub trait DumpLayoutFormat {
+    fn dump_layout_format(&self) -> String;
+}
+
+impl DumpLayoutFormat for CSSFloat {
+    fn dump_layout_format(&self) -> String {
+        let px = format!("{:.2}", self);
+        let mut px_trimmed = px.trim_end_matches("0");
+        px_trimmed = px_trimmed.trim_end_matches(".");
+        px_trimmed.to_owned()
+    }
+}
+
+impl DumpLayoutFormat for CSSPixelLength {
+    fn dump_layout_format(&self) -> String {
+        self.px().dump_layout_format()
+    }
+}
+
+impl DumpLayoutFormat for NodeData {
+    fn dump_layout_format(&self) -> String {
+        let possibly_lowercase = match self {
+            NodeData::Comment(_) => "COMMENT",
+            NodeData::Document(_) => "DOCUMENT",
+            NodeData::Doctype(_) => "DOCTYPE",
+            NodeData::DocumentFragment => "DOCUMENT_FRAGMENT",
+            NodeData::Element(element_data) => &element_data.name.local,
+            NodeData::Text(_) => "TEXT",
+            NodeData::ProcessingInstruction(_) => "PROCESSING_INSTRUCTION",
+        }
+        .to_owned();
+        possibly_lowercase.to_uppercase()
+    }
 }

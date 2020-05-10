@@ -1,5 +1,5 @@
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::{Dimensions, DumpLayout};
+use crate::layout::{Dimensions, DumpLayout, DumpLayoutFormat};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
@@ -335,15 +335,22 @@ impl LayoutBox {
 /// BX-O--LC --          NAV RenderFlexibleBox at (0,0) size 260x819 renderer->(0x30ddf2e20) node->(0x30dde41c0)
 impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize) {
+        let node_name = match self.box_type {
+            BoxType::Anonymous => "".to_owned(),
+            BoxType::Block | BoxType::Inline => {
+                format!("{}", self.node.data().dump_layout_format())
+            }
+        };
         writeln!(
             write_to,
-            "{:indent_spaces$}{:?} LayoutBox at ({:?}, {:?}) size {:?}x{:?}",
+            "{:indent_spaces$}{} {:?} LayoutBox at ({}, {}) size {}x{}",
             "",
+            node_name,
             self.box_type,
-            self.dimensions.content.start_x,
-            self.dimensions.content.start_y,
-            self.dimensions.content.width,
-            self.dimensions.content.height,
+            self.dimensions.content.start_x.dump_layout_format(),
+            self.dimensions.content.start_y.dump_layout_format(),
+            self.dimensions.content.width.dump_layout_format(),
+            self.dimensions.content.height.dump_layout_format(),
             indent_spaces = indent_spaces,
         )
         .expect("error writing layout dump");

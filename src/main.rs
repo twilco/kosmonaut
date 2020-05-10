@@ -62,13 +62,13 @@ fn main() {
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or(vec![
-        style::stylesheet::parse_css_to_stylesheet(
+    let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or_else(|| {
+        vec![style::stylesheet::parse_css_to_stylesheet(
             Some("rainbow-divs.css".to_owned()),
             &mut std::fs::read_to_string("tests/rainbow-divs.css").expect("file fail"),
         )
-        .expect("parse stylesheet fail"),
-    ]);
+        .expect("parse stylesheet fail")]
+    });
     apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
 
     run_event_loop(

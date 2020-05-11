@@ -96,8 +96,10 @@ pub fn run_event_loop(
     let mut dirty_layout_tree = clean_layout_tree.clone();
     global_layout(&mut dirty_layout_tree, windowed_context.window());
     let mut display_list = build_display_list(&dirty_layout_tree);
+    // Use this to prevent multiple layout dumps, probably due to concurrency issues?
+    let mut has_dumped_layout = false;
     event_loop.run(move |event, _, control_flow| {
-        //        println!("{:?}", event);
+        // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
         match event {
             Event::LoopDestroyed => {}
@@ -111,14 +113,21 @@ pub fn run_event_loop(
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
                     if dump_layout_tree {
                         *control_flow = ControlFlow::Exit;
-                        dirty_layout_tree.dump_layout(&mut std::io::stdout(), 0);
-                        return;
+                        if !has_dumped_layout {
+                            has_dumped_layout = true;
+                            dirty_layout_tree.dump_layout(&mut std::io::stdout(), 0);
+                        }
+                    } else {
+                        display_list = build_display_list(&dirty_layout_tree);
+                        paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                     }
-                    display_list = build_display_list(&dirty_layout_tree);
-                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                 }
                 WindowEvent::RedrawRequested => {
-                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
+                    // TODO: This is the first event sent, but our display list is empty without a WindowEvent::Redraw.
+                    // Maybe build display list with default window dimensions if it's empty?
+                    if !dump_layout_tree {
+                        paint(&windowed_context, &gl, &display_list, &mut rect_painter);
+                    }
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),

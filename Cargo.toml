@@ -9,7 +9,7 @@ app_units = "0.7.1"
 cssparser = "0.25.8"
 clap = "2.33.0"
 gl = { path = "crates/gl" }
-glutin = "0.22.0-alpha4"
+glutin = "0.24.0"
 html5ever = "0.24.0"
 matches = "0.1.8"
 rand = "0.7.0"

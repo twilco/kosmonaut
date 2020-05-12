@@ -104,10 +104,14 @@ pub fn run_event_loop(
         match event {
             Event::LoopDestroyed => {}
             Event::WindowEvent { ref event, .. } => match event {
-                WindowEvent::Resized(logical_size) => {
-                    let dpi_factor = windowed_context.window().hidpi_factor();
-                    let physical_size = logical_size.to_physical(dpi_factor);
-                    windowed_context.resize(physical_size);
+                WindowEvent::Resized(physical_size) => {
+                    // TODO: Do we handle UI scaling correctly?  See: https://docs.rs/glutin/0.24.0/glutin/dpi/index.html
+                    // The docs for `WindowEvent::ScaleFactorChanged` suggest we might be OK, since a scale factor change
+                    // seems to result in a `WindowEvent::Resized` with the new physical size, but this should be double-checked.
+                    //   > After this event [WindowEvent::ScaleFactorChange] callback has been processed, the window will be resized to whatever value
+                    //   > is pointed to by the `new_inner_size` reference. By default, this will contain the size suggested
+                    //   > by the OS, but it can be changed to any value.
+                    windowed_context.resize(*physical_size);
                     // Refresh layout tree state to a clean slate.
                     dirty_layout_tree = clean_layout_tree.clone();
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
@@ -119,13 +123,6 @@ pub fn run_event_loop(
                         }
                     } else {
                         display_list = build_display_list(&dirty_layout_tree);
-                        paint(&windowed_context, &gl, &display_list, &mut rect_painter);
-                    }
-                }
-                WindowEvent::RedrawRequested => {
-                    // TODO: This is the first event sent, but our display list is empty without a WindowEvent::Redraw.
-                    // Maybe build display list with default window dimensions if it's empty?
-                    if !dump_layout_tree {
                         paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                     }
                 }

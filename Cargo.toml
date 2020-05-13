@@ -10,15 +10,15 @@ cssparser = "0.25.8"
 clap = "2.33.0"
 gl = { path = "crates/gl" }
 glutin = "0.24.0"
-html5ever = "0.24.0"
+html5ever = "0.25.1"
 matches = "0.1.8"
-rand = "0.7.0"
+rand = "0.7.3"
 selectors = "0.21.0"
-smallbitvec = "2.3.0"
-strum = "0.16.0"
-strum_macros = "0.16.0"
+smallbitvec = "2.5.0"
+strum = "0.18.0"
+strum_macros = "0.18.0"
 tempdir = "0.3.7"
-derive_builder = "0.8.1"
+derive_builder = "0.9.0"
 
 [features]
 gl_debug = ["gl/debug"]

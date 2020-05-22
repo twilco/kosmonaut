@@ -10,10 +10,7 @@ use cssparser::{self, CowRcStr, ParseError, SourceLocation, ToCss};
 use html5ever::{LocalName, Namespace};
 use selectors::attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint};
 use selectors::context::QuirksMode;
-use selectors::parser::{
-    NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList,
-    SelectorParseErrorKind,
-};
+use selectors::parser::{NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList, SelectorParseErrorKind};
 use selectors::{self, matching, OpaqueElement};
 use std::fmt;
 
@@ -32,6 +29,7 @@ impl SelectorImpl for KosmonautSelectors {
     type LocalName = LocalName;
     type NamespacePrefix = LocalName;
     type NamespaceUrl = Namespace;
+    type PartName = LocalName;
     type BorrowedNamespaceUrl = Namespace;
     type BorrowedLocalName = LocalName;
 
@@ -103,6 +101,14 @@ impl NonTSPseudoClass for PseudoClass {
     fn is_active_or_hover(&self) -> bool {
         matches!(*self, PseudoClass::Active | PseudoClass::Hover)
     }
+
+    fn is_user_action_state(&self) -> bool {
+        matches!(*self, PseudoClass::Active | PseudoClass::Hover | PseudoClass::Focus)
+    }
+
+    fn has_zero_specificity(&self) -> bool {
+        false
+    }
 }
 
 impl ToCss for PseudoClass {
@@ -151,8 +157,8 @@ impl selectors::Element for NodeDataRef<ElementData> {
     }
 
     #[inline]
-    fn is_html_slot_element(&self) -> bool {
-        false
+    fn parent_element(&self) -> Option<Self> {
+        self.as_node().parent().and_then(NodeRef::into_element_ref)
     }
     #[inline]
     fn parent_node_is_shadow_root(&self) -> bool {
@@ -163,10 +169,10 @@ impl selectors::Element for NodeDataRef<ElementData> {
         None
     }
 
-    #[inline]
-    fn parent_element(&self) -> Option<Self> {
-        self.as_node().parent().and_then(NodeRef::into_element_ref)
+    fn is_pseudo_element(&self) -> bool {
+        false
     }
+
     #[inline]
     fn prev_sibling_element(&self) -> Option<Self> {
         self.as_node().preceding_siblings().elements().next()
@@ -176,34 +182,73 @@ impl selectors::Element for NodeDataRef<ElementData> {
         self.as_node().following_siblings().elements().next()
     }
     #[inline]
-    fn is_empty(&self) -> bool {
-        self.as_node().children().all(|child| match *child.data() {
-            NodeData::Element(_) => false,
-            NodeData::Text(ref text) => text.borrow().is_empty(),
-            _ => true,
-        })
-    }
-    #[inline]
-    fn is_root(&self) -> bool {
-        match self.as_node().parent() {
-            None => false,
-            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
-        }
-    }
-
-    #[inline]
     fn is_html_element_in_html_document(&self) -> bool {
-        // TODO: Have a notion of HTML document v.s. XML document?
+        // TODO: Have a notion of HTML document vs. XML document?
         self.name.ns == ns!(html)
     }
 
-    #[inline]
-    fn local_name(&self) -> &LocalName {
-        &self.name.local
+    fn has_local_name(&self, local_name: &LocalName) -> bool {
+        self.name.local == *local_name
     }
+
+    fn has_namespace(&self, namespace: &Namespace) -> bool {
+        self.name.ns == *namespace
+    }
+
+    fn is_same_type(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+
     #[inline]
-    fn namespace(&self) -> &Namespace {
-        &self.name.ns
+    fn attr_matches(
+        &self,
+        ns: &NamespaceConstraint<&Namespace>,
+        local_name: &LocalName,
+        operation: &AttrSelectorOperation<&String>,
+    ) -> bool {
+        let attrs = self.attributes.borrow();
+        match *ns {
+            NamespaceConstraint::Any => attrs
+                .map
+                .iter()
+                .any(|(name, attr)| name.local == *local_name && operation.eval_str(&attr.value)),
+            NamespaceConstraint::Specific(ref ns_url) => attrs
+                .map
+                .get(&ExpandedName::new(&(*ns_url).clone(), local_name.clone()))
+                .map_or(false, |attr| operation.eval_str(&attr.value)),
+        }
+    }
+
+    fn match_non_ts_pseudo_class<F>(
+        &self,
+        pseudo: &PseudoClass,
+        _context: &mut matching::MatchingContext<KosmonautSelectors>,
+        _flags_setter: &mut F,
+    ) -> bool
+    where
+        F: FnMut(&Self, matching::ElementSelectorFlags),
+    {
+        use self::PseudoClass::*;
+        match *pseudo {
+            Active | Focus | Hover | Enabled | Disabled | Checked | Indeterminate | Visited => {
+                false
+            }
+            AnyLink | Link => {
+                self.name.ns == ns!(html)
+                    && matches!(
+                        self.name.local,
+                        local_name!("a") | local_name!("area") | local_name!("link")
+                    )
+                    && self.attributes.borrow().contains(local_name!("href"))
+            }
+        }
+    }
+    fn match_pseudo_element(
+        &self,
+        pseudo: &PseudoElement,
+        _context: &mut matching::MatchingContext<KosmonautSelectors>,
+    ) -> bool {
+        match *pseudo {}
     }
 
     #[inline]
@@ -218,6 +263,11 @@ impl selectors::Element for NodeDataRef<ElementData> {
                 .borrow()
                 .map
                 .contains_key(&ExpandedName::new(ns!(), local_name!("href")))
+    }
+
+    #[inline]
+    fn is_html_slot_element(&self) -> bool {
+        false
     }
 
     #[inline]
@@ -243,56 +293,32 @@ impl selectors::Element for NodeDataRef<ElementData> {
             }
     }
 
+    fn exported_part(&self, _name: &LocalName) -> Option<LocalName> {
+        None
+    }
+
+    fn imported_part(&self, _name: &LocalName) -> Option<LocalName> {
+        None
+    }
+
+    fn is_part(&self, _name: &LocalName) -> bool {
+        false
+    }
+
     #[inline]
-    fn attr_matches(
-        &self,
-        ns: &NamespaceConstraint<&Namespace>,
-        local_name: &LocalName,
-        operation: &AttrSelectorOperation<&String>,
-    ) -> bool {
-        let attrs = self.attributes.borrow();
-        match *ns {
-            NamespaceConstraint::Any => attrs
-                .map
-                .iter()
-                .any(|(name, attr)| name.local == *local_name && operation.eval_str(&attr.value)),
-            NamespaceConstraint::Specific(ref ns_url) => attrs
-                .map
-                .get(&ExpandedName::new(&(*ns_url).clone(), local_name.clone()))
-                .map_or(false, |attr| operation.eval_str(&attr.value)),
-        }
+    fn is_empty(&self) -> bool {
+        self.as_node().children().all(|child| match *child.data() {
+            NodeData::Element(_) => false,
+            NodeData::Text(ref text) => text.borrow().is_empty(),
+            _ => true,
+        })
     }
 
-    fn match_pseudo_element(
-        &self,
-        pseudo: &PseudoElement,
-        _context: &mut matching::MatchingContext<KosmonautSelectors>,
-    ) -> bool {
-        match *pseudo {}
-    }
-
-    fn match_non_ts_pseudo_class<F>(
-        &self,
-        pseudo: &PseudoClass,
-        _context: &mut matching::MatchingContext<KosmonautSelectors>,
-        _flags_setter: &mut F,
-    ) -> bool
-    where
-        F: FnMut(&Self, matching::ElementSelectorFlags),
-    {
-        use self::PseudoClass::*;
-        match *pseudo {
-            Active | Focus | Hover | Enabled | Disabled | Checked | Indeterminate | Visited => {
-                false
-            }
-            AnyLink | Link => {
-                self.name.ns == ns!(html)
-                    && matches!(
-                        self.name.local,
-                        local_name!("a") | local_name!("area") | local_name!("link")
-                    )
-                    && self.attributes.borrow().contains(local_name!("href"))
-            }
+    #[inline]
+    fn is_root(&self) -> bool {
+        match self.as_node().parent() {
+            None => false,
+            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
         }
     }
 }

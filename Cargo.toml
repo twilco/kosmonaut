@@ -6,14 +6,14 @@ edition = "2018"
 
 [dependencies]
 app_units = "0.7.1"
-cssparser = "0.25.8"
+cssparser = "0.27"
 clap = "2.33.0"
 gl = { path = "crates/gl" }
 glutin = "0.24.0"
 html5ever = "0.25.1"
 matches = "0.1.8"
 rand = "0.7.3"
-selectors = "0.21.0"
+selectors = "0.22.0"
 smallbitvec = "2.5.0"
 strum = "0.18.0"
 strum_macros = "0.18.0"

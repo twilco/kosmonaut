@@ -10,7 +10,10 @@ use cssparser::{self, CowRcStr, ParseError, SourceLocation, ToCss};
 use html5ever::{LocalName, Namespace};
 use selectors::attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint};
 use selectors::context::QuirksMode;
-use selectors::parser::{NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList, SelectorParseErrorKind};
+use selectors::parser::{
+    NonTSPseudoClass, Parser, Selector as GenericSelector, SelectorImpl, SelectorList,
+    SelectorParseErrorKind,
+};
 use selectors::{self, matching, OpaqueElement};
 use std::fmt;
 
@@ -103,7 +106,10 @@ impl NonTSPseudoClass for PseudoClass {
     }
 
     fn is_user_action_state(&self) -> bool {
-        matches!(*self, PseudoClass::Active | PseudoClass::Hover | PseudoClass::Focus)
+        matches!(
+            *self,
+            PseudoClass::Active | PseudoClass::Hover | PseudoClass::Focus
+        )
     }
 
     fn has_zero_specificity(&self) -> bool {

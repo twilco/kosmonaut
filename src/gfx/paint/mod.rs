@@ -13,17 +13,20 @@ pub fn paint(
     display_list: &[DisplayCommand],
     rect_painter: &mut RectPainter,
 ) {
-    // TODO: Do we need to set gl.Viewport() size here?
-    let viewport_width = windowed_context.window().inner_size().width as f32;
-    let viewport_height = windowed_context.window().inner_size().height as f32;
+    // Note: For semantic correctness, the OpenGL instance (represented by the `gl` parameter) must
+    // also have its viewport specified to the below dimensions, presumably done outside this
+    // function when the window is resized.
+    // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml
+    let viewport_width = windowed_context.window().inner_size().width;
+    let viewport_height = windowed_context.window().inner_size().height;
     let mut vertex_data = Vec::new();
 
     for command in display_list {
         process_display_command(
             command,
             &mut vertex_data,
-            viewport_width,
-            viewport_height,
+            viewport_width as f32,
+            viewport_height as f32,
             gl,
         );
     }

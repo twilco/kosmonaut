@@ -15,6 +15,7 @@ use std::fs::File;
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
+use glutin::dpi::PhysicalSize;
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
@@ -36,6 +37,7 @@ use crate::gfx::paint::paint;
 use crate::gfx::paint::rect::RectPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info};
 pub use common::Side;
+use gl::viewport::resize_viewport;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
@@ -111,7 +113,7 @@ pub fn run_event_loop(
                     //   > After this event [WindowEvent::ScaleFactorChange] callback has been processed, the window will be resized to whatever value
                     //   > is pointed to by the `new_inner_size` reference. By default, this will contain the size suggested
                     //   > by the OS, but it can be changed to any value.
-                    windowed_context.resize(*physical_size);
+                    resize_window(&gl, &windowed_context, physical_size);
                     // Refresh layout tree state to a clean slate.
                     dirty_layout_tree = clean_layout_tree.clone();
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
@@ -132,4 +134,13 @@ pub fn run_event_loop(
             _ => (),
         }
     });
+}
+
+fn resize_window(
+    gl: &Gl,
+    windowed_context: &WindowedContext<PossiblyCurrent>,
+    new_size: &PhysicalSize<u32>,
+) {
+    resize_viewport(gl, new_size.width, new_size.height);
+    windowed_context.resize(*new_size);
 }

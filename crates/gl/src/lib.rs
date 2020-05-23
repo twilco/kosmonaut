@@ -16,6 +16,7 @@ pub mod shader;
 pub mod util;
 pub mod vao;
 pub mod vbo;
+pub mod viewport;
 
 // This crate generates `gl_bindings.rs` in the `target` folder.  I have copy-pasted this file
 // to `bindings.rs` in the local `src` directory to get autocomplete working, since my editor

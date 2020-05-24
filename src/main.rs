@@ -1,5 +1,3 @@
-#![feature(crate_visibility_modifier)]
-
 #[macro_use]
 extern crate cssparser;
 #[macro_use]
@@ -15,13 +13,13 @@ use std::fs::File;
 
 use crate::dom::parser::parse_html;
 use crate::dom::traits::TendrilSink;
-use glutin::dpi::PhysicalSize;
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
 use crate::dom::tree::NodeRef;
 use crate::layout::{build_layout_tree, global_layout, DumpLayout};
 use crate::style::apply_styles;
+
 pub mod cli;
 pub mod common;
 pub mod dom;
@@ -30,14 +28,14 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    dump_layout_tree, html_file_path_from_files, setup_and_get_cli_args, stylesheets_from_files,
+    dump_layout_tree, html_file_path_from_files, inner_window_height, inner_window_width,
+    setup_and_get_cli_args, stylesheets_from_files,
 };
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::paint;
 use crate::gfx::paint::rect::RectPainter;
-use crate::gfx::{init_main_window_and_gl, print_gl_info};
+use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
 pub use common::Side;
-use gl::viewport::resize_viewport;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
@@ -50,7 +48,7 @@ use glutin::{PossiblyCurrent, WindowedContext};
 #[allow(unused_variables)]
 fn main() {
     let arg_matches = setup_and_get_cli_args();
-    let fallback_local_html = "tests/rainbow-divs.html";
+    let fallback_local_html = "tests/websrc/rainbow-divs.html";
     let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
     let dom = parse_html()
         .from_utf8()
@@ -64,22 +62,40 @@ fn main() {
     let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or_else(|| {
         vec![style::stylesheet::parse_css_to_stylesheet(
             Some("rainbow-divs.css".to_owned()),
-            &mut std::fs::read_to_string("tests/rainbow-divs.css").expect("file fail"),
+            &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
         )
         .expect("parse stylesheet fail")]
     });
     apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
+    let (inner_width_opt, inner_height_opt) = (
+        inner_window_width(&arg_matches),
+        inner_window_height(&arg_matches),
+    );
+
     if dump_layout_tree(&arg_matches) {
-        let mut layout_tree = build_layout_tree(dom).unwrap();
-        // TODO: Set these sizes as constants in the layout tree integration test module (when it is created).
-        global_layout(&mut layout_tree, 1920., 1080.);
-        layout_tree.dump_layout(&mut std::io::stdout(), 0);
+        run_layout_dump(dom, inner_width_opt, inner_height_opt);
         return;
     }
-
-    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
+    let (windowed_context, event_loop, gl) =
+        init_main_window_and_gl(inner_width_opt, inner_height_opt);
     print_gl_info(&windowed_context, &gl);
     run_event_loop(event_loop, gl, dom, windowed_context);
+}
+
+fn run_layout_dump(
+    styled_dom: NodeRef,
+    inner_width_opt: Option<f32>,
+    inner_height_opt: Option<f32>,
+) {
+    let mut layout_tree = build_layout_tree(styled_dom).unwrap();
+    global_layout(
+        &mut layout_tree,
+        inner_width_opt
+            .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
+        inner_height_opt
+            .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
+    );
+    layout_tree.dump_layout(&mut std::io::stdout(), 0);
 }
 
 pub fn run_event_loop(
@@ -134,13 +150,4 @@ pub fn run_event_loop(
             _ => (),
         }
     });
-}
-
-fn resize_window(
-    gl: &Gl,
-    windowed_context: &WindowedContext<PossiblyCurrent>,
-    new_size: &PhysicalSize<u32>,
-) {
-    resize_viewport(gl, new_size.width, new_size.height);
-    windowed_context.resize(*new_size);
 }

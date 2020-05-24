@@ -10,7 +10,7 @@ Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicl
 
 ### What can Kosmonaut do?
 
-So far, not much.  Only a very limited subset of CSS is currently supported, so most web pages will not work.  However, given very basic HTML and CSS, Kosmonaut does render the right things — see Kosmonaut's rendering of [this code](https://github.com/twilco/kosmonaut/blob/eef5274c252038062049769861d02354cbaa4b2a/tests/rainbow-divs-incl-css.html), compared with that of Firefox:
+So far, not much.  Only a very limited subset of CSS is currently supported, so most web pages will not work.  However, given very basic HTML and CSS, Kosmonaut does render the right things — see Kosmonaut's rendering of [this code](https://github.com/twilco/kosmonaut/blob/eef5274c252038062049769861d02354cbaa4b2a/web/rainbow-divs-incl-css.html), compared with that of Firefox:
 
 ![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](rainbow-divs-vs-firefox.png)
 
@@ -29,7 +29,7 @@ Kosmonaut does not currently support any networking.  To render HTML and CSS wit
 
 To run the rainbow divs example pictured above, try:
 
-`cargo run -- --files tests/rainbow-divs.html tests/rainbow-divs.css`
+`cargo run -- --files tests/websrc/rainbow-divs.html tests/websrc/rainbow-divs.css`
  
 ### License and credits
 

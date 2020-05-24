@@ -1,6 +1,7 @@
 use crate::style;
 use crate::style::stylesheet::Stylesheet;
 use clap::{App, Arg, ArgMatches, SubCommand};
+use std::str::FromStr;
 
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     App::new("Kosmonaut")
@@ -17,10 +18,37 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                 .takes_value(true)
                 .global(true),
         )
+        .arg(
+            Arg::with_name("width")
+                .short("w")
+                .long("width")
+                .value_name("WIDTH")
+                .help("Inner window width.  Applicable in both headed and headless (e.g. dump-layout) contexts.")
+                .takes_value(true)
+                .validator(is_num_validator)
+                .global(true),
+        )
+        .arg(
+            Arg::with_name("height")
+                .short("h")
+                .long("height")
+                .value_name("HEIGHT")
+                .help("Inner window height.  Applicable in both headed and headless (e.g. dump-layout) contexts.")
+                .takes_value(true)
+                .validator(is_num_validator)
+                .global(true),
+        )
         .subcommand(SubCommand::with_name("dump-layout").about(
             "Dumps layout-tree as text to stdout after first global layout, exiting afterwards.",
         ))
         .get_matches()
+}
+
+fn is_num_validator(string: String) -> Result<(), String> {
+    match string.parse::<f32>() {
+        Ok(_) => Ok(()),
+        Err(_) => Err(format!("given arg '{}' is not a number", string)),
+    }
 }
 
 pub fn html_file_path_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<&'a str> {
@@ -62,4 +90,24 @@ pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec
 
 pub fn dump_layout_tree(arg_matches: &ArgMatches) -> bool {
     arg_matches.subcommand_matches("dump-layout").is_some()
+}
+
+pub fn inner_window_width(arg_matches: &ArgMatches) -> Option<f32> {
+    try_get::<f32>(arg_matches, "width")
+}
+
+pub fn inner_window_height(arg_matches: &ArgMatches) -> Option<f32> {
+    try_get::<f32>(arg_matches, "height")
+}
+
+fn try_get<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {
+    arg_matches.value_of(arg_name).map(|arg_str| {
+        arg_str.parse::<T>().unwrap_or_else(|_| {
+            panic!(format!(
+                "couldn't parse '{}' arg as '{}'",
+                arg_name,
+                std::any::type_name::<T>()
+            ))
+        })
+    })
 }

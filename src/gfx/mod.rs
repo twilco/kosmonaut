@@ -17,6 +17,8 @@ pub fn init_main_window_and_gl() -> (WindowedContext<PossiblyCurrent>, EventLoop
         width: 1920,
         height: 1080,
     };
+    // TODO: Add Ksomonaut icon.  See here for Glutin icon usage example:
+    // https://github.com/RyanChristian4427/parametric_equations/blob/afa7436f70ec2209154255debe7925f9b1c35347/src/lib.rs
     let wb = WindowBuilder::new()
         .with_title("Kosmonaut")
         .with_inner_size(initial_physical_size);

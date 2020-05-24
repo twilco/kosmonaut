@@ -49,9 +49,6 @@ use glutin::{PossiblyCurrent, WindowedContext};
 ///     - Yuri Gagarin
 #[allow(unused_variables)]
 fn main() {
-    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
-    print_gl_info(&windowed_context, &gl);
-
     let arg_matches = setup_and_get_cli_args();
     let fallback_local_html = "tests/rainbow-divs.html";
     let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
@@ -72,18 +69,20 @@ fn main() {
         .expect("parse stylesheet fail")]
     });
     apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
+    if dump_layout_tree(&arg_matches) {
+        let mut layout_tree = build_layout_tree(dom).unwrap();
+        // TODO: Set these sizes as constants in the layout tree integration test module (when it is created).
+        global_layout(&mut layout_tree, 1920., 1080.);
+        layout_tree.dump_layout(&mut std::io::stdout(), 0);
+        return;
+    }
 
-    run_event_loop(
-        dump_layout_tree(&arg_matches),
-        event_loop,
-        gl,
-        dom,
-        windowed_context,
-    );
+    let (windowed_context, event_loop, gl) = init_main_window_and_gl();
+    print_gl_info(&windowed_context, &gl);
+    run_event_loop(event_loop, gl, dom, windowed_context);
 }
 
 pub fn run_event_loop(
-    dump_layout_tree: bool,
     event_loop: EventLoop<()>,
     gl: Gl,
     styled_dom: NodeRef,
@@ -94,13 +93,14 @@ pub fn run_event_loop(
     // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
     // instead only needing a clone.
     let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
-    if dump_layout_tree {
-        clean_layout_tree.dump_layout(&mut std::io::stdout(), 0);
-        return;
-    }
 
     let mut dirty_layout_tree = clean_layout_tree.clone();
-    global_layout(&mut dirty_layout_tree, windowed_context.window());
+    let inner_window_size = windowed_context.window().inner_size();
+    global_layout(
+        &mut dirty_layout_tree,
+        inner_window_size.width as f32,
+        inner_window_size.height as f32,
+    );
     let mut display_list = build_display_list(&dirty_layout_tree);
     paint(&windowed_context, &gl, &display_list, &mut rect_painter);
     event_loop.run(move |event, _, control_flow| {
@@ -119,7 +119,12 @@ pub fn run_event_loop(
                     resize_window(&gl, &windowed_context, physical_size);
                     // Refresh layout tree state to a clean slate.
                     dirty_layout_tree = clean_layout_tree.clone();
-                    global_layout(&mut dirty_layout_tree, windowed_context.window());
+                    let inner_window_size = windowed_context.window().inner_size();
+                    global_layout(
+                        &mut dirty_layout_tree,
+                        inner_window_size.width as f32,
+                        inner_window_size.width as f32,
+                    );
                     display_list = build_display_list(&dirty_layout_tree);
                     paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                 }

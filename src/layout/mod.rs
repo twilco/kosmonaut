@@ -9,7 +9,6 @@ use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::Display;
 use crate::style::values::CSSFloat;
 use crate::Side;
-use glutin::window::Window;
 use std::io::Write;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
@@ -52,13 +51,17 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
 
 /// Given a `window` and what probably should be the root of a `layout_tree`, perform a layout
 /// with the dimensions of the `window`.
-pub fn global_layout(layout_tree: &mut LayoutBox, window: &Window) {
+pub fn global_layout(
+    layout_tree: &mut LayoutBox,
+    inner_window_width: f32,
+    inner_window_height: f32,
+) {
     layout_tree.layout(Dimensions {
         content: Rect {
             start_x: 0.0,
             start_y: 0.0,
-            width: CSSPixelLength::new(window.inner_size().width as f32),
-            height: CSSPixelLength::new(window.inner_size().height as f32),
+            width: CSSPixelLength::new(inner_window_width),
+            height: CSSPixelLength::new(inner_window_height),
         },
         padding: Default::default(),
         border: Default::default(),

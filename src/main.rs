@@ -94,12 +94,15 @@ pub fn run_event_loop(
     // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
     // instead only needing a clone.
     let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
+    if dump_layout_tree {
+        clean_layout_tree.dump_layout(&mut std::io::stdout(), 0);
+        return;
+    }
 
     let mut dirty_layout_tree = clean_layout_tree.clone();
     global_layout(&mut dirty_layout_tree, windowed_context.window());
     let mut display_list = build_display_list(&dirty_layout_tree);
-    // Use this to prevent multiple layout dumps, probably due to concurrency issues?
-    let mut has_dumped_layout = false;
+    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
     event_loop.run(move |event, _, control_flow| {
         // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
@@ -117,16 +120,8 @@ pub fn run_event_loop(
                     // Refresh layout tree state to a clean slate.
                     dirty_layout_tree = clean_layout_tree.clone();
                     global_layout(&mut dirty_layout_tree, windowed_context.window());
-                    if dump_layout_tree {
-                        *control_flow = ControlFlow::Exit;
-                        if !has_dumped_layout {
-                            has_dumped_layout = true;
-                            dirty_layout_tree.dump_layout(&mut std::io::stdout(), 0);
-                        }
-                    } else {
-                        display_list = build_display_list(&dirty_layout_tree);
-                        paint(&windowed_context, &gl, &display_list, &mut rect_painter);
-                    }
+                    display_list = build_display_list(&dirty_layout_tree);
+                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),

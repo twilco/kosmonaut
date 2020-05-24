@@ -53,7 +53,7 @@ fn main() {
     print_gl_info(&windowed_context, &gl);
 
     let arg_matches = setup_and_get_cli_args();
-    let fallback_local_html = "tests/rainbow-divs.html";
+    let fallback_local_html = "tests/websrc/rainbow-divs.html";
     let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
     let dom = parse_html()
         .from_utf8()
@@ -67,7 +67,7 @@ fn main() {
     let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or_else(|| {
         vec![style::stylesheet::parse_css_to_stylesheet(
             Some("rainbow-divs.css".to_owned()),
-            &mut std::fs::read_to_string("tests/rainbow-divs.css").expect("file fail"),
+            &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
         )
         .expect("parse stylesheet fail")]
     });

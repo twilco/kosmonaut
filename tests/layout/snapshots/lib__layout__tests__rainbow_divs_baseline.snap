@@ -1,5 +1,5 @@
 ---
-source: tests/layout.rs
+source: tests/layout/mod.rs
 expression: dump_layout_cmd.stdout()
 ---
 DOCUMENT Inline LayoutBox at (0, 0) size 1920x184

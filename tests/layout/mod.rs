@@ -1,8 +1,6 @@
-mod common;
-
 #[cfg(test)]
 mod tests {
-    use crate::common::new_dump_layout_cmd;
+    use crate::util::new_dump_layout_cmd;
     use insta::assert_snapshot;
 
     #[test]

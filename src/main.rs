@@ -32,13 +32,13 @@ use crate::cli::{
     setup_and_get_cli_args, stylesheets_from_files,
 };
 use crate::gfx::display::build_display_list;
-use crate::gfx::paint::paint;
-use crate::gfx::paint::rect::RectPainter;
+use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
 pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
+use crate::gfx::char::CharHandle;
 
 /// Welcome to Kosmonaut.
 ///
@@ -104,7 +104,7 @@ pub fn run_event_loop(
     styled_dom: NodeRef,
     windowed_context: WindowedContext<PossiblyCurrent>,
 ) {
-    let mut rect_painter = RectPainter::new(&gl).unwrap();
+    let mut master_painter = MasterPainter::new(&gl).unwrap();
     // An un-laid-out tree of boxes, to be cloned from whenever a global layout is required.
     // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
     // instead only needing a clone.
@@ -117,8 +117,9 @@ pub fn run_event_loop(
         inner_window_size.width as f32,
         inner_window_size.height as f32,
     );
-    let mut display_list = build_display_list(&dirty_layout_tree);
-    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
+    let char_handle = CharHandle::new(&gl);
+    let mut display_list = build_display_list(&dirty_layout_tree, &char_handle);
+    master_painter.paint(&windowed_context, &display_list);
     event_loop.run(move |event, _, control_flow| {
         // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
@@ -141,8 +142,8 @@ pub fn run_event_loop(
                         inner_window_size.width as f32,
                         inner_window_size.width as f32,
                     );
-                    display_list = build_display_list(&dirty_layout_tree);
-                    paint(&windowed_context, &gl, &display_list, &mut rect_painter);
+                    display_list = build_display_list(&dirty_layout_tree, &char_handle);
+                    master_painter.paint(&windowed_context, &display_list);
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),

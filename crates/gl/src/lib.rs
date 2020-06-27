@@ -10,9 +10,11 @@ use std::rc::Rc;
     clippy::unreadable_literal
 )]
 mod bindings;
+pub mod error;
 pub mod info_log;
 pub mod program;
 pub mod shader;
+pub mod texture;
 pub mod util;
 pub mod vao;
 pub mod vbo;

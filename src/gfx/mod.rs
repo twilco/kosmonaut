@@ -1,12 +1,14 @@
 use gl::util::opengl_version;
 use gl::viewport::resize_viewport;
-use gl::Gl;
+use gl::{Gl, BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use glutin::dpi::PhysicalSize;
 use glutin::event_loop::EventLoop;
 use glutin::window::WindowBuilder;
 use glutin::{ContextBuilder, GlProfile, PossiblyCurrent, WindowedContext};
 
+pub mod char;
 pub mod display;
+pub mod font;
 pub mod ndc;
 pub mod paint;
 
@@ -23,7 +25,7 @@ pub fn init_main_window_and_gl(
         width: inner_width_opt.unwrap_or(DEFAULT_INNER_WINDOW_WIDTH_PX) as u32,
         height: inner_height_opt.unwrap_or(DEFAULT_INNER_WINDOW_HEIGHT_PX) as u32,
     };
-    // TODO: Add Ksomonaut icon.  See here for Glutin icon usage example:
+    // TODO: Add Kosmonaut icon.  See here for Glutin icon usage example:
     // https://github.com/RyanChristian4427/parametric_equations/blob/afa7436f70ec2209154255debe7925f9b1c35347/src/lib.rs
     let wb = WindowBuilder::new()
         .with_title("Kosmonaut")
@@ -35,8 +37,21 @@ pub fn init_main_window_and_gl(
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
     let gl_context = windowed_context.context();
     let gl = Gl::load_with(|ptr| gl_context.get_proc_address(ptr) as *const _);
+    configure_gl_blend(&gl);
     resize_window(&gl, &windowed_context, &initial_physical_size);
     (windowed_context, el, gl)
+}
+
+/// Enables and configures blending for the entire OpenGL instance.  This blending configuration is
+/// required to support text rendering.  If we require other blending configurations, this function
+/// probably shouldn't set this blending configuration instance-wide here.
+///
+/// https://learnopengl.com/In-Practice/Text-Rendering
+fn configure_gl_blend(gl: &Gl) {
+    unsafe {
+        gl.Enable(BLEND);
+        gl.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
+    }
 }
 
 pub fn resize_window(

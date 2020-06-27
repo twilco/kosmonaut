@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="basic-inline-layout.css" type="text/css">
+    <style>
+        .block {
+            display: block;
+            background-color: red;
+        }
+        .inline {
+            display: inline;
+            background-color: green;
+            color: purple;
+        }
+        .common {
+            width: 600px;
+            height: 300px;
+            margin: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="block common">
+    <div class="inline common">test</div>
+    <div class="inline common"></div>
+</div>
+<div class="block common"></div>
+<div class="block common"></div>
+<div class="block common"></div>
+</body>
+</html>

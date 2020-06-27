@@ -1,0 +1,9 @@
+.block {
+    display: block;
+}
+
+.common {
+    background-color: red;
+    width: 300px;
+    height: 300px;
+}

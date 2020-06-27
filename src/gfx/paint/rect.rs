@@ -1,9 +1,8 @@
 use crate::gfx::ndc::{ndc_x, ndc_y};
-use crate::gfx::paint::ToVertices;
+use crate::gfx::paint::{build_program, ToVertices};
 use crate::layout::Rect;
 use cssparser::RGBA;
 use gl::program::Program;
-use gl::shader::{Shader, ShaderKind};
 use gl::types::{GLint, GLvoid};
 use gl::vao::VertexArrayObject;
 use gl::vbo::VertexBufferObject;
@@ -75,26 +74,19 @@ impl RectPainter {
 }
 
 fn build_triangle_program(gl: &Gl) -> Result<Program, String> {
-    let vertex_shader = Shader::from_source(
-        &CString::new(include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/shader_src/triangle.vert"
-        )))
-        .expect("could not create cstring for triangle"),
-        ShaderKind::Vertex,
-        gl,
-    )?;
-    let fragment_shader = Shader::from_source(
-        &CString::new(include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/shader_src/triangle.frag"
-        )))
-        .expect("could not create cstring for triangle"),
-        ShaderKind::Fragment,
-        gl,
-    )?;
-    let program = Program::from_shaders(&[vertex_shader, fragment_shader], &gl)?;
-    Ok(program)
+    let vertex_shader_src = &CString::new(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/shader_src/triangle.vert"
+    )))
+    .expect("could not create cstring for triangle program");
+
+    let frag_shader_src = &CString::new(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/shader_src/triangle.frag"
+    )))
+    .expect("could not create cstring for triangle program");
+
+    build_program(vertex_shader_src, frag_shader_src, gl)
 }
 
 impl ToVertices for (&RGBA, &Rect) {

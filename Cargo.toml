@@ -5,13 +5,17 @@ authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
+accountable-refcell = "0.2.0"
 app_units = "0.7.1"
 cssparser = "0.27"
 clap = "2.33.0"
+font-kit = { path = "../font-kit" }
+freetype = "0.5.1"
 gl = { path = "crates/gl" }
 glutin = "0.24.0"
 html5ever = "0.25.1"
 matches = "0.1.8"
+pathfinder_geometry = "0.5.1"
 rand = "0.7.3"
 selectors = "0.22.0"
 smallbitvec = "2.5.0"

@@ -73,8 +73,8 @@ impl LayoutBox {
     ///
     /// If a block box contains inline-children, an anonymous box must be used to contain them.
     ///
-    /// If this box is already an inline or anonymous box, we can use ourself to contain the inline
-    /// children.  Otherwise, find or create an anonymous box.
+    /// If this box is already an inline or anonymous box, we can use ourselves to contain the
+    /// inline children.  Otherwise, find or create an anonymous box.
     fn get_inline_container(&mut self) -> &mut LayoutBox {
         match self.box_type {
             BoxType::Inline | BoxType::Anonymous => self,

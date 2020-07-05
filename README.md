@@ -1,5 +1,7 @@
 ![Kosmonaut banner](img/Kosmonaut_Banner_1200x400-01.png)
 
+---
+
 [![Build Status](https://travis-ci.com/twilco/kosmonaut.svg?branch=master)](https://travis-ci.com/twilco/kosmonaut) [![Join the chat at https://gitter.im/kosmonaut-browser/community](https://badges.gitter.im/kosmonaut-browser/community.svg)](https://gitter.im/kosmonaut-browser/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicle for your journey across the world wide web.

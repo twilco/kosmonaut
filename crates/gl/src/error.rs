@@ -1,6 +1,5 @@
 use crate::{Gl, NO_ERROR, INVALID_ENUM, INVALID_VALUE, INVALID_OPERATION, INVALID_FRAMEBUFFER_OPERATION, OUT_OF_MEMORY};
 use crate::bindings::types::GLenum;
-use std::fmt::Error;
 
 /// Returns all errors that have been recorded since the last call to this function.  The act of
 /// getting these flags clears them from the internal OpenGL state machine, and thus they will not

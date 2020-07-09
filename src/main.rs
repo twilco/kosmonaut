@@ -35,6 +35,7 @@ use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
+use crate::layout::layout_box::LayoutBox;
 pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
@@ -105,22 +106,20 @@ pub fn run_event_loop(
     windowed_context: WindowedContext<PossiblyCurrent>,
 ) {
     let mut master_painter = MasterPainter::new(&gl).unwrap();
+    let char_handle = CharHandle::new(&gl);
     // An un-laid-out tree of boxes, to be cloned from whenever a global layout is required.
     // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
     // instead only needing a clone.
     let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
 
     // TODO: Need to handle initial window scale factor.
-    let mut dirty_layout_tree = clean_layout_tree.clone();
-    let inner_window_size = windowed_context.window().inner_size();
-    global_layout(
-        &mut dirty_layout_tree,
-        inner_window_size.width as f32,
-        inner_window_size.height as f32,
+
+    paint(
+        clean_layout_tree.clone(),
+        &windowed_context,
+        &char_handle,
+        &mut master_painter,
     );
-    let char_handle = CharHandle::new(&gl);
-    let mut display_list = build_display_list(&dirty_layout_tree, &char_handle);
-    master_painter.paint(&windowed_context, &display_list);
     event_loop.run(move |event, _, control_flow| {
         // println!("{:?}", event);
         *control_flow = ControlFlow::Wait;
@@ -129,18 +128,17 @@ pub fn run_event_loop(
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(physical_size) => {
                     resize_window(&gl, &windowed_context, physical_size);
-                    // Refresh layout tree state to a clean slate.
-                    dirty_layout_tree = clean_layout_tree.clone();
-                    let inner_window_size = windowed_context.window().inner_size();
-                    global_layout(
-                        &mut dirty_layout_tree,
-                        inner_window_size.width as f32,
-                        inner_window_size.width as f32,
-                    );
-                    display_list = build_display_list(&dirty_layout_tree, &char_handle);
-                    master_painter.paint(&windowed_context, &display_list);
+                    paint(
+                        clean_layout_tree.clone(),
+                        &windowed_context,
+                        &char_handle,
+                        &mut master_painter,
+                    )
                 }
-                WindowEvent::ScaleFactorChanged { scale_factor: _, new_inner_size: _ } => {
+                WindowEvent::ScaleFactorChanged {
+                    scale_factor: _,
+                    new_inner_size: _,
+                } => {
                     // TODO: Must handle scale factor change.
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
@@ -149,4 +147,20 @@ pub fn run_event_loop(
             _ => (),
         }
     });
+
+    fn paint(
+        mut layout_tree: LayoutBox,
+        windowed_context: &WindowedContext<PossiblyCurrent>,
+        char_handle: &CharHandle,
+        painter: &mut MasterPainter,
+    ) {
+        let inner_window_size = windowed_context.window().inner_size();
+        global_layout(
+            &mut layout_tree,
+            inner_window_size.width as f32,
+            inner_window_size.width as f32,
+        );
+        let display_list = build_display_list(&layout_tree, &char_handle);
+        painter.paint(&windowed_context, &display_list);
+    }
 }

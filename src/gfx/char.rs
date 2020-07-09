@@ -9,6 +9,7 @@ use font_kit::error::GlyphLoadingError;
 use font_kit::font::Font;
 use font_kit::hinting::HintingOptions;
 use gl::texture::{Texture, TextureKind};
+use gl::types::GLint;
 use gl::{
     Gl, CLAMP_TO_EDGE, LINEAR, RED, TEXTURE_2D, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER,
     TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
@@ -17,7 +18,6 @@ use pathfinder_geometry::transform2d::Transform2F;
 use pathfinder_geometry::vector::{Vector2F, Vector2I};
 use std::collections::HashMap;
 use std::os::raw::c_void;
-use gl::types::GLint;
 
 #[derive(Debug)]
 pub struct OpenglChar {
@@ -45,17 +45,25 @@ impl OpenglChar {
             &mut canvas,
             glyph_id,
             size_px as f32,
-            Transform2F::from_translation(Vector2F::new(0.0, 32.0)),
+            Transform2F::from_translation(Vector2F::new(0.0, size_px as f32)),
             HintingOptions::None,
             RasterizationOptions::GrayscaleAa,
         )?;
+        let texture = OpenglChar::setup_texture(gl, &canvas);
 
-        // TODO: Are advance and bearing correct?
+        // Divide by 64 because these are represented as FreeType font units, which are 1/64th
+        // of a pixel.  We want pixel units.
+        // TODO: Represent font units as a type to avoid confusion and ease conversion?
+        let advance_font_units = font.advance(glyph_id)?;
+        let advance = Vector2F::new(advance_font_units.x() / 64.0, advance_font_units.y() / 64.0);
+        let bearing_font_units = font.origin(glyph_id)?;
+        let bearing = Vector2F::new(bearing_font_units.x() / 64.0, bearing_font_units.y() / 64.0);
+
         Ok(OpenglChar {
-            advance: font.advance(glyph_id)?,
-            bearing: font.origin(glyph_id)?,
+            advance,
+            bearing,
             size_px: size_px as f32,
-            texture: OpenglChar::setup_texture(gl, &canvas),
+            texture,
             val: ch,
         })
     }
@@ -155,10 +163,7 @@ impl CharHandle {
                 }
             };
             if !chars.contains_key(&ch) {
-                chars.insert(
-                    ch,
-                    OpenglChar::new(ch, font_size.to_px(), font, &self.gl)?
-                );
+                chars.insert(ch, OpenglChar::new(ch, font_size.to_px(), font, &self.gl)?);
             }
         }
         let cached_chars = self.cached_chars.borrow();

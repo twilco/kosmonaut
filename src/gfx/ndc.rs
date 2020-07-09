@@ -1,4 +1,5 @@
 // TODO: I think OpenGL can do all of this NDC business for us.  The current implementation works, but I doubt it is idiomatic.
+// I believe orthographic projection is what we need?
 // https://learnopengl.com/Getting-started/Transformations
 // https://learnopengl.com/Getting-started/Coordinate-Systems
 

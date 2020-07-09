@@ -31,6 +31,7 @@ use crate::cli::{
     dump_layout_tree, html_file_path_from_files, inner_window_height, inner_window_width,
     setup_and_get_cli_args, stylesheets_from_files,
 };
+use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
@@ -38,7 +39,6 @@ pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
-use crate::gfx::char::CharHandle;
 
 /// Welcome to Kosmonaut.
 ///

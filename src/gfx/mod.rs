@@ -5,8 +5,8 @@ use glutin::dpi::PhysicalSize;
 use glutin::event_loop::EventLoop;
 use glutin::window::{Icon, WindowBuilder};
 use glutin::{ContextBuilder, GlProfile, PossiblyCurrent, WindowedContext};
-use std::io::Cursor;
 use image::ImageFormat;
+use std::io::Cursor;
 
 pub mod char;
 pub mod display;
@@ -33,18 +33,14 @@ pub fn init_main_window_and_gl(
         Cursor::new(&include_bytes!("../../img/Kosmonaut_Logo_164x164-01.png")[..]),
         ImageFormat::Png,
     )
-        .unwrap()
-        .to_rgba();
+    .unwrap()
+    .to_rgba();
     let icon_dimensions = icon.dimensions();
     let wb = WindowBuilder::new()
         .with_title("Kosmonaut")
         .with_inner_size(initial_physical_size)
         .with_window_icon(Some(
-            Icon::from_rgba(
-                icon.to_vec(),
-                icon_dimensions.0,
-                icon_dimensions.1
-            ).unwrap()
+            Icon::from_rgba(icon.to_vec(), icon_dimensions.0, icon_dimensions.1).unwrap(),
         ));
     let windowed_context = ContextBuilder::new()
         .with_gl_profile(GlProfile::Core)

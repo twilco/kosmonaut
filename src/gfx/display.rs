@@ -1,13 +1,13 @@
+use crate::gfx::char::CharHandle;
+use crate::gfx::font::FontHandle;
 use crate::layout::layout_box::{BoxType, LayoutBox};
 use crate::layout::Rect;
 use crate::style::values::computed::LineStyle;
 use crate::Side;
+use app_units::Au;
 use cssparser::RGBA;
 use gl::texture::TextureId;
 use pathfinder_geometry::vector::Vector2F;
-use crate::gfx::char::CharHandle;
-use crate::gfx::font::FontHandle;
-use app_units::Au;
 
 /// Builds list of display commands that should be used to paint the output.
 pub fn build_display_list(layout_box: &LayoutBox, char_handle: &CharHandle) -> DisplayList {
@@ -15,7 +15,15 @@ pub fn build_display_list(layout_box: &LayoutBox, char_handle: &CharHandle) -> D
     // TODO: Remove the three preceeding lines once text rendering is fixed.
     let font_handle = FontHandle::new();
     let font = font_handle.get_font("Liberation Mono").unwrap();
-    char_handle.prepare_char(&mut display_list, 'a', RGBA::new(0, 0, 0 ,1), &font, Au::from_f32_px(12.)).unwrap();
+    char_handle
+        .prepare_char(
+            &mut display_list,
+            'A',
+            RGBA::new(0, 0, 0, 1),
+            &font,
+            Au::from_f32_px(12.),
+        )
+        .unwrap();
     prepare_layout_box(&mut display_list, &layout_box);
     display_list
 }

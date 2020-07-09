@@ -1,13 +1,14 @@
 use crate::gfx::display::CharCommand;
+use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, CharPaintData, ToVertices};
+use cssparser::RGBA;
 use gl::program::Program;
 use gl::types::{GLint, GLsizeiptr};
 use gl::vao::VertexArrayObject;
 use gl::vbo::VertexBufferObject;
 use gl::{Gl, ARRAY_BUFFER, DYNAMIC_DRAW, FALSE, FLOAT, TEXTURE0, TEXTURE_2D, TRIANGLES};
-use std::ffi::CString;
 use pathfinder_geometry::transform3d::Transform4F;
-use cssparser::RGBA;
+use std::ffi::CString;
 
 /// Uses given OpenGL instance to paint arbitrary text.
 pub struct TextPainter {
@@ -57,7 +58,12 @@ impl TextPainter {
         })
     }
 
-    pub fn paint(&mut self, paintable_chars: &[CharPaintData], viewport_width: u32, viewport_height: u32) {
+    pub fn paint(
+        &mut self,
+        paintable_chars: &[CharPaintData],
+        viewport_width: u32,
+        viewport_height: u32,
+    ) {
         self.program.use_globally();
 
         let text_color_str =
@@ -74,12 +80,21 @@ impl TextPainter {
                 black.green_f32(),
                 black.blue_f32(),
             );
-            let projection = Transform4F::from_ortho(0., viewport_width as f32, 0., viewport_height as f32, 0.1, 0.9);
+            // TODO: This isn't correct.
+            let projection = Transform4F::from_ortho(
+                0.,
+                viewport_width as f32,
+                viewport_height as f32,
+                0.,
+                0.0,
+                100.0,
+            );
             self.gl.UniformMatrix4fv(
-                self.gl.GetUniformLocation(self.program.id(), projection_str.as_ptr()),
+                self.gl
+                    .GetUniformLocation(self.program.id(), projection_str.as_ptr()),
                 1,
                 FALSE,
-                projection.as_ptr()
+                projection.as_ptr(),
             );
             self.gl.ActiveTexture(TEXTURE0);
             self.gl.BindVertexArray(self.vao.name());
@@ -125,18 +140,49 @@ fn build_text_program(gl: &Gl) -> Result<Program, String> {
 }
 
 impl ToVertices for CharCommand {
-    fn to_vertices(&self, _viewport_width: f32, _viewport_height: f32) -> Vec<f32> {
+    fn to_vertices(&self, viewport_width: f32, viewport_height: f32) -> Vec<f32> {
         let x_pos = self.start_coords().x() + self.bearing().x();
         let y_pos = self.start_coords().y() - (self.size().y() - self.bearing().y());
 
         let mut vertices = Vec::new();
-        vertices.extend_from_slice(&[x_pos, y_pos + self.size().y(), 0.0, 0.0]);
-        vertices.extend_from_slice(&[x_pos, y_pos, 0.0, 1.0]);
-        vertices.extend_from_slice(&[x_pos + self.size().x(), y_pos, 1.0, 1.0]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos, viewport_width),
+            ndc_y(y_pos + self.size().y(), viewport_height),
+            0.0,
+            0.0,
+        ]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos, viewport_width),
+            ndc_y(y_pos, viewport_height),
+            0.0,
+            1.0,
+        ]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos + self.size().x(), viewport_width),
+            ndc_y(y_pos, viewport_height),
+            1.0,
+            1.0,
+        ]);
 
-        vertices.extend_from_slice(&[x_pos, y_pos + self.size().y(), 0.0, 0.0]);
-        vertices.extend_from_slice(&[x_pos + self.size().x(), y_pos, 1.0, 1.0]);
-        vertices.extend_from_slice(&[x_pos + self.size().x(), y_pos + self.size().y(), 1.0, 0.0]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos, viewport_width),
+            ndc_y(y_pos + self.size().y(), viewport_height),
+            0.0,
+            0.0,
+        ]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos + self.size().x(), viewport_width),
+            ndc_y(y_pos, viewport_height),
+            1.0,
+            1.0,
+        ]);
+        vertices.extend_from_slice(&[
+            ndc_x(x_pos + self.size().x(), viewport_width),
+            ndc_y(y_pos + self.size().y(), viewport_height),
+            1.0,
+            0.0,
+        ]);
+
         vertices
     }
 }

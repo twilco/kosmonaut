@@ -1,6 +1,6 @@
 use accountable_refcell::{Ref, RefCell};
 use font_kit::error::{FontLoadingError, SelectionError};
-use font_kit::loaders::freetype::Font;
+use font_kit::loaders::default::Font;
 use font_kit::source::SystemSource;
 use std::collections::HashMap;
 

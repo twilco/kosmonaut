@@ -14,7 +14,7 @@ pub fn build_display_list(layout_box: &LayoutBox, char_handle: &CharHandle) -> D
     let mut display_list = Vec::new();
     // TODO: Remove the three preceeding lines once text rendering is fixed.
     let font_handle = FontHandle::new();
-    let font = font_handle.get_font("Liberation Mono").unwrap();
+    let font = font_handle.get_font("Helvetica").unwrap();
     char_handle
         .prepare_char(
             &mut display_list,

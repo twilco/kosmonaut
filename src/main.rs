@@ -110,6 +110,7 @@ pub fn run_event_loop(
     // instead only needing a clone.
     let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
 
+    // TODO: Need to handle initial window scale factor.
     let mut dirty_layout_tree = clean_layout_tree.clone();
     let inner_window_size = windowed_context.window().inner_size();
     global_layout(
@@ -127,12 +128,6 @@ pub fn run_event_loop(
             Event::LoopDestroyed => {}
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(physical_size) => {
-                    // TODO: Do we handle UI scaling correctly?  See: https://docs.rs/glutin/0.24.0/glutin/dpi/index.html
-                    // The docs for `WindowEvent::ScaleFactorChanged` suggest we might be OK, since a scale factor change
-                    // seems to result in a `WindowEvent::Resized` with the new physical size, but this should be double-checked.
-                    //   > After this event [WindowEvent::ScaleFactorChange] callback has been processed, the window will be resized to whatever value
-                    //   > is pointed to by the `new_inner_size` reference. By default, this will contain the size suggested
-                    //   > by the OS, but it can be changed to any value.
                     resize_window(&gl, &windowed_context, physical_size);
                     // Refresh layout tree state to a clean slate.
                     dirty_layout_tree = clean_layout_tree.clone();
@@ -144,6 +139,9 @@ pub fn run_event_loop(
                     );
                     display_list = build_display_list(&dirty_layout_tree, &char_handle);
                     master_painter.paint(&windowed_context, &display_list);
+                }
+                WindowEvent::ScaleFactorChanged { scale_factor: _, new_inner_size: _ } => {
+                    // TODO: Must handle scale factor change.
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),

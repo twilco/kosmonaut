@@ -1,5 +1,5 @@
-use crate::{types, Gl, TEXTURE_2D};
 use crate::bindings::types::GLuint;
+use crate::{types, Gl, TEXTURE_2D};
 
 pub type TextureId = types::GLuint;
 
@@ -28,7 +28,7 @@ impl Texture {
         Texture {
             id,
             kind,
-            gl: gl.clone()
+            gl: gl.clone(),
         }
     }
 
@@ -39,9 +39,7 @@ impl Texture {
 
 impl Drop for Texture {
     fn drop(&mut self) {
-        unsafe {
-            self.gl.DeleteTextures(1, &self.id)
-        }
+        unsafe { self.gl.DeleteTextures(1, &self.id) }
     }
 }
 
@@ -54,7 +52,7 @@ impl Drop for Texture {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TextureKind {
     /// Images in this texture have two dimensions -- width and height (but no depth).
-    TwoDimensional
+    TwoDimensional,
 }
 
 impl From<TextureKind> for types::GLuint {

@@ -1,5 +1,8 @@
-use crate::{Gl, NO_ERROR, INVALID_ENUM, INVALID_VALUE, INVALID_OPERATION, INVALID_FRAMEBUFFER_OPERATION, OUT_OF_MEMORY};
 use crate::bindings::types::GLenum;
+use crate::{
+    Gl, INVALID_ENUM, INVALID_FRAMEBUFFER_OPERATION, INVALID_OPERATION, INVALID_VALUE, NO_ERROR,
+    OUT_OF_MEMORY,
+};
 
 /// Returns all errors that have been recorded since the last call to this function.  The act of
 /// getting these flags clears them from the internal OpenGL state machine, and thus they will not
@@ -27,7 +30,7 @@ impl From<GLenum> for ErrorFlag {
             INVALID_OPERATION => ErrorFlag::InvalidOperation,
             INVALID_FRAMEBUFFER_OPERATION => ErrorFlag::InvalidFramebufferOperation,
             OUT_OF_MEMORY => ErrorFlag::OutOfMemory,
-            _ => panic!("unexpected opengl error of value: {}", enum_val)
+            _ => panic!("unexpected opengl error of value: {}", enum_val),
         }
     }
 }
@@ -56,5 +59,5 @@ pub enum ErrorFlag {
     StackUnderflow,
     ///  An attempt has been made to perform an operation that would cause an internal stack to
     /// overflow.
-    StackOverflow
+    StackOverflow,
 }

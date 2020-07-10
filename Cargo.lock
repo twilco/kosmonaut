@@ -881,7 +881,6 @@ dependencies = [
  "cssparser 0.27.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_builder 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "font-kit 0.9.0 (git+https://github.com/twilco/font-kit.git)",
- "freetype 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gl 0.1.0",
  "glutin 0.24.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "html5ever 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",

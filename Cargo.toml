@@ -10,11 +10,10 @@ app_units = "0.7.1"
 cssparser = "0.27"
 clap = "2.33.0"
 font-kit = { git = "https://github.com/twilco/font-kit" }
-freetype = "0.5.1"
 gl = { path = "crates/gl" }
-glutin = "0.24.0"
+glutin = "0.24"
 html5ever = "0.25.1"
-image = "0.23.6"
+image = "0.23"
 matches = "0.1.8"
 pathfinder_geometry = "0.5.1"
 rand = "0.7.3"

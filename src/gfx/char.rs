@@ -22,7 +22,6 @@ use std::os::raw::c_void;
 #[derive(Debug)]
 pub struct OpenglChar {
     /// Offset to advance to next glyph.
-    /// TODO: This is in 1/64th pixels...this fact still needs to be handled somewhere.
     advance: Vector2F,
     /// Offset from baseline to left/top of glyph.
     bearing: Vector2F,

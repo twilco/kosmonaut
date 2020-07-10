@@ -55,18 +55,22 @@ pub fn global_layout(
     layout_tree: &mut LayoutBox,
     inner_window_width: f32,
     inner_window_height: f32,
+    scale_factor: f32,
 ) {
-    layout_tree.layout(Dimensions {
-        content: Rect {
-            start_x: 0.0,
-            start_y: 0.0,
-            width: CSSPixelLength::new(inner_window_width),
-            height: CSSPixelLength::new(inner_window_height),
+    layout_tree.layout(
+        Dimensions {
+            content: Rect {
+                start_x: 0.0,
+                start_y: 0.0,
+                width: CSSPixelLength::new(inner_window_width),
+                height: CSSPixelLength::new(inner_window_height),
+            },
+            padding: Default::default(),
+            border: Default::default(),
+            margin: Default::default(),
         },
-        padding: Default::default(),
-        border: Default::default(),
-        margin: Default::default(),
-    });
+        scale_factor,
+    );
 }
 
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#box-model
@@ -106,6 +110,12 @@ impl Dimensions {
     pub fn margin_box(self) -> Rect {
         self.border_box().expanded_by(self.margin)
     }
+
+    pub fn scale_edges_by(&mut self, scale_factor: f32) {
+        self.padding.scale_by(scale_factor);
+        self.border.scale_by(scale_factor);
+        self.margin.scale_by(scale_factor);
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -135,6 +145,15 @@ pub struct EdgeSizes {
     pub right: CSSPixelLength,
     pub top: CSSPixelLength,
     pub bottom: CSSPixelLength,
+}
+
+impl EdgeSizes {
+    pub fn scale_by(&mut self, scale_factor: f32) {
+        self.left *= scale_factor;
+        self.right *= scale_factor;
+        self.top *= scale_factor;
+        self.bottom *= scale_factor;
+    }
 }
 
 /// Trait describing behavior necessary for dumping the layout tree, used in the `dump-layout`

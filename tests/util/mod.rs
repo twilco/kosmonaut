@@ -6,6 +6,8 @@ use std::process::{Command, ExitStatus, Stdio};
 
 pub(crate) static LAYOUT_DUMP_INNER_WINDOW_WIDTH_PX: f32 = 1920.;
 pub(crate) static LAYOUT_DUMP_INNER_WINDOW_HEIGHT_PX: f32 = 1080.;
+/// Unless otherwise specified, run layout tests with a scale factor of 1.0.
+pub(crate) static LAYOUT_DUMP_DEFAULT_SCALE_FACTOR: f32 = 1.0;
 
 /// `CommandUnderTest` and all related code taken from `cargo-benchcmp`:
 /// https://github.com/BurntSushi/cargo-benchcmp/blob/45246edd8143ee6f9c540cf14324ec933a952757/tests/integration.rs
@@ -175,12 +177,18 @@ impl CommandUnderTest {
     }
 }
 
-pub fn new_dump_layout_cmd() -> CommandUnderTest {
+pub fn dump_layout_cmd_scaled(scale_factor: f32) -> CommandUnderTest {
     let mut cmd = CommandUnderTest::new();
     cmd.arg("dump-layout");
     cmd.arg("--width");
     cmd.arg(format!("{}", LAYOUT_DUMP_INNER_WINDOW_WIDTH_PX));
     cmd.arg("--height");
     cmd.arg(format!("{}", LAYOUT_DUMP_INNER_WINDOW_HEIGHT_PX));
+    cmd.arg("--scale_factor");
+    cmd.arg(format!("{}", scale_factor));
     cmd
+}
+
+pub fn dump_layout_cmd() -> CommandUnderTest {
+    dump_layout_cmd_scaled(LAYOUT_DUMP_DEFAULT_SCALE_FACTOR)
 }

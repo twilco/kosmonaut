@@ -16,7 +16,17 @@ So far, not much.  Only a very limited subset of CSS is currently supported, so 
 
 ![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](img/rainbow-divs-vs-firefox.png)
 
-### Build
+### Roadmap
+
+Here is a summary of things Kosmonaut can do, things I'm currently working on, and things that are towards the front of the todo list.
+
+- [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
+- [x] Layout and paint of normal flow, block formatting context block-level boxes.
+- [x] Layout-tree-dump based testing
+- [ ] Text rendering with FreeType (without support for text layout — see next item)
+- [ ] Support for normal flow, inline formatting context layout and paint
+
+### Build and test
 
 Kosmonaut is built with Rust using OpenGL bindings via [gl-rs](https://github.com/brendanzab/gl-rs), [Glutin](https://github.com/rust-windowing/glutin) for window management and OpenGL context creation, Servo's [html5ever](https://github.com/servo/html5ever) and [cssparser](https://github.com/servo/rust-cssparser) for HTML and CSS parsing, and various other auxiliary libraries.
 
@@ -33,15 +43,15 @@ To run the rainbow divs example pictured above, try:
 
 `cargo run -- --files tests/websrc/rainbow-divs.html tests/websrc/rainbow-divs.css`
 
-### Roadmap
+To run the tests, both unit and layout, run:
 
-Here is a summary of things Kosmonaut can do, things I'm currently working on, and things that are towards the front of the todo list.
+`cargo test`
 
-- [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
-- [x] Layout and paint of normal flow, block formatting context block-level boxes.
-- [x] Layout-tree-dump based testing
-- [ ] Text rendering with FreeType (without support for text layout — see next item)
-- [ ] Support for normal flow, inline formatting context layout and paint
+For layout tests, Kosmonaut transforms the given HTML and CSS into the layout tree and dumps that as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
+
+If you need to review / update snapshots, it is helpful to install the Cargo insta CLI tool like so:
+
+`cargo install cargo-insta`
  
 ### License and credits
 

@@ -29,7 +29,7 @@ pub mod style;
 
 use crate::cli::{
     dump_layout_tree, html_file_path_from_files, inner_window_height, inner_window_width,
-    setup_and_get_cli_args, stylesheets_from_files,
+    scale_factor, setup_and_get_cli_args, stylesheets_from_files,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
@@ -73,20 +73,24 @@ fn main() {
         inner_window_height(&arg_matches),
     );
 
+    let scale_factor_opt = scale_factor(&arg_matches);
     if dump_layout_tree(&arg_matches) {
-        run_layout_dump(dom, inner_width_opt, inner_height_opt);
+        let scale_factor = scale_factor_opt
+            .expect("scale factor must be explicitly specified when running layout dump");
+        run_layout_dump(dom, inner_width_opt, inner_height_opt, scale_factor);
         return;
     }
     let (windowed_context, event_loop, gl) =
         init_main_window_and_gl(inner_width_opt, inner_height_opt);
     print_gl_info(&windowed_context, &gl);
-    run_event_loop(event_loop, gl, dom, windowed_context);
+    run_event_loop(event_loop, gl, dom, windowed_context, scale_factor_opt);
 }
 
 fn run_layout_dump(
     styled_dom: NodeRef,
     inner_width_opt: Option<f32>,
     inner_height_opt: Option<f32>,
+    scale_factor: f32,
 ) {
     let mut layout_tree = build_layout_tree(styled_dom).unwrap();
     global_layout(
@@ -95,6 +99,7 @@ fn run_layout_dump(
             .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
         inner_height_opt
             .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
+        scale_factor,
     );
     layout_tree.dump_layout(&mut std::io::stdout(), 0);
 }
@@ -104,6 +109,7 @@ pub fn run_event_loop(
     gl: Gl,
     styled_dom: NodeRef,
     windowed_context: WindowedContext<PossiblyCurrent>,
+    cli_specified_scale_factor: Option<f32>,
 ) {
     let mut master_painter = MasterPainter::new(&gl).unwrap();
     let char_handle = CharHandle::new(&gl);
@@ -111,14 +117,14 @@ pub fn run_event_loop(
     // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
     // instead only needing a clone.
     let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
-
-    // TODO: Need to handle initial window scale factor.
-
+    let mut scale =
+        cli_specified_scale_factor.unwrap_or(windowed_context.window().scale_factor() as f32);
     paint(
         clean_layout_tree.clone(),
         &windowed_context,
         &char_handle,
         &mut master_painter,
+        scale,
     );
     event_loop.run(move |event, _, control_flow| {
         // println!("{:?}", event);
@@ -133,13 +139,22 @@ pub fn run_event_loop(
                         &windowed_context,
                         &char_handle,
                         &mut master_painter,
+                        scale,
                     )
                 }
                 WindowEvent::ScaleFactorChanged {
-                    scale_factor: _,
-                    new_inner_size: _,
+                    scale_factor,
+                    new_inner_size,
                 } => {
-                    // TODO: Must handle scale factor change.
+                    scale = *scale_factor as f32;
+                    resize_window(&gl, &windowed_context, new_inner_size);
+                    paint(
+                        clean_layout_tree.clone(),
+                        &windowed_context,
+                        &char_handle,
+                        &mut master_painter,
+                        scale,
+                    )
                 }
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),
@@ -153,12 +168,14 @@ pub fn run_event_loop(
         windowed_context: &WindowedContext<PossiblyCurrent>,
         char_handle: &CharHandle,
         painter: &mut MasterPainter,
+        scale_factor: f32,
     ) {
         let inner_window_size = windowed_context.window().inner_size();
         global_layout(
             &mut layout_tree,
             inner_window_size.width as f32,
             inner_window_size.width as f32,
+            scale_factor,
         );
         let display_list = build_display_list(&layout_tree, &char_handle);
         painter.paint(&windowed_context, &display_list);

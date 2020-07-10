@@ -4,6 +4,8 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use std::str::FromStr;
 
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
+    let headed_or_headless_applicable =
+        "Applicable in both headed and headless (e.g. dump-layout) contexts.";
     App::new("Kosmonaut")
         .version("0.1")
         .author("Tyler Wilcock (twilco)")
@@ -23,7 +25,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                 .short("w")
                 .long("width")
                 .value_name("WIDTH")
-                .help("Inner window width.  Applicable in both headed and headless (e.g. dump-layout) contexts.")
+                .help(&format!("Inner window width.  {}", headed_or_headless_applicable))
                 .takes_value(true)
                 .validator(is_num_validator)
                 .global(true),
@@ -33,13 +35,23 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                 .short("h")
                 .long("height")
                 .value_name("HEIGHT")
-                .help("Inner window height.  Applicable in both headed and headless (e.g. dump-layout) contexts.")
+                .help(&format!("Inner window height.  {}", headed_or_headless_applicable))
+                .takes_value(true)
+                .validator(is_num_validator)
+                .global(true),
+        )
+        .arg(
+            Arg::with_name("scale_factor")
+                .short("s")
+                .long("scale_factor")
+                .value_name("SCALE_FACTOR")
+                .help(&format!("Device/window scale factor.  {}", headed_or_headless_applicable))
                 .takes_value(true)
                 .validator(is_num_validator)
                 .global(true),
         )
         .subcommand(SubCommand::with_name("dump-layout").about(
-            "Dumps layout-tree as text to stdout after first global layout, exiting afterwards.",
+            "Dumps layout-tree as text to stdout after first global layout, exiting afterwards.  Scale factor must be sup",
         ))
         .get_matches()
 }
@@ -98,6 +110,10 @@ pub fn inner_window_width(arg_matches: &ArgMatches) -> Option<f32> {
 
 pub fn inner_window_height(arg_matches: &ArgMatches) -> Option<f32> {
     try_get::<f32>(arg_matches, "height")
+}
+
+pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
+    try_get::<f32>(arg_matches, "scale_factor")
 }
 
 fn try_get<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {

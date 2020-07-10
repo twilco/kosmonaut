@@ -2,7 +2,7 @@ use crate::style::values::computed::{ComputeValue, Percentage};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, MulAssign};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub};
 
 /// The computed `<length>` value.
 #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]

@@ -1,0 +1,48 @@
+---
+source: tests/layout/mod.rs
+expression: dump_layout_cmd.stdout()
+---
+DOCUMENT Inline LayoutBox at (0, 0) size 1920x368
+  DOCTYPE Inline LayoutBox at (0, 0) size 1920x0
+  HTML Block LayoutBox at (0, 0) size 1920x368
+     Anonymous LayoutBox at (0, 0) size 1920x0
+      TEXT Inline LayoutBox at (0, 0) size 1920x0
+    BODY Block LayoutBox at (16, 16) size 1888x336
+       Anonymous LayoutBox at (0, 0) size 1856x0
+        TEXT Inline LayoutBox at (0, 0) size 1856x0
+      DIV Block LayoutBox at (40, 40) size 1840x288
+         Anonymous LayoutBox at (0, 0) size 1792x0
+          TEXT Inline LayoutBox at (0, 0) size 1792x0
+        DIV Block LayoutBox at (64, 64) size 1792x240
+           Anonymous LayoutBox at (0, 0) size 1744x0
+            TEXT Inline LayoutBox at (0, 0) size 1744x0
+          DIV Block LayoutBox at (88, 88) size 1744x192
+             Anonymous LayoutBox at (0, 0) size 1696x0
+              TEXT Inline LayoutBox at (0, 0) size 1696x0
+            DIV Block LayoutBox at (112, 112) size 1696x144
+               Anonymous LayoutBox at (0, 0) size 1648x0
+                TEXT Inline LayoutBox at (0, 0) size 1648x0
+              DIV Block LayoutBox at (136, 136) size 1648x96
+                 Anonymous LayoutBox at (0, 0) size 1600x0
+                  TEXT Inline LayoutBox at (0, 0) size 1600x0
+                DIV Block LayoutBox at (160, 160) size 1600x48
+                   Anonymous LayoutBox at (0, 0) size 1552x0
+                    TEXT Inline LayoutBox at (0, 0) size 1552x0
+                  DIV Block LayoutBox at (184, 184) size 1552x0
+                     Anonymous LayoutBox at (0, 0) size 1504x0
+                      TEXT Inline LayoutBox at (0, 0) size 1504x0
+                   Anonymous LayoutBox at (0, 0) size 1552x0
+                    TEXT Inline LayoutBox at (0, 0) size 1552x0
+                 Anonymous LayoutBox at (0, 0) size 1600x0
+                  TEXT Inline LayoutBox at (0, 0) size 1600x0
+               Anonymous LayoutBox at (0, 0) size 1648x0
+                TEXT Inline LayoutBox at (0, 0) size 1648x0
+             Anonymous LayoutBox at (0, 0) size 1696x0
+              TEXT Inline LayoutBox at (0, 0) size 1696x0
+           Anonymous LayoutBox at (0, 0) size 1744x0
+            TEXT Inline LayoutBox at (0, 0) size 1744x0
+         Anonymous LayoutBox at (0, 0) size 1792x0
+          TEXT Inline LayoutBox at (0, 0) size 1792x0
+       Anonymous LayoutBox at (0, 0) size 1856x0
+        TEXT Inline LayoutBox at (0, 0) size 1856x0
+

@@ -101,9 +101,9 @@ impl LayoutBox {
     ///
     /// In this step, we will be taking computed values and calculating actual, used values
     /// based on the constraint of our environment.
-    pub fn layout(&mut self, containing_block: Dimensions) {
+    pub fn layout(&mut self, containing_block: Dimensions, scale_factor: f32) {
         match self.box_type {
-            BoxType::Block => self.layout_block(containing_block),
+            BoxType::Block => self.layout_block(containing_block, scale_factor),
             BoxType::Inline => {
                 // TODO: The root element is an inline box-type, so when we can actually layout
                 // inline boxes, make sure to handle the root element.  This current implementation
@@ -113,16 +113,20 @@ impl LayoutBox {
                     // The root element takes the dimensions of the containing block, which is the viewport.
                     self.dimensions = containing_block;
                     for child in &mut self.children {
-                        child.layout(self.dimensions);
+                        child.layout(self.dimensions, scale_factor);
                     }
                 } else {
                     //                    println!("layout inline box types not implemented");
-                    layout_non_block_because_only_block_is_impl(self, containing_block);
+                    layout_non_block_because_only_block_is_impl(
+                        self,
+                        containing_block,
+                        scale_factor,
+                    );
                 }
             }
             BoxType::Anonymous => {
                 //                println!("layout anonymous box types not implemented");
-                layout_non_block_because_only_block_is_impl(self, containing_block);
+                layout_non_block_because_only_block_is_impl(self, containing_block, scale_factor);
             }
         }
 
@@ -130,9 +134,10 @@ impl LayoutBox {
         fn layout_non_block_because_only_block_is_impl(
             layout_box: &mut LayoutBox,
             containing_block: Dimensions,
+            scale_factor: f32,
         ) {
-            layout_box.calculate_block_width(containing_block);
-            layout_box.layout_block_children();
+            layout_box.calculate_block_width(containing_block, scale_factor);
+            layout_box.layout_block_children(scale_factor);
         }
     }
 
@@ -153,16 +158,16 @@ impl LayoutBox {
     }
 
     /// Assuming `self` is a block-box, calculate the dimensions of this box and any children.
-    fn layout_block(&mut self, containing_block: Dimensions) {
+    fn layout_block(&mut self, containing_block: Dimensions, scale_factor: f32) {
         // Child width can depend on parent width, so we need to calculate this box's width before
         // laying out its children.
-        self.calculate_block_width(containing_block);
+        self.calculate_block_width(containing_block, scale_factor);
 
         // Determine where the box is located within its containing block.
-        self.calculate_block_position(containing_block);
+        self.calculate_block_position(containing_block, scale_factor);
 
         // Recursively layout the children of this box.
-        self.layout_block_children();
+        self.layout_block_children(scale_factor);
 
         // Parent height can depend on child height, so let's calculate our height now that we've
         // laid out our children.
@@ -174,7 +179,7 @@ impl LayoutBox {
     /// https://www.w3.org/TR/CSS2/visudet.html#blockwidth
     ///
     /// Sets the horizontal margin/padding/border dimensions, and the `width`.
-    fn calculate_block_width(&mut self, containing_block: Dimensions) {
+    fn calculate_block_width(&mut self, containing_block: Dimensions, scale_factor: f32) {
         let containing_width = containing_block.content.width;
         let cvs = self.node.computed_values();
 
@@ -187,19 +192,23 @@ impl LayoutBox {
         let padding_left = cvs.padding_left;
         let padding_right = cvs.padding_right;
 
-        let total_size = margin_left.size.to_px(containing_width)
+        // Run block layout _with_ the device scale factor applied to ensure the proper values are
+        // computed.
+        let block_width = (margin_left.size.to_px(containing_width)
             + margin_right.size.to_px(containing_width)
             + border_left.size
             + border_right.size
             + padding_left.size.to_px(containing_width)
-            + padding_right.size.to_px(containing_width);
+            + padding_right.size.to_px(containing_width)
+            + width.size.to_px(containing_width))
+            * scale_factor;
 
         let auto = LengthPercentageOrAuto::Auto;
         // If 'width' is not 'auto' and 'border-left-width' + 'padding-left' + 'width' +
         // 'padding-right' + 'border-right-width' (plus any of 'margin-left' or 'margin-right'
         // that are not 'auto') is larger than the width of the containing block, then any 'auto'
         // values for 'margin-left' or 'margin-right' are, for the following rules, treated as zero.
-        if width.size != auto && total_size > containing_width {
+        if width.size != auto && block_width > containing_width {
             if margin_left.size == auto {
                 margin_left.size =
                     LengthPercentageOrAuto::LengthPercentage(LengthPercentage::new_len(0.));
@@ -211,7 +220,7 @@ impl LayoutBox {
         }
         // This value can be negative, indicating an overflow or "overconstraint", if the width of
         // this box is greater than that of the containing one.
-        let underflow = containing_width - total_size;
+        let underflow = containing_width - block_width;
         match (
             width.size == auto,
             margin_left.size == auto,
@@ -289,7 +298,7 @@ impl LayoutBox {
     }
 
     /// Calculates this boxes position (x, y) on the page.
-    fn calculate_block_position(&mut self, containing_block: Dimensions) {
+    fn calculate_block_position(&mut self, containing_block: Dimensions, scale_factor: f32) {
         let cvs = self.node.computed_values();
         let containing_width = containing_block.content.width;
         let d = &mut self.dimensions;
@@ -302,6 +311,9 @@ impl LayoutBox {
 
         d.padding.bottom = cvs.padding_bottom.size.to_px(containing_width);
         d.padding.top = cvs.padding_top.size.to_px(containing_width);
+
+        // Ensure window scale factor is applied before computing the start-{x, y} coordinates.
+        d.scale_edges_by(scale_factor);
 
         d.content.start_x =
             (containing_block.content.start_x + d.margin.left + d.border.left + d.padding.left)
@@ -316,10 +328,10 @@ impl LayoutBox {
             .into();
     }
 
-    fn layout_block_children(&mut self) {
+    fn layout_block_children(&mut self, scale_factor: f32) {
         let d = &mut self.dimensions;
         for child in &mut self.children {
-            child.layout(*d);
+            child.layout(*d, scale_factor);
             // Track the height so each child is laid out below the previous content.
             d.content.height += child.dimensions.margin_box().height;
         }

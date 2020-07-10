@@ -2,7 +2,7 @@ use crate::style::values::computed::{ComputeValue, Percentage};
 use crate::style::values::{specified, CSSFloat};
 use app_units::Au;
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, MulAssign};
 
 /// The computed `<length>` value.
 #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
@@ -81,6 +81,12 @@ impl Mul<CSSFloat> for CSSPixelLength {
     #[inline]
     fn mul(self, other: CSSFloat) -> Self {
         Self::new(self.px() * other)
+    }
+}
+
+impl MulAssign<CSSFloat> for CSSPixelLength {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.0 = self.0 * rhs;
     }
 }
 

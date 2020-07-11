@@ -10,7 +10,11 @@ use gl::texture::TextureId;
 use pathfinder_geometry::vector::Vector2F;
 
 /// Builds list of display commands that should be used to paint the output.
-pub fn build_display_list(layout_box: &LayoutBox, char_handle: &CharHandle) -> DisplayList {
+pub fn build_display_list(
+    layout_box: &LayoutBox,
+    char_handle: &CharHandle,
+    scale_factor: f32,
+) -> DisplayList {
     let mut display_list = Vec::new();
     // TODO: Remove the three preceeding lines once text rendering is fixed.
     let font_handle = FontHandle::new();
@@ -22,6 +26,7 @@ pub fn build_display_list(layout_box: &LayoutBox, char_handle: &CharHandle) -> D
             RGBA::new(0, 0, 0, 1),
             &font,
             Au::from_f32_px(12.),
+            scale_factor,
         )
         .unwrap();
     prepare_layout_box(&mut display_list, &layout_box);

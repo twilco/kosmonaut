@@ -181,6 +181,7 @@ impl CharHandle {
         color: RGBA,
         font: &Font,
         size: Au,
+        scale_factor: f32,
     ) -> Result<(), CharError> {
         let opengl_char = self.get_char(font, size, ch)?;
         display_list.push(DisplayCommand::Char(CharCommand::new(
@@ -188,7 +189,7 @@ impl CharHandle {
             opengl_char.bearing(),
             ch,
             color,
-            Vector2F::new(size.to_f32_px(), size.to_f32_px()),
+            Vector2F::new(size.to_f32_px(), size.to_f32_px()) * scale_factor,
             // TODO: These starting x and y coordinates need to be determined by layout once inline
             // layout is implemented.  For now, all characters will be painted over the top of  each
             // other at 0,0.
@@ -205,9 +206,10 @@ impl CharHandle {
         font: &Font,
         str: &str,
         size: Au,
+        scale_factor: f32,
     ) -> Result<(), CharError> {
         for char in str.chars() {
-            self.prepare_char(display_list, char, color, font, size)?;
+            self.prepare_char(display_list, char, color, font, size, scale_factor)?;
         }
         Ok(())
     }

@@ -177,7 +177,7 @@ pub fn run_event_loop(
             inner_window_size.width as f32,
             scale_factor,
         );
-        let display_list = build_display_list(&layout_tree, &char_handle);
+        let display_list = build_display_list(&layout_tree, &char_handle, scale_factor);
         painter.paint(&windowed_context, &display_list);
     }
 }

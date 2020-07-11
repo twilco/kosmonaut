@@ -1,13 +1,11 @@
 use crate::gfx::display::CharCommand;
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, CharPaintData, ToVertices};
-use cssparser::RGBA;
 use gl::program::Program;
 use gl::types::{GLint, GLsizeiptr};
 use gl::vao::VertexArrayObject;
 use gl::vbo::VertexBufferObject;
 use gl::{Gl, ARRAY_BUFFER, DYNAMIC_DRAW, FALSE, FLOAT, TEXTURE0, TEXTURE_2D, TRIANGLES};
-use pathfinder_geometry::transform3d::Transform4F;
 use std::ffi::CString;
 
 /// Uses given OpenGL instance to paint arbitrary text.
@@ -58,44 +56,12 @@ impl TextPainter {
         })
     }
 
-    pub fn paint(
-        &mut self,
-        paintable_chars: &[CharPaintData],
-        viewport_width: u32,
-        viewport_height: u32,
-    ) {
+    pub fn paint(&mut self, paintable_chars: &[CharPaintData]) {
         self.program.use_globally();
 
         let text_color_str =
             CString::new("textColor").expect("couldn't create `textColor` cstring");
-        let projection_str =
-            CString::new("projection").expect("couldn't create `projection` cstring");
-        let black = RGBA::new(0, 0, 0, 1);
         unsafe {
-            // TODO: Clean this up.  Should be using the color provided by the character, not hardcoded black.
-            self.gl.Uniform3f(
-                self.gl
-                    .GetUniformLocation(self.program.id(), text_color_str.as_ptr()),
-                black.red_f32(),
-                black.green_f32(),
-                black.blue_f32(),
-            );
-            // TODO: This isn't correct.
-            let projection = Transform4F::from_ortho(
-                0.,
-                viewport_width as f32,
-                viewport_height as f32,
-                0.,
-                0.0,
-                100.0,
-            );
-            self.gl.UniformMatrix4fv(
-                self.gl
-                    .GetUniformLocation(self.program.id(), projection_str.as_ptr()),
-                1,
-                FALSE,
-                projection.as_ptr(),
-            );
             self.gl.ActiveTexture(TEXTURE0);
             self.gl.BindVertexArray(self.vao.name());
         }
@@ -104,6 +70,13 @@ impl TextPainter {
             assert!(ch.vertices.len() <= i32::max_value() as usize);
 
             unsafe {
+                self.gl.Uniform3f(
+                    self.gl
+                        .GetUniformLocation(self.program.id(), text_color_str.as_ptr()),
+                    ch.color.red_f32(),
+                    ch.color.green_f32(),
+                    ch.color.blue_f32(),
+                );
                 self.gl.BindTexture(TEXTURE_2D, ch.texture_id);
                 self.vao.store_vertex_data(&ch.vertices);
                 // Casting the `usize` to `GLint` will not truncate due to the above assert!().

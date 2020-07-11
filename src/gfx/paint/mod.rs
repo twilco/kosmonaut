@@ -76,11 +76,7 @@ impl MasterPainter {
             );
         }
         self.rect_painter.paint(self.rect_vertices.as_slice());
-        self.text_painter.paint(
-            self.text_vertices.as_slice(),
-            viewport_width,
-            viewport_height,
-        );
+        self.text_painter.paint(self.text_vertices.as_slice());
         // Now that we've painted, let's dump the paint buckets so they're clean for the next paint.
         self.rect_vertices.clear();
         self.text_vertices.clear();

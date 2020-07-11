@@ -48,6 +48,11 @@ impl OpenglChar {
             HintingOptions::None,
             RasterizationOptions::GrayscaleAa,
         )?;
+        // TODO: Implement texture packing.  Currently, for each font and size, a new OpenGL texture
+        // is generated along with each character and cached.  It would be better if we used one
+        // texture for each font and size, packing all rasterizations of each character into this
+        // singular texture.  This avoids rapid texture swapping when rendering lines of text,
+        // which can cause serious perf issues.
         let texture = OpenglChar::setup_texture(gl, &canvas);
 
         // Divide by 64 because these are represented as FreeType font units, which are 1/64th
@@ -193,7 +198,7 @@ impl CharHandle {
             // TODO: These starting x and y coordinates need to be determined by layout once inline
             // layout is implemented.  For now, all characters will be painted over the top of  each
             // other at 0,0.
-            Vector2F::new(0., 0.),
+            Vector2F::new(300., 300.),
             opengl_char.texture.id(),
         )));
         Ok(())

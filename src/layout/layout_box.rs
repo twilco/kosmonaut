@@ -303,14 +303,14 @@ impl LayoutBox {
         let containing_width = containing_block.content.width;
         let d = &mut self.dimensions;
 
-        d.margin.bottom = cvs.margin_bottom.size.to_px(containing_width);
-        d.margin.top = cvs.margin_top.size.to_px(containing_width);
+        d.padding.bottom = cvs.padding_bottom.size.to_px(containing_width);
+        d.padding.top = cvs.padding_top.size.to_px(containing_width);
 
         d.border.bottom = cvs.border_bottom_width.size;
         d.border.top = cvs.border_top_width.size;
 
-        d.padding.bottom = cvs.padding_bottom.size.to_px(containing_width);
-        d.padding.top = cvs.padding_top.size.to_px(containing_width);
+        d.margin.bottom = cvs.margin_bottom.size.to_px(containing_width);
+        d.margin.top = cvs.margin_top.size.to_px(containing_width);
 
         // Ensure window scale factor is applied before computing the start-{x, y} coordinates.
         d.scale_edges_by(scale_factor);

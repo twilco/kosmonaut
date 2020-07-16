@@ -66,30 +66,37 @@ impl LayoutBox {
 
     /// Adds the `new_child` to the proper inline-container of `self`.
     pub fn add_child_inline(&mut self, new_child: LayoutBox) {
-        self.get_inline_container().children.push(new_child)
+        self.get_root_inline_box().children.push(new_child)
     }
 
-    /// Gets the proper `LayoutBox` container to insert inline-children in to.
-    ///
-    /// If a block box contains inline-children, an anonymous box must be used to contain them.
+    /// Gets the proper `LayoutBox` container to insert inline-children in to, which is called
+    /// the "root inline box".  The root inline box for a block container holds all of that block
+    /// containers inline-level contents.
     ///
     /// If this box is already an inline or anonymous box, we can use ourselves to contain the
     /// inline children.  Otherwise, find or create an anonymous box.
-    fn get_inline_container(&mut self) -> &mut LayoutBox {
+    ///
+    /// https://drafts.csswg.org/css-inline-3/#model
+    fn get_root_inline_box(&mut self) -> &mut LayoutBox {
         match self.box_type {
             BoxType::Inline | BoxType::Anonymous => self,
             BoxType::Block => {
-                match self.children.last() {
-                    Some(last_child)
-                        if discriminant(&last_child.box_type)
-                            == discriminant(&BoxType::Anonymous) => {}
-                    _ => self
-                        .children
-                        .push(LayoutBox::new(BoxType::Anonymous, self.node.clone())),
-                }
-                self.children
-                    .last_mut()
-                    .expect("there should've been at least one child")
+                let root_inline_box_idx_opt =
+                    self.children.iter().enumerate().find_map(|(idx, child)| {
+                        if discriminant(&child.box_type) == discriminant(&BoxType::Anonymous) {
+                            return Some(idx);
+                        }
+                        return None;
+                    });
+                let idx = match root_inline_box_idx_opt {
+                    Some(idx) => idx,
+                    None => {
+                        self.children
+                            .push(LayoutBox::new(BoxType::Anonymous, self.node.clone()));
+                        self.children.len() - 1
+                    }
+                };
+                self.children.iter_mut().nth(idx).unwrap()
             }
         }
     }

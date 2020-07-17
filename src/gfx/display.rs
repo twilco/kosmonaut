@@ -150,7 +150,7 @@ fn prepare_layout_box(display_list: &mut DisplayList, layout_box: &LayoutBox) {
             // Step 2 of painting order
             prepare_block_listitem_block_equiv(display_list, layout_box)
         }
-        BoxType::Anonymous | BoxType::Inline => {
+        BoxType::Anonymous | BoxType::AnonymousInline | BoxType::Inline => {
             // TODO: Implement other steps of painting order, 3 -> 10
             // println!("skipping render of non-block box")
         }

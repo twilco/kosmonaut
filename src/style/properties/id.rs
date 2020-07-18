@@ -43,17 +43,17 @@ impl PropertyId {
             //            "font-weight" => PropertyId::Longhand(LonghandId::FontWeight),
             //            "visibility" => PropertyId::Longhand(LonghandId::Visibility),
             "font-size" => PropertyId::Longhand(LonghandId::FontSize),
-            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
-            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
-            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
-            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
             "height" => PropertyId::Longhand(LonghandId::Height),
-            "width" => PropertyId::Longhand(LonghandId::Width),
-            //            "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
             "margin-bottom" => PropertyId::Longhand(LonghandId::MarginBottom),
             "margin-left" => PropertyId::Longhand(LonghandId::MarginLeft),
             "margin-right" => PropertyId::Longhand(LonghandId::MarginRight),
             "margin-top" => PropertyId::Longhand(LonghandId::MarginTop),
+            "padding-bottom" => PropertyId::Longhand(LonghandId::PaddingBottom),
+            "padding-left" => PropertyId::Longhand(LonghandId::PaddingLeft),
+            "padding-right" => PropertyId::Longhand(LonghandId::PaddingRight),
+            "padding-top" => PropertyId::Longhand(LonghandId::PaddingTop),
+            "width" => PropertyId::Longhand(LonghandId::Width),
+            "writing-mode" => PropertyId::Longhand(LonghandId::WritingMode),
             // Shorthands
             "background" => PropertyId::Shorthand(ShorthandId::Background),
             "border-width" => PropertyId::Shorthand(ShorthandId::BorderWidth),
@@ -161,8 +161,8 @@ pub enum LonghandId {
     //    WhiteSpace = 41,
     //    /// word-break
     //    WordBreak = 42,
-    //    /// writing-mode
-    //    WritingMode = 43,
+    /// writing-mode
+    WritingMode = 43,
     //    /// z-index
     //    ZIndex = 44,
     //    /// flex-grow
@@ -513,6 +513,9 @@ impl LonghandId {
             LonghandId::Width => {
                 cv_builder.width(specified::Width::value_default(ctx));
             }
+            LonghandId::WritingMode => {
+                cv_builder.writing_mode(computed::WritingMode::value_default(ctx));
+            }
             _ => unimplemented!(
                 "{}",
                 format!("value default by longhand for id: {:?}", self)
@@ -550,6 +553,7 @@ impl From<&PropertyDeclaration> for LonghandId {
             PropertyDeclaration::PaddingRight(_) => LonghandId::PaddingRight,
             PropertyDeclaration::PaddingTop(_) => LonghandId::PaddingTop,
             PropertyDeclaration::Width(_) => LonghandId::Width,
+            PropertyDeclaration::WritingMode(_) => LonghandId::WritingMode,
         }
     }
 }

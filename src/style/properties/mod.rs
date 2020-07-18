@@ -10,6 +10,7 @@ use smallbitvec::SmallBitVec;
 
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
+use crate::style::values::computed::direction::WritingMode;
 use crate::style::values::computed::{Display, LineStyle};
 use crate::style::values::specified::border::{
     BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
@@ -245,6 +246,9 @@ impl PropertyDeclaration {
                 LonghandId::Width => {
                     declarations.push(PropertyDeclaration::Width(Width::parse(input)?));
                 }
+                LonghandId::WritingMode => {
+                    declarations.push(PropertyDeclaration::WritingMode(WritingMode::parse(input)?));
+                }
                 _ => unimplemented!(
                     "{}",
                     format!("value default by longhand for id: {:?}", longhand)
@@ -285,6 +289,7 @@ pub enum PropertyDeclaration {
     PaddingRight(crate::style::values::specified::PaddingRight),
     PaddingTop(crate::style::values::specified::PaddingTop),
     Width(crate::style::values::specified::Width),
+    WritingMode(crate::style::values::computed::WritingMode),
 }
 
 pub struct ComputedPropertyDeclarations {}

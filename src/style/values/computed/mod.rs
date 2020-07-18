@@ -3,6 +3,7 @@
 pub mod background;
 pub mod border;
 pub mod color;
+pub mod direction;
 pub mod display;
 pub mod font;
 pub mod height;
@@ -26,6 +27,7 @@ use crate::style::properties::id::LonghandId;
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
 
+pub use crate::style::values::computed::direction::WritingMode;
 use crate::Side;
 pub use background::BackgroundColor;
 pub use border::LineStyle;
@@ -107,6 +109,7 @@ pub struct ComputedValues {
     pub padding_right: PaddingRight,
     pub padding_top: PaddingTop,
     pub width: Width,
+    pub writing_mode: WritingMode,
 }
 
 impl ComputedValues {
@@ -164,6 +167,7 @@ impl Default for ComputedValues {
             padding_right: PaddingRight::initial_value(),
             padding_top: PaddingTop::initial_value(),
             width: Width::initial_value(),
+            writing_mode: WritingMode::initial_value(),
         }
     }
 }
@@ -345,6 +349,9 @@ pub fn compute_values(node: NodeRef) {
                     }
                     PropertyDeclaration::Width(width) => {
                         cv_builder.width(width.compute_value_with_context(&context));
+                    }
+                    PropertyDeclaration::WritingMode(writing_mode) => {
+                        cv_builder.writing_mode(*writing_mode);
                     }
                 }
             }

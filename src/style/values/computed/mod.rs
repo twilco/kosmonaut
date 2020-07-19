@@ -28,6 +28,7 @@ use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
 
 pub use crate::style::values::computed::direction::WritingMode;
+use crate::style::values::computed::length::{CSSPixelLength, LengthPercentageOrAuto, LengthPercentage};
 use crate::Side;
 pub use background::BackgroundColor;
 pub use border::LineStyle;
@@ -130,6 +131,44 @@ impl ComputedValues {
             Side::Left => self.border_left_color.rgba,
             Side::Right => self.border_right_color.rgba,
             Side::Top => self.border_top_color.rgba,
+        }
+    }
+
+    pub fn logical_width(&self) -> LengthPercentageOrAuto {
+        if self.writing_mode.is_horizontal() { self.width.size } else { self.height.size }
+    }
+
+    pub fn logical_height(&self) -> LengthPercentageOrAuto {
+        if self.writing_mode.is_horizontal() { self.height.size } else { self.width.size }
+    }
+
+    pub fn logical_padding(&self, side: Side) -> LengthPercentage {
+        let horizontal_mode = self.writing_mode.is_horizontal();
+        match side {
+            Side::Bottom => if horizontal_mode { self.padding_bottom.size } else { self.padding_right.size },
+            Side::Left => if horizontal_mode { self.padding_left.size } else { self.padding_top.size },
+            Side::Right => if horizontal_mode { self.padding_right.size } else { self.padding_bottom.size },
+            Side::Top => if horizontal_mode { self.padding_top.size } else { self.padding_left.size },
+        }
+    }
+
+    pub fn logical_border_width(&self, side: Side) -> CSSPixelLength {
+        let horizontal_mode = self.writing_mode.is_horizontal();
+        match side {
+            Side::Bottom => if horizontal_mode { self.border_bottom_width.size } else { self.border_right_width.size },
+            Side::Left => if horizontal_mode { self.border_left_width.size } else { self.border_top_width.size },
+            Side::Right => if horizontal_mode { self.border_right_width.size } else { self.border_bottom_width.size },
+            Side::Top => if horizontal_mode { self.border_top_width.size } else { self.border_left_width.size },
+        }
+    }
+
+    pub fn logical_margin(&self, side: Side) -> LengthPercentageOrAuto {
+        let horizontal_mode = self.writing_mode.is_horizontal();
+        match side {
+            Side::Bottom => if horizontal_mode { self.margin_bottom.size } else { self.margin_right.size },
+            Side::Left => if horizontal_mode { self.margin_left.size } else { self.margin_top.size },
+            Side::Right => if horizontal_mode { self.margin_right.size } else { self.margin_bottom.size },
+            Side::Top => if horizontal_mode { self.margin_top.size } else { self.margin_left.size },
         }
     }
 }

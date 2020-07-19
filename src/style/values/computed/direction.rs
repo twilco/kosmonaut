@@ -61,6 +61,16 @@ impl WritingMode {
             "sideways-lr" => Ok(WritingMode::SidewaysLr),
         }
     }
+
+    pub fn is_horizontal(&self) -> bool {
+        match self {
+            WritingMode::VerticalLr
+            | WritingMode::VerticalRl
+            | WritingMode::SidewaysLr
+            | WritingMode::SidewaysRl => false,
+            WritingMode::HorizontalTb => true,
+        }
+    }
 }
 
 impl ValueDefault for WritingMode {

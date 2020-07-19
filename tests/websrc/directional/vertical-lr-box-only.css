@@ -8,6 +8,8 @@ body {
 }
 
 div {
+    margin-left: 15px;
+    margin-top: 15px;
     width: 400px;
     height: 200px;
     background-color: green;

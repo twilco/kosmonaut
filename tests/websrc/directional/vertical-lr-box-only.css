@@ -4,6 +4,7 @@ html {
 
 body {
     writing-mode: vertical-lr;
+    direction: ltr;
 }
 
 div {

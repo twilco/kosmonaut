@@ -37,6 +37,7 @@ impl PropertyId {
             "border-right-width" => PropertyId::Longhand(LonghandId::BorderRightWidth),
             "border-top-width" => PropertyId::Longhand(LonghandId::BorderTopWidth),
             "color" => PropertyId::Longhand(LonghandId::Color),
+            "direction" => PropertyId::Longhand(LonghandId::Direction),
             "display" => PropertyId::Longhand(LonghandId::Display),
             //            "float" => PropertyId::Longhand(LonghandId::Float),
             //            "font-style" => PropertyId::Longhand(LonghandId::FontStyle),
@@ -97,8 +98,8 @@ pub enum LonghandId {
     //    Clear = 9,
     //    /// column-count
     //    ColumnCount = 10,
-    //    /// direction
-    //    Direction = 11,
+    /// direction
+    Direction = 11,
     /// display
     Display = 12,
     //    /// empty-cells
@@ -477,6 +478,9 @@ impl LonghandId {
             LonghandId::Color => {
                 cv_builder.color(specified::Color::value_default(ctx));
             }
+            LonghandId::Direction => {
+                cv_builder.direction(computed::Direction::value_default(ctx));
+            }
             LonghandId::Display => {
                 cv_builder.display(computed::Display::value_default(ctx));
             }
@@ -541,6 +545,7 @@ impl From<&PropertyDeclaration> for LonghandId {
             PropertyDeclaration::BorderRightWidth(_) => LonghandId::BorderRightWidth,
             PropertyDeclaration::BorderTopWidth(_) => LonghandId::BorderTopWidth,
             PropertyDeclaration::Color(_) => LonghandId::Color,
+            PropertyDeclaration::Direction(_) => LonghandId::Direction,
             PropertyDeclaration::Display(_) => LonghandId::Display,
             PropertyDeclaration::FontSize(_) => LonghandId::FontSize,
             PropertyDeclaration::Height(_) => LonghandId::Height,

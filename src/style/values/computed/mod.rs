@@ -37,6 +37,7 @@ pub use border::{
 };
 pub use color::Color;
 use cssparser::RGBA;
+pub use direction::Direction;
 pub use display::Display;
 pub use font::FontSize;
 pub use percentage::Percentage;
@@ -97,6 +98,7 @@ pub struct ComputedValues {
     pub border_right_width: BorderRightWidth,
     pub border_top_width: BorderTopWidth,
     pub color: Color,
+    pub direction: Direction,
     pub display: Display,
     pub font_size: FontSize,
     pub height: Height,
@@ -155,6 +157,7 @@ impl Default for ComputedValues {
             border_right_width: BorderRightWidth::initial_value(initial_border_style),
             border_top_width: BorderTopWidth::initial_value(initial_border_style),
             color: initial_color_prop,
+            direction: Direction::initial_value(),
             display: Display::initial_value(),
             font_size: FontSize::initial_value(),
             height: Height::initial_value(),
@@ -307,6 +310,9 @@ pub fn compute_values(node: NodeRef) {
                     }
                     PropertyDeclaration::Color(_) => {
                         cv_builder.color(context.color());
+                    }
+                    PropertyDeclaration::Direction(direction) => {
+                        cv_builder.direction(*direction);
                     }
                     PropertyDeclaration::Display(display) => {
                         // TODO: Should we copying `display` here (taking the specified value), rather than computing the value?

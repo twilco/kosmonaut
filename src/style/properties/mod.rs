@@ -11,7 +11,7 @@ use smallbitvec::SmallBitVec;
 use crate::style::properties::id::{LonghandId, PropertyId};
 use crate::style::select::Specificity;
 use crate::style::values::computed::direction::WritingMode;
-use crate::style::values::computed::{Display, LineStyle};
+use crate::style::values::computed::{Direction, Display, LineStyle};
 use crate::style::values::specified::border::{
     BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
 };
@@ -204,6 +204,9 @@ impl PropertyDeclaration {
                 LonghandId::Color => {
                     declarations.push(PropertyDeclaration::Color(Color::parse(input)?))
                 }
+                LonghandId::Direction => {
+                    declarations.push(PropertyDeclaration::Direction(Direction::parse(input)?))
+                }
                 LonghandId::Display => {
                     declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
                 }
@@ -277,6 +280,7 @@ pub enum PropertyDeclaration {
     BorderRightWidth(crate::style::values::specified::BorderRightWidth),
     BorderTopWidth(crate::style::values::specified::BorderTopWidth),
     Color(crate::style::values::specified::Color),
+    Direction(crate::style::values::computed::Direction),
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     Height(crate::style::values::specified::Height),

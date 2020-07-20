@@ -1,3 +1,5 @@
+#![feature(or_patterns)]
+
 #[macro_use]
 extern crate cssparser;
 #[macro_use]

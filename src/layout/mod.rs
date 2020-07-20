@@ -1,14 +1,17 @@
 // Useful links:
 //  * https://www.w3.org/TR/css-display-3/#css-box
 //  * https://www.w3.org/TR/2018/WD-css-box-3-20181218/#intro
+pub mod dimensions;
 pub mod layout_box;
+pub mod rect;
 
 use crate::dom::tree::{NodeData, NodeRef};
+use crate::layout::dimensions::PhysicalDimensions;
 use crate::layout::layout_box::{BoxType, LayoutBox};
+use crate::layout::rect::Rect;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::Display;
 use crate::style::values::CSSFloat;
-use crate::Side;
 use std::io::Write;
 
 /// Takes a DOM node and builds the corresponding layout tree of it and its children.  Returns
@@ -18,8 +21,18 @@ pub fn build_layout_tree(node: NodeRef) -> Option<LayoutBox> {
     // TODO: We need to think about the validity of making strong-ref clones to nodes here (and elsewhere).
     // Will things get properly dropped?  Maybe LayoutBox should store a `Weak` ref?
     let mut layout_box = match computed_values.display {
-        Display::Block => LayoutBox::new(BoxType::Block, node.clone()),
-        Display::Inline => LayoutBox::new(BoxType::Inline, node.clone()),
+        Display::Block => LayoutBox::new(
+            BoxType::Block,
+            node.clone(),
+            computed_values.direction,
+            computed_values.writing_mode,
+        ),
+        Display::Inline => LayoutBox::new(
+            BoxType::Inline,
+            node.clone(),
+            computed_values.direction,
+            computed_values.writing_mode,
+        ),
         Display::None => {
             return None;
         }
@@ -58,7 +71,7 @@ pub fn global_layout(
     scale_factor: f32,
 ) {
     layout_tree.layout(
-        Dimensions {
+        PhysicalDimensions {
             content: Rect {
                 start_x: 0.0,
                 start_y: 0.0,
@@ -73,87 +86,20 @@ pub fn global_layout(
     );
 }
 
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#box-model
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Dimensions {
-    // Position of the content area relative to the document origin:
-    pub content: Rect,
-
-    // Surrounding edges:
-    pub padding: EdgeSizes,
-    pub border: EdgeSizes,
-    pub margin: EdgeSizes,
+/// https://drafts.csswg.org/css-writing-modes-4/#logical-directions
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LogicalDirection {
+    BlockStart,
+    BlockEnd,
+    InlineStart,
+    InlineEnd,
 }
 
-impl Dimensions {
-    pub fn border_size(self, side: Side) -> CSSPixelLength {
-        match side {
-            Side::Bottom => self.border.bottom,
-            Side::Left => self.border.left,
-            Side::Right => self.border.right,
-            Side::Top => self.border.top,
-        }
-    }
-
-    /// The area covered by the content area plus its padding.
-    pub fn padding_box(self) -> Rect {
-        self.content.expanded_by(self.padding)
-    }
-
-    /// The area covered by the content area plus padding and borders.
-    pub fn border_box(self) -> Rect {
-        self.padding_box().expanded_by(self.border)
-    }
-
-    /// The area covered by the content area plus padding, borders, and margin.
-    // TODO: This will need to change when we implement margin collapsing: http://www.w3.org/TR/CSS2/box.html#collapsing-margins
-    pub fn margin_box(self) -> Rect {
-        self.border_box().expanded_by(self.margin)
-    }
-
-    pub fn scale_edges_by(&mut self, scale_factor: f32) {
-        self.padding.scale_by(scale_factor);
-        self.border.scale_by(scale_factor);
-        self.margin.scale_by(scale_factor);
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Rect {
-    /// The exact point Where the rectangle begins on the x-axis.
-    pub start_x: CSSFloat,
-    /// The exact point Where the rectangle begins on the y-axis.
-    pub start_y: CSSFloat,
-    pub width: CSSPixelLength,
-    pub height: CSSPixelLength,
-}
-
-impl Rect {
-    fn expanded_by(self, edge: EdgeSizes) -> Rect {
-        Rect {
-            start_x: (self.start_x - edge.left).px(),
-            start_y: (self.start_y - edge.top).px(),
-            width: self.width + edge.left + edge.right,
-            height: self.height + edge.top + edge.bottom,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct EdgeSizes {
-    pub left: CSSPixelLength,
-    pub right: CSSPixelLength,
-    pub top: CSSPixelLength,
-    pub bottom: CSSPixelLength,
-}
-
-impl EdgeSizes {
-    pub fn scale_by(&mut self, scale_factor: f32) {
-        self.left *= scale_factor;
-        self.right *= scale_factor;
-        self.top *= scale_factor;
-        self.bottom *= scale_factor;
-    }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BoxComponent {
+    Border,
+    Margin,
+    Padding,
 }
 
 /// Trait describing behavior necessary for dumping the layout tree, used in the `dump-layout`

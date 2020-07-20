@@ -1,6 +1,6 @@
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, ToVertices};
-use crate::layout::Rect;
+use crate::layout::rect::Rect;
 use cssparser::RGBA;
 use gl::program::Program;
 use gl::types::{GLint, GLvoid};

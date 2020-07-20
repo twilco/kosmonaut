@@ -1,41 +1,52 @@
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::{Dimensions, DumpLayout, DumpLayoutFormat};
+use crate::layout::dimensions::{LogicalDimensions, PhysicalDimensions};
+use crate::layout::{BoxComponent, DumpLayout, DumpLayoutFormat, LogicalDirection};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::ComputedValues;
+use crate::style::values::computed::{ComputedValues, Direction, WritingMode};
 use crate::style::values::used::ToPx;
+use crate::Side;
 use std::cell::Ref;
 use std::io::Write;
 use std::mem::discriminant;
 
 #[derive(Clone, Debug)]
 pub struct LayoutBox {
-    dimensions: Dimensions,
     box_type: BoxType,
     children: Vec<LayoutBox>,
+    dimensions: LogicalDimensions,
+    direction: Direction,
     /// Reference to the closest non-anonymous node.  This distinction only matters for anonymous
     /// boxes, since anonymous boxes are by definition not associated with a node, but need access
     /// to a node to get computed values during layout.  If the box is a block, inline, or any other
     /// non-anonymous box, this field is simply the actual DOM node associated with this box.
     node: NodeRef,
+    writing_mode: WritingMode,
 }
 
 impl LayoutBox {
     /// Creates a new layout box.  The passed in node should be the DOM node associated with
     /// the box, assuming it is a non-anonymous box.  If creating an anonymous box, `node`
     /// should be the DOM node associated with the closest non-anonymous box.
-    pub fn new(box_type: BoxType, node: NodeRef) -> LayoutBox {
+    pub fn new(
+        box_type: BoxType,
+        node: NodeRef,
+        direction: Direction,
+        writing_mode: WritingMode,
+    ) -> LayoutBox {
         LayoutBox {
             box_type,
-            dimensions: Default::default(), // initially set all fields to 0.0
+            dimensions: LogicalDimensions::new(writing_mode, direction),
+            direction,
             children: Vec::new(),
             node,
+            writing_mode,
         }
     }
 
-    pub fn dimensions(&self) -> Dimensions {
-        self.dimensions
+    pub fn physical_dimensions(&self) -> PhysicalDimensions {
+        self.dimensions.physical()
     }
 
     pub fn box_type(&self) -> BoxType {
@@ -87,29 +98,34 @@ impl LayoutBox {
                         {
                             return Some(idx);
                         }
-                        return None;
+                        None
                     });
                 let idx = match root_inline_box_idx_opt {
                     Some(idx) => idx,
                     None => {
-                        self.children
-                            .push(LayoutBox::new(BoxType::AnonymousInline, self.node.clone()));
+                        self.children.push(LayoutBox::new(
+                            BoxType::AnonymousInline,
+                            self.node.clone(),
+                            self.direction,
+                            self.writing_mode,
+                        ));
                         self.children.len() - 1
                     }
                 };
-                self.children.iter_mut().nth(idx).unwrap()
+                self.children.get_mut(idx).unwrap()
             }
         }
     }
 
     /// Calculates the dimensions of this box, and any child boxes.
     ///
-    /// A block's width depends on that of its parent (called "containing block" in the spec), while
-    /// a block's height depends on that of its children.  This is important to know in layout.
+    /// A block's logical width depends on that of its parent (called "containing block" in the spec),
+    /// while a block's logical height depends on that of its children.  This is important to know
+    /// in layout.
     ///
     /// In this step, we will be taking computed values and calculating actual, used values
     /// based on the constraint of our environment.
-    pub fn layout(&mut self, containing_block: Dimensions, scale_factor: f32) {
+    pub fn layout(&mut self, containing_block: PhysicalDimensions, scale_factor: f32) {
         match self.box_type {
             BoxType::Anonymous | BoxType::AnonymousInline => {
                 //                println!("layout anonymous box types not implemented");
@@ -123,9 +139,9 @@ impl LayoutBox {
                 if self.is_root() {
                     //                    println!("laying out root element, which is an inline box type");
                     // The root element takes the dimensions of the containing block, which is the viewport.
-                    self.dimensions = containing_block;
+                    self.dimensions.replace_inner_physical(containing_block);
                     for child in &mut self.children {
-                        child.layout(self.dimensions, scale_factor);
+                        child.layout(self.dimensions.physical(), scale_factor);
                     }
                 } else {
                     //                    println!("layout inline box types not implemented");
@@ -141,74 +157,76 @@ impl LayoutBox {
         // TODO: Implement inline and anonymous layout and then remove this function
         fn layout_non_block_because_only_block_is_impl(
             layout_box: &mut LayoutBox,
-            containing_block: Dimensions,
+            containing_block: PhysicalDimensions,
             scale_factor: f32,
         ) {
-            layout_box.calculate_block_width(containing_block, scale_factor);
+            layout_box.calculate_block_logical_width(containing_block, scale_factor);
             layout_box.layout_block_children(scale_factor);
         }
     }
 
-    /// Custom debug implementation for when you don't want to print out information about the node,
-    /// as that can be quite noisy.
-    pub fn nodeless_dbg(&self) {
-        //        if self.box_type == BoxType::Block {
-        dbg!(&self.dimensions.content);
-        dbg!(&self.box_type);
-        //            println!("children: [");
-        //        }
-
-        self.children.iter().for_each(|child| child.nodeless_dbg());
-
-        //        if self.box_type == BoxType::Block {
-        //            println!("]");
-        //        }
-    }
-
     /// Assuming `self` is a block-box, calculate the dimensions of this box and any children.
-    fn layout_block(&mut self, containing_block: Dimensions, scale_factor: f32) {
-        // Child width can depend on parent width, so we need to calculate this box's width before
-        // laying out its children.
-        self.calculate_block_width(containing_block, scale_factor);
+    fn layout_block(&mut self, containing_block: PhysicalDimensions, scale_factor: f32) {
+        // Child logical width (inline size) can depend on parent logical width, so we need to
+        // calculate it for this box before laying out its children.
+        self.calculate_block_logical_width(containing_block, scale_factor);
 
         // Determine where the box is located within its containing block.
         self.calculate_block_position(containing_block, scale_factor);
 
-        // Recursively layout the children of this box.
+        // Recursively layout the children of this box, which also determines this block's logical
+        // height (block size).
         self.layout_block_children(scale_factor);
 
-        // Parent height can depend on child height, so let's calculate our height now that we've
-        // laid out our children.
-        self.calculate_block_height(containing_block);
+        // Now that we've performed a layout with logical properties, let's apply any physical
+        // properties explicitly given for this block (e.g. `width`, `height`, bottom/left/right/top
+        // properties).
+        self.apply_physical_properties(containing_block);
     }
 
-    /// Calculate the width of a block-level non-replaced element in normal flow.
+    /// Calculate the logical width (inline size) of a block-level non-replaced element in normal
+    /// flow.
     ///
     /// https://www.w3.org/TR/CSS2/visudet.html#blockwidth
+    /// https://drafts.csswg.org/css-writing-modes-4/#vertical-layout
     ///
-    /// Sets the horizontal margin/padding/border dimensions, and the `width`.
-    fn calculate_block_width(&mut self, containing_block: Dimensions, scale_factor: f32) {
+    /// Sets the inline margin/padding/border dimensions, and the inline size.
+    fn calculate_block_logical_width(
+        &mut self,
+        containing_block: PhysicalDimensions,
+        scale_factor: f32,
+    ) {
+        // FIXME: In all of our abstract layout code, we use self.writing_mode to determine logical
+        // dimensions, but I believe we should instead be looking at the writing mode of the
+        // containing block.  https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
+
+        // FIXME: Always using the physical containing block width here is almost certainly wrong, but
+        // works...sometimes.  This should probably be the containing block `width` or `height`
+        // depending on the self.writing mode (or containing block writing mode?)...but this didn't
+        // work when I tried it, likely due to other bugs, such as the FIXME directly above.
+        // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
         let containing_width = containing_block.content.width;
         let cvs = self.node.computed_values();
 
-        let mut width = cvs.width;
-        let mut margin_left = cvs.margin_left;
-        let mut margin_right = cvs.margin_right;
+        let mut logical_width = cvs.logical_width();
+        let mut logical_margin_left = cvs.logical_margin(Side::Left);
+        let mut logical_margin_right = cvs.logical_margin(Side::Right);
 
-        let border_left = cvs.border_left_width;
-        let border_right = cvs.border_right_width;
-        let padding_left = cvs.padding_left;
-        let padding_right = cvs.padding_right;
+        let logical_border_left = cvs.logical_border_width(Side::Left);
+        let logical_border_right = cvs.logical_border_width(Side::Right);
+
+        let logical_padding_left = cvs.logical_padding(Side::Left);
+        let logical_padding_right = cvs.logical_padding(Side::Right);
 
         // Run block layout _with_ the device scale factor applied to ensure the proper values are
         // computed.
-        let block_width = (margin_left.size.to_px(containing_width)
-            + margin_right.size.to_px(containing_width)
-            + border_left.size
-            + border_right.size
-            + padding_left.size.to_px(containing_width)
-            + padding_right.size.to_px(containing_width)
-            + width.size.to_px(containing_width))
+        let block_width = (logical_margin_left.to_px(containing_width)
+            + logical_margin_right.to_px(containing_width)
+            + logical_border_left
+            + logical_border_right
+            + logical_padding_left.to_px(containing_width)
+            + logical_padding_right.to_px(containing_width)
+            + logical_width.to_px(containing_width))
             * scale_factor;
 
         let auto = LengthPercentageOrAuto::Auto;
@@ -216,24 +234,20 @@ impl LayoutBox {
         // 'padding-right' + 'border-right-width' (plus any of 'margin-left' or 'margin-right'
         // that are not 'auto') is larger than the width of the containing block, then any 'auto'
         // values for 'margin-left' or 'margin-right' are, for the following rules, treated as zero.
-        if width.size != auto && block_width > containing_width {
-            if margin_left.size == auto {
-                margin_left.size =
+        if logical_width != auto && block_width > containing_width {
+            if logical_margin_left == auto {
+                logical_margin_left =
                     LengthPercentageOrAuto::LengthPercentage(LengthPercentage::new_len(0.));
             }
-            if margin_right.size == auto {
-                margin_right.size =
+            if logical_margin_right == auto {
+                logical_margin_right =
                     LengthPercentageOrAuto::LengthPercentage(LengthPercentage::new_len(0.));
             }
         }
         // This value can be negative, indicating an overflow or "overconstraint", if the width of
         // this box is greater than that of the containing one.
         let underflow = containing_width - block_width;
-        match (
-            width.size == auto,
-            margin_left.size == auto,
-            margin_right.size == auto,
-        ) {
+        match (logical_width == auto, logical_margin_left == auto, logical_margin_right == auto) {
             // If all of the above have a computed value other than 'auto', the values are said to be
             // "over-constrained" and one of the used values will have to be different from its computed
             // value. If the 'direction' property of the containing block has the value 'ltr', the
@@ -241,108 +255,198 @@ impl LayoutBox {
             // the equality true. If the value of 'direction' is 'rtl', this happens to 'margin-left' instead.
             (false, false, false) => {
                 // TODO: Support `direction: rtl` property/value
-                margin_right.size = LengthPercentageOrAuto::new_len_px(
-                    margin_right.size.to_px(containing_width) + underflow,
+                logical_margin_right = LengthPercentageOrAuto::new_len_px(
+                    logical_margin_right.to_px(containing_width) + underflow,
                 )
             }
             // If there is exactly one margin value specified as 'auto', its used value follows
             // from the equality.
-            (false, true, false) => {
-                margin_left.size = LengthPercentageOrAuto::new_len_px(underflow)
-            }
-            (false, false, true) => {
-                margin_right.size = LengthPercentageOrAuto::new_len_px(underflow)
-            }
+            (false, true, false) => logical_margin_left = LengthPercentageOrAuto::new_len_px(underflow),
+            (false, false, true) => logical_margin_right = LengthPercentageOrAuto::new_len_px(underflow),
             // If both 'margin-left' and 'margin-right' are 'auto', their used values are equal.
-            // This horizontally centers the element with respect to the edges of the containing block.
+            // This centers the element with respect to the edges of the containing block.
             (false, true, true) => {
-                margin_left.size = LengthPercentageOrAuto::new_len_px(underflow / 2.);
-                margin_right.size = LengthPercentageOrAuto::new_len_px(underflow / 2.);
+                logical_margin_left = LengthPercentageOrAuto::new_len_px(underflow / 2.);
+                logical_margin_right = LengthPercentageOrAuto::new_len_px(underflow / 2.);
             }
             // If 'width' is set to 'auto', any other 'auto' values become '0' and 'width' follows
             // from the resulting equality.
             (true, _, _) => {
-                if margin_left.size == auto {
-                    margin_left.size = LengthPercentageOrAuto::new_len(0.)
+                if logical_margin_left == auto {
+                    logical_margin_left = LengthPercentageOrAuto::new_len(0.)
                 };
-                if margin_right.size == auto {
-                    margin_right.size = LengthPercentageOrAuto::new_len(0.)
+                if logical_margin_right == auto {
+                    logical_margin_right = LengthPercentageOrAuto::new_len(0.)
                 };
 
                 if underflow >= CSSPixelLength::new(0.) {
-                    width.size = LengthPercentageOrAuto::new_len_px(underflow)
+                    logical_width = LengthPercentageOrAuto::new_len_px(underflow)
                 } else {
                     // Width cannot be negative, adjust `margin-right` instead
                     // TODO: Support `direction: rtl` property/value
-                    width.size = LengthPercentageOrAuto::new_len(0.);
-                    margin_right.size = LengthPercentageOrAuto::new_len_px(
-                        margin_right.size.to_px(containing_width) + underflow,
+                    logical_width = LengthPercentageOrAuto::new_len(0.);
+                    logical_margin_right = LengthPercentageOrAuto::new_len_px(
+                        logical_margin_right.to_px(containing_width) + underflow,
                     );
                 }
             }
         }
-        // Now that we've calculated the horizontal used values, store them in this box's dimensions.
+        // Now that we've calculated the inline used values, store them in this box's dimensions.
         let d = &mut self.dimensions;
-        d.content.width = width.size.to_px(containing_width);
+        d.set_inline_size(logical_width.to_px(containing_width));
 
-        d.padding.left = padding_left.size.to_px(containing_width);
-        d.padding.right = padding_right.size.to_px(containing_width);
+        d.set(
+            LogicalDirection::InlineStart,
+            BoxComponent::Padding,
+            logical_padding_left.to_px(containing_width),
+        );
+        d.set(
+            LogicalDirection::InlineEnd,
+            BoxComponent::Padding,
+            logical_padding_right.to_px(containing_width),
+        );
 
-        d.border.left = border_left.size;
-        d.border.right = border_right.size;
+        d.set(
+            LogicalDirection::InlineStart,
+            BoxComponent::Border,
+            logical_border_left,
+        );
+        d.set(
+            LogicalDirection::InlineEnd,
+            BoxComponent::Border,
+            logical_border_right,
+        );
 
-        d.margin.left = margin_left.size.to_px(containing_width);
-        d.margin.right = margin_right.size.to_px(containing_width);
+        d.set(
+            LogicalDirection::InlineStart,
+            BoxComponent::Margin,
+            logical_margin_left.to_px(containing_width),
+        );
+        d.set(
+            LogicalDirection::InlineEnd,
+            BoxComponent::Margin,
+            logical_margin_right.to_px(containing_width),
+        );
     }
 
-    fn calculate_block_height(&mut self, containing_block: Dimensions) {
-        // If the height is set to an explicit length, use that — otherwise keep the value
-        // calculated by `layout_block_children`.
-        if let LengthPercentageOrAuto::LengthPercentage(lp) =
-            self.node.computed_values().height.size
-        {
-            self.dimensions.content.height = lp.to_px(containing_block.content.height);
-        }
-    }
-
-    /// Calculates this boxes position (x, y) on the page.
-    fn calculate_block_position(&mut self, containing_block: Dimensions, scale_factor: f32) {
+    /// Calculates this box's (x, y) position on the page.
+    fn calculate_block_position(
+        &mut self,
+        containing_block: PhysicalDimensions,
+        scale_factor: f32,
+    ) {
         let cvs = self.node.computed_values();
-        let containing_width = containing_block.content.width;
+        let containing_width = if self.writing_mode.is_horizontal() {
+            containing_block.content.width
+        } else {
+            containing_block.content.height
+        };
         let d = &mut self.dimensions;
 
-        d.padding.bottom = cvs.padding_bottom.size.to_px(containing_width);
-        d.padding.top = cvs.padding_top.size.to_px(containing_width);
+        d.set(
+            LogicalDirection::BlockEnd,
+            BoxComponent::Padding,
+            cvs.padding_bottom.size.to_px(containing_width),
+        );
+        d.set(
+            LogicalDirection::BlockStart,
+            BoxComponent::Padding,
+            cvs.padding_top.size.to_px(containing_width),
+        );
 
-        d.border.bottom = cvs.border_bottom_width.size;
-        d.border.top = cvs.border_top_width.size;
+        d.set(
+            LogicalDirection::BlockEnd,
+            BoxComponent::Border,
+            cvs.border_bottom_width.size,
+        );
+        d.set(
+            LogicalDirection::BlockStart,
+            BoxComponent::Border,
+            cvs.border_top_width.size,
+        );
 
-        d.margin.bottom = cvs.margin_bottom.size.to_px(containing_width);
-        d.margin.top = cvs.margin_top.size.to_px(containing_width);
+        d.set(
+            LogicalDirection::BlockEnd,
+            BoxComponent::Margin,
+            cvs.margin_bottom.size.to_px(containing_width),
+        );
+        d.set(
+            LogicalDirection::BlockStart,
+            BoxComponent::Margin,
+            cvs.margin_top.size.to_px(containing_width),
+        );
 
         // Ensure window scale factor is applied before computing the start-{x, y} coordinates.
         d.scale_edges_by(scale_factor);
 
-        d.content.start_x =
-            (containing_block.content.start_x + d.margin.left + d.border.left + d.padding.left)
-                .into();
-        // Position the box below all the previous boxes in the container.
-        // TODO: I think this is block-layout/context specific behavior.  We'll need to generalize this logic to handle other formatting contexts
-        d.content.start_y = (containing_block.content.start_y
-            + containing_block.content.height
-            + d.margin.top
-            + d.border.top
-            + d.padding.top)
-            .into();
+        let container_inline_start_coord = if self.writing_mode.is_horizontal() {
+            containing_block.content.start_x
+        } else {
+            containing_block.content.start_y
+        };
+
+        let container_block_size = if self.writing_mode.is_horizontal() {
+            containing_block.content.height
+        } else {
+            containing_block.content.width
+        };
+        d.set_inline_start_coord(
+            (container_inline_start_coord
+                + d.get(LogicalDirection::InlineStart, BoxComponent::Margin)
+                + d.get(LogicalDirection::InlineStart, BoxComponent::Border)
+                + d.get(LogicalDirection::InlineStart, BoxComponent::Padding))
+            .into(),
+        );
+        // TODO: Always adding containing_block.content.start_y is almost certainly wrong, but
+        // works...sometimes..  This should probably be `container_block_start_coord`...but this
+        // didn't work when I tried it, likely due to other bugs, such as the fact that we may not
+        // be mapping flow-relative directions correctly (we should sometimes be using the
+        // containing block writing-mode, but we always use the writing-mode of the `self` block.)
+        // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
+        d.set_block_start_coord(
+            (container_block_size
+                + containing_block.content.start_y
+                + d.get(LogicalDirection::BlockStart, BoxComponent::Margin)
+                + d.get(LogicalDirection::BlockStart, BoxComponent::Border)
+                + d.get(LogicalDirection::BlockStart, BoxComponent::Padding))
+            .into(),
+        );
     }
 
     fn layout_block_children(&mut self, scale_factor: f32) {
-        let d = &mut self.dimensions;
+        let mut physical_dimensions = self.dimensions.physical();
         for child in &mut self.children {
-            child.layout(*d, scale_factor);
-            // Track the height so each child is laid out below the previous content.
-            d.content.height += child.dimensions.margin_box().height;
+            child.layout(physical_dimensions, scale_factor);
+            // Track the block size so each child is laid out after the previous one.
+            self.dimensions.set_block_size(
+                self.dimensions.get_content_block_size() + child.dimensions.margin_box_block_size(),
+            );
+            physical_dimensions = self.dimensions.physical();
         }
+    }
+
+    /// If this block has any explicitly set values (e.g. lenght or percentage values, NOT auto) for
+    /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
+    /// function will set them.  Otherwise, the used values will be those given by other layout
+    /// equations.
+    fn apply_physical_properties(&mut self, containing_block: PhysicalDimensions) {
+        let width = self.node.computed_values().width.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
+            self.dimensions
+                .set_phys_width(lp.to_px(containing_block.content.width));
+        }
+
+        let height = self.node.computed_values().height.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
+            self.dimensions
+                .set_phys_height(lp.to_px(containing_block.content.height));
+        }
+
+        // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
+        // are broken in non-horizontal writing modes because they are applied logically, when
+        // these properties should instead be applied physically.  E.g., margin-left should always affect
+        // the page-relative left margin of the box, but instead reflects the flow relative margin
+        // left, which physically ends up being the top margin.
     }
 }
 
@@ -359,16 +463,17 @@ impl DumpLayout for LayoutBox {
             BoxType::Anonymous | BoxType::AnonymousInline => "".to_owned(),
             BoxType::Block | BoxType::Inline => self.node.data().dump_layout_format(),
         };
+        let physical_dimensions = self.dimensions.physical();
         writeln!(
             write_to,
             "{:indent_spaces$}{} {:?} LayoutBox at ({}, {}) size {}x{}",
             "",
             node_name,
             self.box_type,
-            self.dimensions.content.start_x.dump_layout_format(),
-            self.dimensions.content.start_y.dump_layout_format(),
-            self.dimensions.content.width.dump_layout_format(),
-            self.dimensions.content.height.dump_layout_format(),
+            physical_dimensions.content.start_x.dump_layout_format(),
+            physical_dimensions.content.start_y.dump_layout_format(),
+            physical_dimensions.content.width.dump_layout_format(),
+            physical_dimensions.content.height.dump_layout_format(),
             indent_spaces = indent_spaces,
         )
         .expect("error writing layout dump");

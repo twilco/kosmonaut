@@ -3,13 +3,15 @@ html {
 }
 
 body {
-    writing-mode: vertical-lr;
-    direction: ltr;
+    /*writing-mode: vertical-lr;*/
+    /*direction: ltr;*/
 }
 
 div {
     margin-left: 15px;
     margin-top: 15px;
+    /*margin-bottom: 15px;*/
+    /*margin-right: 15px;*/
     width: 400px;
     height: 200px;
     background-color: green;

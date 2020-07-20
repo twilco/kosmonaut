@@ -1,7 +1,7 @@
 use crate::gfx::char::CharHandle;
 use crate::gfx::font::FontHandle;
 use crate::layout::layout_box::{BoxType, LayoutBox};
-use crate::layout::Rect;
+use crate::layout::rect::Rect;
 use crate::style::values::computed::LineStyle;
 use crate::Side;
 use app_units::Au;
@@ -173,7 +173,7 @@ fn prepare_background(display_list: &mut DisplayList, layout_box: &LayoutBox) {
     if bg_color != RGBA::transparent() {
         display_list.push(DisplayCommand::RectSolidColor(
             bg_color,
-            layout_box.dimensions().border_box(),
+            layout_box.physical_dimensions().border_box(),
         ))
     }
 }
@@ -189,7 +189,7 @@ fn prepare_borders(display_list: &mut DisplayList, layout_box: &LayoutBox) {
 /// Prepares the border `side` of `layout_box` for display by converting it to a display command.
 fn prepare_border(display_list: &mut DisplayList, layout_box: &LayoutBox, side: Side) {
     let cvs = layout_box.computed_values();
-    let d = layout_box.dimensions();
+    let d = layout_box.physical_dimensions();
     let border_style = cvs.border_style(side);
     let border_color_rgba = cvs.border_color_rgba(side);
     // The border size has already been calculated during layout, so we don't need to get it from

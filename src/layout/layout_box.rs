@@ -181,7 +181,7 @@ impl LayoutBox {
         // Now that we've performed a layout with logical properties, let's apply any physical
         // properties explicitly given for this block (e.g. `width`, `height`, bottom/left/right/top
         // properties).
-        self.apply_physical_properties(containing_block);
+        self.apply_physical_properties(containing_block, scale_factor);
     }
 
     /// Calculate the logical width (inline size) of a block-level non-replaced element in normal
@@ -429,17 +429,17 @@ impl LayoutBox {
     /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
     /// function will set them.  Otherwise, the used values will be those given by other layout
     /// equations.
-    fn apply_physical_properties(&mut self, containing_block: PhysicalDimensions) {
+    fn apply_physical_properties(&mut self, containing_block: PhysicalDimensions, scale_factor: f32) {
         let width = self.node.computed_values().width.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
             self.dimensions
-                .set_phys_width(lp.to_px(containing_block.content.width));
+                .set_phys_width(lp.to_px(containing_block.content.width) * scale_factor);
         }
 
         let height = self.node.computed_values().height.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
             self.dimensions
-                .set_phys_height(lp.to_px(containing_block.content.height));
+                .set_phys_height(lp.to_px(containing_block.content.height) * scale_factor);
         }
 
         // FIXME: The physical bottom/left/right/top properties for margin, border, and padding

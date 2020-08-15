@@ -25,6 +25,7 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
      - [x] Partial support for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
      - [ ] Margin collapsing
 - [x] Layout-tree-dump based testing
+- [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
 - [ ] Text rendering with FreeType (without support for text layout — see next item)
 - [ ] Support for normal flow, inline formatting context layout and paint
 

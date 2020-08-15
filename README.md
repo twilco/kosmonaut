@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.com/twilco/kosmonaut.svg?branch=master)](https://travis-ci.com/twilco/kosmonaut) [![Join the chat at https://gitter.im/kosmonaut-browser/community](https://badges.gitter.im/kosmonaut-browser/community.svg)](https://gitter.im/kosmonaut-browser/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Kosmonaut is a web browser prioritizing speed and privacy, serving as the vehicle for your journey across the world wide web.
+Kosmonaut is a web browser engine created to serve as the vehicle for your journey across the world wide web.
 
 > The road to the stars is steep and dangerous.  But we're not afraid...space flights can't be stopped.
 > 
@@ -16,8 +16,6 @@ So far, not much.  Only a very limited subset of CSS is currently supported, so 
 
 ![Kosmonaut and Firefox rendering HTML and CSS the same, resulting in a picture of some rainbow colored boxes.](img/rainbow-divs-vs-firefox.png)
 
-### Roadmap
-
 Here is a summary of things Kosmonaut can do, things I'm currently working on, and things that are towards the front of the todo list.
 
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
@@ -28,6 +26,10 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
 - [ ] Text rendering with FreeType (without support for text layout — see next item)
 - [ ] Support for normal flow, inline formatting context layout and paint
+
+### Project goals
+
+Kosmonaut was created with the intention of learning browser engine development.  However, the project has come a little ways now, and I've been thinking about niches I can work towards fitting Kosmonaut into.  I've shared some thoughts on potential niches [in this issue](https://github.com/twilco/kosmonaut/issues/6), and would love to hear your ideas too. 
 
 ### Build and test
 

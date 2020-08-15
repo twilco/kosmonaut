@@ -8,7 +8,7 @@ Kosmonaut is a web browser engine created to serve as the vehicle for your journ
 
 > The road to the stars is steep and dangerous.  But we're not afraid...space flights can't be stopped.
 > 
-> \- Yuri Gagarin
+> ― Yuri Gagarin
 
 ### What can Kosmonaut do?
 

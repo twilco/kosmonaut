@@ -1,3 +1,5 @@
+pub mod directional;
+
 #[cfg(test)]
 mod tests {
     use crate::util::{dump_layout_cmd, dump_layout_cmd_scaled};

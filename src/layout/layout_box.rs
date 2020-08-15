@@ -247,7 +247,11 @@ impl LayoutBox {
         // This value can be negative, indicating an overflow or "overconstraint", if the width of
         // this box is greater than that of the containing one.
         let underflow = containing_width - block_width;
-        match (logical_width == auto, logical_margin_left == auto, logical_margin_right == auto) {
+        match (
+            logical_width == auto,
+            logical_margin_left == auto,
+            logical_margin_right == auto,
+        ) {
             // If all of the above have a computed value other than 'auto', the values are said to be
             // "over-constrained" and one of the used values will have to be different from its computed
             // value. If the 'direction' property of the containing block has the value 'ltr', the
@@ -261,8 +265,12 @@ impl LayoutBox {
             }
             // If there is exactly one margin value specified as 'auto', its used value follows
             // from the equality.
-            (false, true, false) => logical_margin_left = LengthPercentageOrAuto::new_len_px(underflow),
-            (false, false, true) => logical_margin_right = LengthPercentageOrAuto::new_len_px(underflow),
+            (false, true, false) => {
+                logical_margin_left = LengthPercentageOrAuto::new_len_px(underflow)
+            }
+            (false, false, true) => {
+                logical_margin_right = LengthPercentageOrAuto::new_len_px(underflow)
+            }
             // If both 'margin-left' and 'margin-right' are 'auto', their used values are equal.
             // This centers the element with respect to the edges of the containing block.
             (false, true, true) => {
@@ -429,7 +437,11 @@ impl LayoutBox {
     /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
     /// function will set them.  Otherwise, the used values will be those given by other layout
     /// equations.
-    fn apply_physical_properties(&mut self, containing_block: PhysicalDimensions, scale_factor: f32) {
+    fn apply_physical_properties(
+        &mut self,
+        containing_block: PhysicalDimensions,
+        scale_factor: f32,
+    ) {
         let width = self.node.computed_values().width.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
             self.dimensions

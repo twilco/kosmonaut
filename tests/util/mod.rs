@@ -1,5 +1,7 @@
+use core::fmt;
 use std::env;
 use std::ffi::OsStr;
+use std::fmt::Formatter;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, ExitStatus, Stdio};
@@ -174,6 +176,12 @@ impl CommandUnderTest {
 
     pub fn stdout(&self) -> &str {
         &self.stdout
+    }
+}
+
+impl fmt::Debug for CommandUnderTest {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.raw.fmt(f)
     }
 }
 

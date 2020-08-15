@@ -25,7 +25,7 @@ tempdir = "0.3.7"
 derive_builder = "0.9.0"
 
 [dev-dependencies]
-insta = "0.16.0"
+insta = "0.16"
 
 [features]
 gl_debug = ["gl/debug"]

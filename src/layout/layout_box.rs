@@ -462,6 +462,9 @@ impl LayoutBox {
     }
 }
 
+/// Writes a textual representation of the layout tree starting with the `self` LayoutBox.  Built
+/// to somewhat match WebKit's version of layout dumps, which look like:
+///
 /// RenderView at (0,0) size 1166x819 renderer->(0x3055f9250)
 /// B-----L- --    HTML RenderBlock at (0,0) size 1166x6248.50 renderer->(0x3055f9700) node->(0x3055f9550)
 /// B------- --      BODY RenderBody at (0,0) size 1166x6248.50 renderer->(0x3055f9830) node->(0x3055f9670)

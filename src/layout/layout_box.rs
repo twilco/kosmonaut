@@ -344,7 +344,7 @@ impl LayoutBox {
         scale_factor: f32,
     ) {
         let cvs = self.node.computed_values();
-        let containing_width = if self.writing_mode.is_horizontal() {
+        let containing_logical_width = if self.writing_mode.is_horizontal() {
             containing_block.content.width
         } else {
             containing_block.content.height
@@ -354,12 +354,12 @@ impl LayoutBox {
         d.set(
             LogicalDirection::BlockEnd,
             BoxComponent::Padding,
-            cvs.padding_bottom.size.to_px(containing_width),
+            cvs.padding_bottom.size.to_px(containing_logical_width),
         );
         d.set(
             LogicalDirection::BlockStart,
             BoxComponent::Padding,
-            cvs.padding_top.size.to_px(containing_width),
+            cvs.padding_top.size.to_px(containing_logical_width),
         );
 
         d.set(
@@ -376,12 +376,12 @@ impl LayoutBox {
         d.set(
             LogicalDirection::BlockEnd,
             BoxComponent::Margin,
-            cvs.margin_bottom.size.to_px(containing_width),
+            cvs.margin_bottom.size.to_px(containing_logical_width),
         );
         d.set(
             LogicalDirection::BlockStart,
             BoxComponent::Margin,
-            cvs.margin_top.size.to_px(containing_width),
+            cvs.margin_top.size.to_px(containing_logical_width),
         );
 
         // Ensure window scale factor is applied before computing the start-{x, y} coordinates.

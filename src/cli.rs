@@ -14,7 +14,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
             Arg::with_name("files")
                 .short("f")
                 .long("files")
-                .value_name("FILES")
+                .value_name("SPACE SEPARATED FILE PATHS")
                 .help("Pass files for Kosmonaut to render.")
                 .multiple(true)
                 .takes_value(true)
@@ -24,7 +24,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
             Arg::with_name("width")
                 .short("w")
                 .long("width")
-                .value_name("WIDTH")
+                .value_name("NUMBER")
                 .help(&format!("Inner window width.  {}", headed_or_headless_applicable))
                 .takes_value(true)
                 .validator(is_num_validator)
@@ -34,25 +34,35 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
             Arg::with_name("height")
                 .short("h")
                 .long("height")
-                .value_name("HEIGHT")
+                .value_name("NUMBER")
                 .help(&format!("Inner window height.  {}", headed_or_headless_applicable))
                 .takes_value(true)
                 .validator(is_num_validator)
                 .global(true),
         )
         .arg(
-            Arg::with_name("scale_factor")
+            Arg::with_name("scale-factor")
                 .short("s")
-                .long("scale_factor")
-                .value_name("SCALE_FACTOR")
+                .long("scale-factor")
+                .value_name("NUMBER")
                 .help(&format!("Device/window scale factor.  {}", headed_or_headless_applicable))
                 .takes_value(true)
                 .validator(is_num_validator)
                 .global(true),
         )
-        .subcommand(SubCommand::with_name("dump-layout").about(
-            "Dumps layout-tree as text to stdout after first global layout, exiting afterwards.  Scale factor must be sup",
-        ))
+        .subcommand(
+            SubCommand::with_name("dump-layout")
+                .about("Dumps layout-tree as text to stdout after first global layout, exiting afterwards.")
+                .arg(
+                    Arg::with_name("verbose")
+                        .short("v")
+                        .long("verbose")
+                        .value_name("BOOLEAN")
+                        .help("Set to true to make layout dumps more verbose (e.g. include margin, border, padding values).")
+                        .takes_value(true)
+                        .validator(is_bool_validator)
+                )
+        )
         .get_matches()
 }
 
@@ -60,6 +70,16 @@ fn is_num_validator(string: String) -> Result<(), String> {
     match string.parse::<f32>() {
         Ok(_) => Ok(()),
         Err(_) => Err(format!("given arg '{}' is not a number", string)),
+    }
+}
+
+fn is_bool_validator(string: String) -> Result<(), String> {
+    match string.parse::<bool>() {
+        Ok(_) => Ok(()),
+        Err(_) => match &string[..] {
+            "0" | "1" => Ok(()),
+            _ => Err(format!("given arg '{}' is not a bool value", string)),
+        },
     }
 }
 
@@ -104,26 +124,38 @@ pub fn dump_layout_tree(arg_matches: &ArgMatches) -> bool {
     arg_matches.subcommand_matches("dump-layout").is_some()
 }
 
+pub fn dump_layout_tree_verbose(arg_matches: &ArgMatches) -> Option<bool> {
+    arg_matches
+        .subcommand_matches("dump-layout")
+        .and_then(|dump_layout_arg_matches| try_get_bool(dump_layout_arg_matches, "verbose"))
+}
+
 pub fn inner_window_width(arg_matches: &ArgMatches) -> Option<f32> {
-    try_get::<f32>(arg_matches, "width")
+    try_get_arg::<f32>(arg_matches, "width")
 }
 
 pub fn inner_window_height(arg_matches: &ArgMatches) -> Option<f32> {
-    try_get::<f32>(arg_matches, "height")
+    try_get_arg::<f32>(arg_matches, "height")
 }
 
 pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
-    try_get::<f32>(arg_matches, "scale_factor")
+    try_get_arg::<f32>(arg_matches, "scale-factor")
 }
 
-fn try_get<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {
-    arg_matches.value_of(arg_name).map(|arg_str| {
-        arg_str.parse::<T>().unwrap_or_else(|_| {
-            panic!(format!(
-                "couldn't parse '{}' arg as '{}'",
-                arg_name,
-                std::any::type_name::<T>()
-            ))
+fn try_get_arg<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {
+    arg_matches
+        .value_of(arg_name)
+        .map(|arg_str| arg_str.parse::<T>().ok())
+        .unwrap_or(None)
+}
+
+fn try_get_bool<'a>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<bool> {
+    try_get_arg::<bool>(arg_matches, arg_name).or_else(|| {
+        let arg_match = arg_matches.value_of(arg_name);
+        arg_match.and_then(|val| match val {
+            "0" => Some(false),
+            "1" => Some(true),
+            _ => None,
         })
     })
 }

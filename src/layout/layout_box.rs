@@ -472,16 +472,38 @@ impl LayoutBox {
 /// B------- --        DIV RenderBlock at (0,0) size 1166x0 renderer->(0x306fcca20) node->(0x305a18700)
 /// B------- --        DIV RenderBlock at (260,0) size 906x6248.50 renderer->(0x306fccb40) node->(0x305a18800)
 /// BX-O--LC --          NAV RenderFlexibleBox at (0,0) size 260x819 renderer->(0x30ddf2e20) node->(0x30dde41c0)
+///
+/// With the `verbose` flag, much more information is printed (such as all of the margin, border,
+/// and padding values).
 impl DumpLayout for LayoutBox {
-    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize) {
+    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool) {
         let node_name = match self.box_type {
             BoxType::Anonymous | BoxType::AnonymousInline => "".to_owned(),
             BoxType::Block | BoxType::Inline => self.node.data().dump_layout_format(),
         };
         let physical_dimensions = self.dimensions.physical();
+        let verbose_str = if verbose {
+            format!(
+                " (ml{} mr{} mb{} mt{} bl{} br{} bb{} bt{} pl{} pr{} pb{} pt{})",
+                physical_dimensions.margin.left.dump_layout_format(),
+                physical_dimensions.margin.right.dump_layout_format(),
+                physical_dimensions.margin.bottom.dump_layout_format(),
+                physical_dimensions.margin.top.dump_layout_format(),
+                physical_dimensions.border.left.dump_layout_format(),
+                physical_dimensions.border.right.dump_layout_format(),
+                physical_dimensions.border.bottom.dump_layout_format(),
+                physical_dimensions.border.top.dump_layout_format(),
+                physical_dimensions.padding.left.dump_layout_format(),
+                physical_dimensions.padding.right.dump_layout_format(),
+                physical_dimensions.padding.bottom.dump_layout_format(),
+                physical_dimensions.padding.top.dump_layout_format(),
+            )
+        } else {
+            "".to_owned()
+        };
         writeln!(
             write_to,
-            "{:indent_spaces$}{} {:?} LayoutBox at ({}, {}) size {}x{}",
+            "{:indent_spaces$}{} {:?} LayoutBox at ({}, {}) size {}x{}{}",
             "",
             node_name,
             self.box_type,
@@ -489,12 +511,13 @@ impl DumpLayout for LayoutBox {
             physical_dimensions.content.start_y.dump_layout_format(),
             physical_dimensions.content.width.dump_layout_format(),
             physical_dimensions.content.height.dump_layout_format(),
+            verbose_str,
             indent_spaces = indent_spaces,
         )
         .expect("error writing layout dump");
 
         self.children.iter().for_each(|child| {
-            child.dump_layout(write_to, indent_spaces + 2);
+            child.dump_layout(write_to, indent_spaces + 2, verbose);
         })
     }
 }

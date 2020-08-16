@@ -30,8 +30,8 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    dump_layout_tree, html_file_path_from_files, inner_window_height, inner_window_width,
-    scale_factor, setup_and_get_cli_args, stylesheets_from_files,
+    dump_layout_tree, dump_layout_tree_verbose, html_file_path_from_files, inner_window_height,
+    inner_window_width, scale_factor, setup_and_get_cli_args, stylesheets_from_files,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
@@ -76,10 +76,17 @@ fn main() {
     );
 
     let scale_factor_opt = scale_factor(&arg_matches);
+    let verbose_dump_layout = dump_layout_tree_verbose(&arg_matches).unwrap_or(false);
     if dump_layout_tree(&arg_matches) {
         let scale_factor = scale_factor_opt
             .expect("scale factor must be explicitly specified when running layout dump");
-        run_layout_dump(dom, inner_width_opt, inner_height_opt, scale_factor);
+        run_layout_dump(
+            dom,
+            inner_width_opt,
+            inner_height_opt,
+            scale_factor,
+            verbose_dump_layout,
+        );
         return;
     }
     let (windowed_context, event_loop, gl) =
@@ -93,6 +100,7 @@ fn run_layout_dump(
     inner_width_opt: Option<f32>,
     inner_height_opt: Option<f32>,
     scale_factor: f32,
+    verbose: bool,
 ) {
     let mut layout_tree = build_layout_tree(styled_dom).unwrap();
     global_layout(
@@ -103,7 +111,7 @@ fn run_layout_dump(
             .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
         scale_factor,
     );
-    layout_tree.dump_layout(&mut std::io::stdout(), 0);
+    layout_tree.dump_layout(&mut std::io::stdout(), 0, verbose);
 }
 
 pub fn run_event_loop(

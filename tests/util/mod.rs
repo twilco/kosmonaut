@@ -192,7 +192,7 @@ pub fn dump_layout_cmd_scaled(scale_factor: f32) -> CommandUnderTest {
     cmd.arg(format!("{}", LAYOUT_DUMP_INNER_WINDOW_WIDTH_PX));
     cmd.arg("--height");
     cmd.arg(format!("{}", LAYOUT_DUMP_INNER_WINDOW_HEIGHT_PX));
-    cmd.arg("--scale_factor");
+    cmd.arg("--scale-factor");
     cmd.arg(format!("{}", scale_factor));
     cmd
 }

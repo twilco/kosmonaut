@@ -106,7 +106,7 @@ pub enum BoxComponent {
 /// tests and debugging.  Should be implemented by "container"-style entities, such as members
 /// of the layout tree, formatting individual struct members via the `DumpLayoutFormat` trait.
 pub trait DumpLayout {
-    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize);
+    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool);
 }
 
 /// Trait describing behavior necessary for formatting ones data in preparation for a layout tree

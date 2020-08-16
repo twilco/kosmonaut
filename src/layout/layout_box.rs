@@ -398,6 +398,7 @@ impl LayoutBox {
         } else {
             containing_block.content.width
         };
+
         d.set_inline_start_coord(
             (container_inline_start_coord
                 + d.get(LogicalDirection::InlineStart, BoxComponent::Margin)
@@ -453,7 +454,6 @@ impl LayoutBox {
             self.dimensions
                 .set_phys_height(lp.to_px(containing_block.content.height) * scale_factor);
         }
-
         // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
         // are broken in non-horizontal writing modes because they are applied logically, when
         // these properties should instead be applied physically.  E.g., margin-left should always affect

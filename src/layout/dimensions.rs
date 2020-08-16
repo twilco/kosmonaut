@@ -65,6 +65,33 @@ impl LogicalDimensions {
         self.dimensions.content.width = val;
     }
 
+    pub fn set_phys_margin(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.dimensions.margin.bottom = val,
+            Side::Left => self.dimensions.margin.left = val,
+            Side::Right => self.dimensions.margin.right = val,
+            Side::Top => self.dimensions.margin.top = val,
+        }
+    }
+
+    pub fn set_phys_border(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.dimensions.border.bottom = val,
+            Side::Left => self.dimensions.border.left = val,
+            Side::Right => self.dimensions.border.right = val,
+            Side::Top => self.dimensions.border.top = val,
+        }
+    }
+
+    pub fn set_phys_padding(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.dimensions.padding.bottom = val,
+            Side::Left => self.dimensions.padding.left = val,
+            Side::Right => self.dimensions.padding.right = val,
+            Side::Top => self.dimensions.padding.top = val,
+        }
+    }
+
     pub fn set_start_x(&mut self, val: CSSFloat) {
         self.dimensions.content.start_x = val;
     }

@@ -26,6 +26,10 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 - [ ] Text rendering with FreeType (without support for text layout — see next item)
 - [ ] Support for normal flow, inline formatting context layout and paint
 
+For those who are curious, here's what I'm specifically working on right now (I'll try to keep this up-to-date).  Commits will be infrequent but generally substantial depending on the size of the thing I'm working on.
+
+* Rewriting block formatting context layout to be closer to-spec, and to fix some corner cases I broke recently.
+
 ### Project goals
 
 Kosmonaut was created with the intention of learning browser engine development.  However, the project has come a little ways now, and I've been thinking about niches I can work towards fitting Kosmonaut into.  I've shared some thoughts on potential niches [in this issue](https://github.com/twilco/kosmonaut/issues/6), and would love to hear your ideas too. 

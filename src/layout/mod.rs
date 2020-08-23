@@ -2,8 +2,11 @@
 //  * https://www.w3.org/TR/css-display-3/#css-box
 //  * https://www.w3.org/TR/2018/WD-css-box-3-20181218/#intro
 pub mod dimensions;
+pub mod flow;
+pub mod formatting_context;
 pub mod layout_box;
 pub mod rect;
+pub mod values;
 
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::dimensions::PhysicalDimensions;

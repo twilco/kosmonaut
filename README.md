@@ -41,7 +41,9 @@ Kosmonaut is built with Rust using OpenGL bindings via [gl-rs](https://github.co
 To build from source:
 
 1. Install Rust: https://www.rust-lang.org/tools/install
-2. Install native dependencies, most of which are required for FreeType which Kosmonaut uses for text rendering.  
+2. Install native dependencies, most of which are required for FreeType which Kosmonaut uses for text rendering.
+    * Windows 10
+        * Skip this step.
     * Ubuntu
         * Install the dependencies found in [this Dockerfile](docker/Dockerfile-ubuntu) on your machine (the `apt-get install` bit).
     * Arch Linux 

@@ -9,7 +9,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     App::new("Kosmonaut")
         .version("0.1")
         .author("Tyler Wilcock (twilco)")
-        .about("A web browser for the space age🚀🚀")
+        .about("A web browser for the space age 🚀")
         .arg(
             Arg::with_name("files")
                 .short("f")

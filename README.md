@@ -57,7 +57,7 @@ To run the tests, both unit and layout, run:
 
 `cargo test`
 
-For layout tests, Kosmonaut transforms the given HTML and CSS into the layout tree and dumps that as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
+For layout tests, Kosmonaut transforms the given HTML and CSS into a box tree, lays it out, and dumps it as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
 
 If you need to review / update snapshots, it is helpful to install the Cargo insta CLI tool like so:
 

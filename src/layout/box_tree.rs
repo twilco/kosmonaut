@@ -1,5 +1,7 @@
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
+use crate::layout::formatting_context::{
+    FormattingContext, FormattingContextRef, QualifiedFormattingContext,
+};
 use crate::layout::layout_box::{AnonymousBlockBox, BlockContainer, InlineBox, LayoutBox, TextRun};
 use crate::style::values::computed::display::{DisplayBox, InnerDisplay, OuterDisplay};
 use crate::style::values::computed::Display;
@@ -19,7 +21,7 @@ use std::rc::Rc;
 /// new formatting context.
 pub fn build_box_tree(
     node: NodeRef,
-    parent_context: Option<Rc<QualifiedFormattingContext>>,
+    parent_context: Option<FormattingContextRef>,
 ) -> Option<LayoutBox> {
     match node.data() {
         // We don't want to create boxes for the document node nor the doctype nodes, so skip past
@@ -122,7 +124,7 @@ fn handle_child_node_by_display(parent_box: &mut LayoutBox, child_node: NodeRef)
 
 fn build_box_from_display(
     node: NodeRef,
-    parent_context: Option<Rc<QualifiedFormattingContext>>,
+    parent_context: Option<FormattingContextRef>,
 ) -> Option<LayoutBox> {
     let computed_values = node.computed_values();
     // Per the "Generated box" column from the table in this section, decide what boxes to generate
@@ -143,15 +145,11 @@ fn build_box_from_display(
                                     parent_context.unwrap()
                                 }
                                 // Parent formatting context is not a BFC, create a new one instead.
-                                _ => Rc::new(QualifiedFormattingContext::Independent(
-                                    FormattingContext::Block,
-                                )),
+                                _ => FormattingContextRef::new_independent_block(),
                             }
                         }
                         // There is no parent formatting context -- create a new BFC.
-                        _ => Rc::new(QualifiedFormattingContext::Independent(
-                            FormattingContext::Block,
-                        )),
+                        _ => FormattingContextRef::new_independent_block(),
                     };
 
                     LayoutBox::BlockContainer(BlockContainer::new(node.clone(), formatting_context))
@@ -159,9 +157,7 @@ fn build_box_from_display(
                 (OuterDisplay::Block, InnerDisplay::FlowRoot) => {
                     LayoutBox::BlockContainer(BlockContainer::new(
                         node.clone(),
-                        Rc::new(QualifiedFormattingContext::Independent(
-                            FormattingContext::Block,
-                        )),
+                        FormattingContextRef::new_independent_block(),
                     ))
                 }
                 (OuterDisplay::Inline, InnerDisplay::Flow) => {
@@ -203,12 +199,8 @@ fn get_or_create_inline_container(
 
 fn create_inline_container(node: NodeRef) -> LayoutBox {
     // Create a new IFC for this inline content.
-    let mut anonymous_block_box = AnonymousBlockBox::new(
-        node.clone(),
-        Rc::new(QualifiedFormattingContext::Independent(
-            FormattingContext::Inline,
-        )),
-    );
+    let mut anonymous_block_box =
+        AnonymousBlockBox::new(node.clone(), FormattingContextRef::new_independent_inline());
     anonymous_block_box.add_child(LayoutBox::create_root_inline_box(
         node.clone(),
         anonymous_block_box.formatting_context(),

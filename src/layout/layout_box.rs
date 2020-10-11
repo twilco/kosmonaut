@@ -1,6 +1,8 @@
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::dimensions::{LogicalDimensions, PhysicalDimensions};
-use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
+use crate::layout::formatting_context::{
+    FormattingContext, FormattingContextRef, QualifiedFormattingContext,
+};
 use crate::layout::{BoxComponent, DumpLayout, DumpLayoutFormat, LogicalDirection};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -61,10 +63,7 @@ impl LayoutBox {
     /// Creates a root inline box (which is another name for an anonymous inline box).
     ///
     /// The given node should be that of the element generating root inline box.
-    pub fn create_root_inline_box(
-        node: NodeRef,
-        formatting_context: Rc<QualifiedFormattingContext>,
-    ) -> Self {
+    pub fn create_root_inline_box(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         assert!(formatting_context.is_inline_formatting_context());
         LayoutBox::AnonymousInline(AnonymousInlineBox::new(node, formatting_context))
     }
@@ -197,7 +196,7 @@ impl LayoutBox {
         }
     }
 
-    pub fn formatting_context(&self) -> Rc<QualifiedFormattingContext> {
+    pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             LayoutBox::AnonymousInline(aib) => aib.formatting_context(),
             LayoutBox::AnonymousBlock(ab) => ab.formatting_context(),
@@ -242,7 +241,7 @@ pub struct BaseBox {
     // TODO(layout-rewrite): Should this be logical (e.g. flow-relative rather than page-relative) dimensions?
     dimensions: PhysicalDimensions,
     /// The formatting context this box participates in.
-    formatting_context: Rc<QualifiedFormattingContext>,
+    formatting_context: FormattingContextRef,
     /// Reference to the closest non-anonymous node.  This distinction only matters for anonymous
     /// boxes, since anonymous boxes are by definition not associated with a node, but need access
     /// to a node to get computed values during layout.  If the box is a block, inline, or any other
@@ -251,10 +250,10 @@ pub struct BaseBox {
 }
 
 impl BaseBox {
-    pub fn new(node: NodeRef, formatting_context: Rc<QualifiedFormattingContext>) -> BaseBox {
+    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> BaseBox {
         BaseBox {
             dimensions: PhysicalDimensions::default(),
-            formatting_context: Rc::clone(&formatting_context),
+            formatting_context: formatting_context.clone(),
             node,
         }
     }
@@ -268,8 +267,8 @@ impl BaseBox {
         self.node.computed_values()
     }
 
-    pub fn formatting_context(&self) -> Rc<QualifiedFormattingContext> {
-        Rc::clone(&self.formatting_context)
+    pub fn formatting_context(&self) -> FormattingContextRef {
+        self.formatting_context.clone()
     }
 
     pub fn has_inline_formatting_context(&self) -> bool {
@@ -304,7 +303,7 @@ macro_rules! base_box_passthrough_impls {
             self.base.computed_values()
         }
 
-        pub fn formatting_context(&self) -> Rc<QualifiedFormattingContext> {
+        pub fn formatting_context(&self) -> FormattingContextRef {
             self.base.formatting_context()
         }
 
@@ -332,7 +331,7 @@ pub struct AnonymousBlockBox {
 impl AnonymousBlockBox {
     base_box_passthrough_impls!();
 
-    pub fn new(node: NodeRef, formatting_context: Rc<QualifiedFormattingContext>) -> Self {
+    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
@@ -353,7 +352,7 @@ pub struct AnonymousInlineBox {
 impl AnonymousInlineBox {
     base_box_passthrough_impls!();
 
-    pub fn new(node: NodeRef, formatting_context: Rc<QualifiedFormattingContext>) -> Self {
+    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
@@ -383,7 +382,7 @@ pub struct BlockContainer {
 impl BlockContainer {
     base_box_passthrough_impls!();
 
-    pub fn new(node: NodeRef, fc: Rc<QualifiedFormattingContext>) -> Self {
+    pub fn new(node: NodeRef, fc: FormattingContextRef) -> Self {
         BlockContainer {
             base: BaseBox::new(node, fc),
             children: Vec::new(),
@@ -406,7 +405,7 @@ pub struct InlineBox {
 impl InlineBox {
     base_box_passthrough_impls!();
 
-    pub fn new(node: NodeRef, formatting_context: Rc<QualifiedFormattingContext>) -> Self {
+    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
@@ -436,11 +435,7 @@ pub struct TextRun {
 impl TextRun {
     base_box_passthrough_impls!();
 
-    pub fn new(
-        node: NodeRef,
-        formatting_context: Rc<QualifiedFormattingContext>,
-        contents: String,
-    ) -> Self {
+    pub fn new(node: NodeRef, formatting_context: FormattingContextRef, contents: String) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             contents,

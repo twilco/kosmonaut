@@ -24,7 +24,7 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
 use crate::dom::tree::NodeRef;
-use crate::layout::{build_box_tree, global_layout, DumpLayout};
+use crate::layout::{global_layout, DumpLayout};
 use crate::style::apply_styles;
 
 pub mod cli;
@@ -42,6 +42,7 @@ use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
+use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
 pub use common::Side;
 use gl::Gl;

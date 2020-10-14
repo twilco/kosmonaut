@@ -151,7 +151,6 @@ fn build_box_from_display(
                         // There is no parent formatting context -- create a new BFC.
                         _ => FormattingContextRef::new_independent_block(),
                     };
-
                     LayoutBox::BlockContainer(BlockContainer::new(node.clone(), formatting_context))
                 }
                 (OuterDisplay::Block, InnerDisplay::FlowRoot) => {

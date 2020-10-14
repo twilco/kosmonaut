@@ -223,6 +223,24 @@ impl From<AnonymousInlineBox> for LayoutBox {
     }
 }
 
+impl From<BlockContainer> for LayoutBox {
+    fn from(block_container: BlockContainer) -> Self {
+        LayoutBox::BlockContainer(block_container)
+    }
+}
+
+impl From<InlineBox> for LayoutBox {
+    fn from(inline_box: InlineBox) -> Self {
+        LayoutBox::InlineBox(inline_box)
+    }
+}
+
+impl From<TextRun> for LayoutBox {
+    fn from(text_run: TextRun) -> Self {
+        LayoutBox::TextRun(text_run)
+    }
+}
+
 // TODO: Use or remove.
 /// Determines what type of layout the box attached to this enum participates in (e.g. block,
 /// inline, flex, ...).
@@ -272,11 +290,7 @@ impl BaseBox {
     }
 
     pub fn has_inline_formatting_context(&self) -> bool {
-        match *self.formatting_context {
-            QualifiedFormattingContext::Independent(FormattingContext::Inline)
-            | QualifiedFormattingContext::Dependent(FormattingContext::Inline) => true,
-            _ => false,
-        }
+        self.formatting_context.is_inline_formatting_context()
     }
 
     /// Determines if this layout box is associated with the root DOM node (<html>).
@@ -390,12 +404,6 @@ impl BlockContainer {
     }
 }
 
-impl From<BlockContainer> for LayoutBox {
-    fn from(block_container: BlockContainer) -> Self {
-        LayoutBox::BlockContainer(block_container)
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct InlineBox {
     base: BaseBox,
@@ -410,12 +418,6 @@ impl InlineBox {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
         }
-    }
-}
-
-impl From<InlineBox> for LayoutBox {
-    fn from(inline_box: InlineBox) -> Self {
-        LayoutBox::InlineBox(inline_box)
     }
 }
 
@@ -440,26 +442,6 @@ impl TextRun {
             base: BaseBox::new(node, formatting_context),
             contents,
         }
-    }
-}
-
-impl From<TextRun> for LayoutBox {
-    fn from(text_run: TextRun) -> Self {
-        LayoutBox::TextRun(text_run)
-    }
-}
-
-/// Note that this does not correspond to a structure from any spec.  It is simply the selection of
-/// box types that can validly contain inline boxes.
-#[derive(Clone, Debug)]
-pub enum InlineContainer {
-    AnonymousInlineBox(AnonymousInlineBox),
-    InlineBox(InlineBox),
-}
-
-impl From<AnonymousInlineBox> for InlineContainer {
-    fn from(aib: AnonymousInlineBox) -> Self {
-        InlineContainer::AnonymousInlineBox(aib)
     }
 }
 

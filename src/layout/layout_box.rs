@@ -68,32 +68,6 @@ impl LayoutBox {
         LayoutBox::AnonymousInline(AnonymousInlineBox::new(node, formatting_context))
     }
 
-    /// Returns a box capable of containing inline children.  If `self` is already an inline-box,
-    /// this will be `self`.  In other cases, we may need to get and or create a child box capable
-    /// of containing inline children.
-    pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
-        match self {
-            LayoutBox::InlineBox(_) | LayoutBox::AnonymousInline(_) => Some(self),
-            LayoutBox::BlockContainer(bc) => bc
-                .children
-                .iter_mut()
-                .last()
-                .map(|last_child| match last_child {
-                    LayoutBox::AnonymousBlock(abb) => {
-                        get_anonymous_inline_layout_box(&mut abb.children)
-                    }
-                    _ => None,
-                })
-                .flatten(),
-            LayoutBox::AnonymousBlock(abb) => get_anonymous_inline_layout_box(&mut abb.children),
-            LayoutBox::TextRun(_) => panic!("get_inline_container_box called on text run"),
-        }
-    }
-
-    pub fn inner_box_type_name(&self) -> &'static str {
-        self.into()
-    }
-
     pub fn add_child(&mut self, child_box: LayoutBox) {
         match child_box {
             LayoutBox::AnonymousBlock(ab) => self.add_anonymous_block_child(ab),
@@ -189,13 +163,6 @@ impl LayoutBox {
         }
     }
 
-    pub fn is_anonymous_inline(&self) -> bool {
-        match self {
-            LayoutBox::AnonymousInline(_) => true,
-            _ => false,
-        }
-    }
-
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             LayoutBox::AnonymousInline(aib) => aib.formatting_context(),
@@ -203,6 +170,49 @@ impl LayoutBox {
             LayoutBox::BlockContainer(bc) => bc.formatting_context(),
             LayoutBox::InlineBox(ib) => ib.formatting_context(),
             LayoutBox::TextRun(tr) => tr.formatting_context(),
+        }
+    }
+
+    /// Returns a box capable of containing inline children.  If `self` is already an inline-box,
+    /// this will be `self`.  In other cases, we may need to get and or create a child box capable
+    /// of containing inline children.
+    pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
+        match self {
+            LayoutBox::InlineBox(_) | LayoutBox::AnonymousInline(_) => Some(self),
+            LayoutBox::BlockContainer(bc) => bc
+                .children
+                .iter_mut()
+                .last()
+                .map(|last_child| match last_child {
+                    LayoutBox::AnonymousBlock(abb) => {
+                        get_anonymous_inline_layout_box(&mut abb.children)
+                    }
+                    _ => None,
+                })
+                .flatten(),
+            LayoutBox::AnonymousBlock(abb) => get_anonymous_inline_layout_box(&mut abb.children),
+            LayoutBox::TextRun(_) => panic!("get_inline_container_box called on text run"),
+        }
+    }
+
+    pub fn inner_box_type_name(&self) -> &'static str {
+        self.into()
+    }
+
+    pub fn is_anonymous_inline(&self) -> bool {
+        match self {
+            LayoutBox::AnonymousInline(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn physical_dimensions(&self) -> PhysicalDimensions {
+        match self {
+            LayoutBox::BlockContainer(bc) => bc.physical_dimensions(),
+            LayoutBox::AnonymousBlock(abb) => abb.physical_dimensions(),
+            LayoutBox::AnonymousInline(aib) => aib.physical_dimensions(),
+            LayoutBox::InlineBox(ib) => ib.physical_dimensions(),
+            LayoutBox::TextRun(tr) => tr.physical_dimensions(),
         }
     }
 }
@@ -276,10 +286,6 @@ impl BaseBox {
         }
     }
 
-    pub fn node(&self) -> NodeRef {
-        self.node.clone()
-    }
-
     /// Retrieve the computed values of the node associated with this layout box.
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         self.node.computed_values()
@@ -301,6 +307,10 @@ impl BaseBox {
         }
     }
 
+    pub fn node(&self) -> NodeRef {
+        self.node.clone()
+    }
+
     pub fn physical_dimensions(&self) -> PhysicalDimensions {
         self.dimensions
     }
@@ -309,10 +319,6 @@ impl BaseBox {
 #[macro_export]
 macro_rules! base_box_passthrough_impls {
     () => {
-        pub fn node(&self) -> NodeRef {
-            self.base.node()
-        }
-
         pub fn computed_values(&self) -> Ref<ComputedValues> {
             self.base.computed_values()
         }
@@ -327,6 +333,10 @@ macro_rules! base_box_passthrough_impls {
 
         pub fn is_root(&self) -> bool {
             self.base.is_root()
+        }
+
+        pub fn node(&self) -> NodeRef {
+            self.base.node()
         }
 
         pub fn physical_dimensions(&self) -> PhysicalDimensions {
@@ -466,28 +476,26 @@ impl DumpLayout for LayoutBox {
             LayoutBox::InlineBox(ib) => ib.node().data().dump_layout_format(),
             LayoutBox::TextRun(tr) => tr.node().data().dump_layout_format(),
         };
-        // let physical_dimensions = self.dimensions.physical();
-        let verbose_str = "".to_owned();
-        // let verbose_str = if verbose {
-        //     format!(
-        //         " (ml{} mr{} mb{} mt{} bl{} br{} bb{} bt{} pl{} pr{} pb{} pt{})",
-        //         physical_dimensions.margin.left.dump_layout_format(),
-        //         physical_dimensions.margin.right.dump_layout_format(),
-        //         physical_dimensions.margin.bottom.dump_layout_format(),
-        //         physical_dimensions.margin.top.dump_layout_format(),
-        //         physical_dimensions.border.left.dump_layout_format(),
-        //         physical_dimensions.border.right.dump_layout_format(),
-        //         physical_dimensions.border.bottom.dump_layout_format(),
-        //         physical_dimensions.border.top.dump_layout_format(),
-        //         physical_dimensions.padding.left.dump_layout_format(),
-        //         physical_dimensions.padding.right.dump_layout_format(),
-        //         physical_dimensions.padding.bottom.dump_layout_format(),
-        //         physical_dimensions.padding.top.dump_layout_format(),
-        //     )
-        // } else {
-        //     "".to_owned()
-        // };
-        // dbg!(indent_spaces);
+        let physical_dimensions = self.physical_dimensions();
+        let verbose_str = if verbose {
+            format!(
+                " (ml{} mr{} mb{} mt{} bl{} br{} bb{} bt{} pl{} pr{} pb{} pt{})",
+                physical_dimensions.margin.left.dump_layout_format(),
+                physical_dimensions.margin.right.dump_layout_format(),
+                physical_dimensions.margin.bottom.dump_layout_format(),
+                physical_dimensions.margin.top.dump_layout_format(),
+                physical_dimensions.border.left.dump_layout_format(),
+                physical_dimensions.border.right.dump_layout_format(),
+                physical_dimensions.border.bottom.dump_layout_format(),
+                physical_dimensions.border.top.dump_layout_format(),
+                physical_dimensions.padding.left.dump_layout_format(),
+                physical_dimensions.padding.right.dump_layout_format(),
+                physical_dimensions.padding.bottom.dump_layout_format(),
+                physical_dimensions.padding.top.dump_layout_format(),
+            )
+        } else {
+            "".to_owned()
+        };
         let node_dump = if node_name_and_data.len() > 0 {
             format!("{} ", node_name_and_data)
         } else {
@@ -499,14 +507,10 @@ impl DumpLayout for LayoutBox {
             "",
             node_dump,
             self.inner_box_type_name(),
-            0,
-            0,
-            0,
-            0,
-            // physical_dimensions.content.start_x.dump_layout_format(),
-            // physical_dimensions.content.start_y.dump_layout_format(),
-            // physical_dimensions.content.width.dump_layout_format(),
-            // physical_dimensions.content.height.dump_layout_format(),
+            physical_dimensions.content.start_x.dump_layout_format(),
+            physical_dimensions.content.start_y.dump_layout_format(),
+            physical_dimensions.content.width.dump_layout_format(),
+            physical_dimensions.content.height.dump_layout_format(),
             verbose_str,
             indent_spaces = indent_spaces,
         )

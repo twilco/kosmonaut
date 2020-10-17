@@ -9,7 +9,7 @@ pub mod values;
 
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
-use crate::layout::dimensions::PhysicalDimensions;
+use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
 use crate::layout::layout_box::{
     AnonymousBlockBox, AnonymousInlineBox, BlockContainer, InlineBox, LayoutBox, TextRun,

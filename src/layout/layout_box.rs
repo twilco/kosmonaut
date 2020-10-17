@@ -1,6 +1,6 @@
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
-use crate::layout::dimensions::{LogicalDimensions, PhysicalDimensions};
+use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::FlowSide;
 use crate::layout::formatting_context::{
     FormattingContext, FormattingContextRef, QualifiedFormattingContext,
@@ -322,17 +322,15 @@ impl LayoutBox {
             (true, false, false) => margin_inline_start = remaining_inline_size,
             (false, false, true) => margin_inline_end = remaining_inline_size,
         }
-
-        self.physical_dimensions()
     }
 
-    pub fn physical_dimensions(&self) -> PhysicalDimensions {
+    pub fn dimensions(&self) -> Dimensions {
         match self {
-            LayoutBox::BlockContainer(bc) => bc.physical_dimensions(),
-            LayoutBox::AnonymousBlock(abb) => abb.physical_dimensions(),
-            LayoutBox::AnonymousInline(aib) => aib.physical_dimensions(),
-            LayoutBox::InlineBox(ib) => ib.physical_dimensions(),
-            LayoutBox::TextRun(tr) => tr.physical_dimensions(),
+            LayoutBox::BlockContainer(bc) => bc.dimensions(),
+            LayoutBox::AnonymousBlock(abb) => abb.dimensions(),
+            LayoutBox::AnonymousInline(aib) => aib.dimensions(),
+            LayoutBox::InlineBox(ib) => ib.dimensions(),
+            LayoutBox::TextRun(tr) => tr.dimensions(),
         }
     }
 }
@@ -386,8 +384,7 @@ pub enum LayoutParticipation {
 /// construct, not something that maps to spec-language.
 #[derive(Clone, Debug)]
 pub struct BaseBox {
-    // TODO(layout-rewrite): Should this be logical (e.g. flow-relative rather than page-relative) dimensions?
-    dimensions: PhysicalDimensions,
+    dimensions: Dimensions,
     /// The formatting context this box participates in.
     formatting_context: FormattingContextRef,
     /// Reference to the closest non-anonymous node.  This distinction only matters for anonymous
@@ -400,7 +397,7 @@ pub struct BaseBox {
 impl BaseBox {
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> BaseBox {
         BaseBox {
-            dimensions: PhysicalDimensions::default(),
+            dimensions: Dimensions::default(),
             formatting_context: formatting_context.clone(),
             node,
         }
@@ -431,7 +428,7 @@ impl BaseBox {
         self.node.clone()
     }
 
-    pub fn physical_dimensions(&self) -> PhysicalDimensions {
+    pub fn dimensions(&self) -> Dimensions {
         self.dimensions
     }
 }
@@ -459,8 +456,8 @@ macro_rules! base_box_passthrough_impls {
             self.base.node()
         }
 
-        pub fn physical_dimensions(&self) -> PhysicalDimensions {
-            self.base.physical_dimensions()
+        pub fn dimensions(&self) -> Dimensions {
+            self.base.dimensions()
         }
     };
 }
@@ -596,22 +593,22 @@ impl DumpLayout for LayoutBox {
             LayoutBox::InlineBox(ib) => ib.node().data().dump_layout_format(),
             LayoutBox::TextRun(tr) => tr.node().data().dump_layout_format(),
         };
-        let physical_dimensions = self.physical_dimensions();
+        let dimensions = self.dimensions();
         let verbose_str = if verbose {
             format!(
                 " (ml{} mr{} mb{} mt{} bl{} br{} bb{} bt{} pl{} pr{} pb{} pt{})",
-                physical_dimensions.margin.left.dump_layout_format(),
-                physical_dimensions.margin.right.dump_layout_format(),
-                physical_dimensions.margin.bottom.dump_layout_format(),
-                physical_dimensions.margin.top.dump_layout_format(),
-                physical_dimensions.border.left.dump_layout_format(),
-                physical_dimensions.border.right.dump_layout_format(),
-                physical_dimensions.border.bottom.dump_layout_format(),
-                physical_dimensions.border.top.dump_layout_format(),
-                physical_dimensions.padding.left.dump_layout_format(),
-                physical_dimensions.padding.right.dump_layout_format(),
-                physical_dimensions.padding.bottom.dump_layout_format(),
-                physical_dimensions.padding.top.dump_layout_format(),
+                dimensions.margin.left.dump_layout_format(),
+                dimensions.margin.right.dump_layout_format(),
+                dimensions.margin.bottom.dump_layout_format(),
+                dimensions.margin.top.dump_layout_format(),
+                dimensions.border.left.dump_layout_format(),
+                dimensions.border.right.dump_layout_format(),
+                dimensions.border.bottom.dump_layout_format(),
+                dimensions.border.top.dump_layout_format(),
+                dimensions.padding.left.dump_layout_format(),
+                dimensions.padding.right.dump_layout_format(),
+                dimensions.padding.bottom.dump_layout_format(),
+                dimensions.padding.top.dump_layout_format(),
             )
         } else {
             "".to_owned()
@@ -627,10 +624,10 @@ impl DumpLayout for LayoutBox {
             "",
             node_dump,
             self.inner_box_type_name(),
-            physical_dimensions.content.start_x.dump_layout_format(),
-            physical_dimensions.content.start_y.dump_layout_format(),
-            physical_dimensions.content.width.dump_layout_format(),
-            physical_dimensions.content.height.dump_layout_format(),
+            dimensions.content.start_x.dump_layout_format(),
+            dimensions.content.start_y.dump_layout_format(),
+            dimensions.content.width.dump_layout_format(),
+            dimensions.content.height.dump_layout_format(),
             verbose_str,
             indent_spaces = indent_spaces,
         )

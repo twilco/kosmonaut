@@ -1,4 +1,4 @@
-use crate::layout::dimensions::{LogicalDimensions, PhysicalDimensions};
+use crate::layout::dimensions::Dimensions;
 use crate::layout::layout_box::LayoutBox;
 use image::error::UnsupportedErrorKind::Format;
 use std::mem::discriminant;

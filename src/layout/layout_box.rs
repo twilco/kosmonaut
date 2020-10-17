@@ -1,7 +1,7 @@
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
-use crate::layout::flow::FlowSide;
+use crate::layout::flow::{solve_block_level_inline_size, FlowSide, SolveInlineSizeInput};
 use crate::layout::formatting_context::{
     FormattingContext, FormattingContextRef, QualifiedFormattingContext,
 };
@@ -227,10 +227,7 @@ impl LayoutBox {
             // https://drafts.csswg.org/css-display/#outer-display-type
             Display::Full(full_display) => match full_display.outer() {
                 OuterDisplay::Block => {
-                    self.calc_block_level_non_replaced_inlinewise_properties(
-                        containing_block,
-                        scale_factor,
-                    );
+                    self.solve_and_set_inline_level_properties(containing_block, scale_factor);
                 }
                 OuterDisplay::Inline => unimplemented!(),
             },
@@ -240,122 +237,73 @@ impl LayoutBox {
         // Layout all children.  This probably belongs somewhere else.
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
-        let self_containing_block = ContainingBlock::new(self.dimensions().content, direction, writing_mode);
+        let self_containing_block =
+            ContainingBlock::new(self.dimensions().content, direction, writing_mode);
         match self {
-            LayoutBox::AnonymousBlock(abb) => {
-                abb.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
-            }
-            LayoutBox::AnonymousInline(aib) => {
-                aib.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
-            }
-            LayoutBox::BlockContainer(bc) => {
-                bc.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
-            }
-            LayoutBox::InlineBox(ib) => {
-                ib.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
-            }
+            LayoutBox::AnonymousBlock(abb) => abb
+                .children
+                .iter_mut()
+                .for_each(|child| child.layout(self_containing_block, scale_factor)),
+            LayoutBox::AnonymousInline(aib) => aib
+                .children
+                .iter_mut()
+                .for_each(|child| child.layout(self_containing_block, scale_factor)),
+            LayoutBox::BlockContainer(bc) => bc
+                .children
+                .iter_mut()
+                .for_each(|child| child.layout(self_containing_block, scale_factor)),
+            LayoutBox::InlineBox(ib) => ib
+                .children
+                .iter_mut()
+                .for_each(|child| child.layout(self_containing_block, scale_factor)),
             LayoutBox::TextRun(_) => {}
         }
     }
 
-    /// Determines used inline-wise direction values.
-    ///
-    /// Corresponds to CSS 2.1 section 10.3.3.  https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#blockwidth
-    pub fn calc_block_level_non_replaced_inlinewise_properties(
+    pub fn solve_and_set_inline_level_properties(
         &mut self,
         containing_block: ContainingBlock,
         scale_factor: f32,
     ) {
+        // Use the containing block's writing mode for resolving flow-relative directions.
+        // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
+        let writing_mode = containing_block.writing_mode();
+
         let computed_values = self.computed_values();
-        let mut margin_inline_start = computed_values.margin_flow_relative(FlowSide::InlineStart);
-        let mut margin_inline_end = computed_values.margin_flow_relative(FlowSide::InlineEnd);
-        let border_inline_start = computed_values.border_flow_relative(FlowSide::InlineStart);
-        let border_inline_end = computed_values.border_flow_relative(FlowSide::InlineEnd);
-        let padding_inline_start = computed_values.padding_flow_relative(FlowSide::InlineStart);
-        let padding_inline_end = computed_values.padding_flow_relative(FlowSide::InlineEnd);
-        let mut inline_size = computed_values.inline_size();
+        let border_inline_start =
+            computed_values.border_flow_relative(FlowSide::InlineStart, writing_mode);
+        let border_inline_end =
+            computed_values.border_flow_relative(FlowSide::InlineEnd, writing_mode);
+        let padding_inline_start =
+            computed_values.padding_flow_relative(FlowSide::InlineStart, writing_mode);
+        let padding_inline_end =
+            computed_values.padding_flow_relative(FlowSide::InlineEnd, writing_mode);
+
+        let solved_inline_sizes = solve_block_level_inline_size(SolveInlineSizeInput {
+            containing_block,
+            margin_inline_start: computed_values
+                .margin_flow_relative(FlowSide::InlineStart, writing_mode),
+            margin_inline_end: computed_values
+                .margin_flow_relative(FlowSide::InlineEnd, writing_mode),
+            border_inline_start,
+            border_inline_end,
+            padding_inline_start,
+            padding_inline_end,
+            inline_size: computed_values.inline_size(writing_mode),
+        });
         // Release this &self borrow so we can mutably borrow below.
         drop(computed_values);
 
-        let margin_box_inline_size = margin_inline_start.to_px(containing_block.inline_size())
-            + margin_inline_end.to_px(containing_block.inline_size())
-            + border_inline_start
-            + border_inline_end
-            + padding_inline_start.to_px(containing_block.inline_size())
-            + padding_inline_end.to_px(containing_block.inline_size())
-            + inline_size.to_px(containing_block.inline_size());
-
-        let zero = LengthPercentageOrAuto::new_len(0.);
-        let auto = LengthPercentageOrAuto::Auto;
-        // If 'width' is not 'auto' and 'border-left-width' + 'padding-left' + 'width' + 'padding-right'
-        // + 'border-right-width' (plus any of 'margin-left' or 'margin-right' that are not 'auto')
-        // is larger than the width of the containing block, then any 'auto' values for 'margin-left'
-        // or 'margin-right' are, for the following rules, treated as zero.
-        if inline_size != auto && margin_box_inline_size > containing_block.inline_size() {
-            margin_inline_start = zero;
-            margin_inline_end = zero;
-        }
-
-        // This can be be negative, indicating an overflow (this box has a larger inline-size than
-        // the containing block).
-        let remaining_inline_size_px = containing_block.inline_size() - margin_box_inline_size;
-        let remaining_inline_size = LengthPercentageOrAuto::new_len_px(remaining_inline_size_px);
-        match (
-            margin_inline_start == auto,
-            inline_size == auto,
-            margin_inline_end == auto,
-        ) {
-            (false, false, false) => {
-                // If all of the above have a computed value other than 'auto', the values are said to be
-                // "over-constrained" and one of the used values will have to be different from its
-                // computed value.
-                // For an explanation of this rule, see: https://stackoverflow.com/a/34931986/2421349
-
-                // If the 'direction' property of the containing block has the value 'ltr', the
-                // specified value of 'margin-right' is ignored and the value is calculated so as
-                // to make the equality true. If the value of 'direction' is 'rtl', this happens to
-                // 'margin-left' instead.
-                match containing_block.direction() {
-                    Direction::Ltr => margin_inline_end = remaining_inline_size,
-                    Direction::Rtl => margin_inline_start = remaining_inline_size,
-                }
-            }
-            (_, true, _) => {
-                // If 'width' is set to 'auto', any other 'auto' values become '0' and 'width'
-                // follows from the resulting equality.
-                inline_size = remaining_inline_size;
-                if margin_inline_start == auto {
-                    margin_inline_start = zero;
-                }
-                if margin_inline_end == auto {
-                    margin_inline_end = zero;
-                }
-            }
-            (true, false, true) => {
-                // If both inline-start and inline-end margins are 'auto', their used values are equal.
-                // This centers the element in the inline-direction.
-                let half_remaining_inline_size =
-                    LengthPercentageOrAuto::new_len_px(remaining_inline_size_px / 2.0);
-                margin_inline_start = half_remaining_inline_size;
-                margin_inline_end = half_remaining_inline_size;
-            }
-            // If there is exactly one value specified as 'auto', its used value follows from the
-            // equality.
-            (true, false, false) => margin_inline_start = remaining_inline_size,
-            (false, false, true) => margin_inline_end = remaining_inline_size,
-        }
-
-        let writing_mode = containing_block.writing_mode();
         let direction = containing_block.direction();
         self.dimensions_mut().set_margin(
             FlowSide::InlineStart,
-            margin_inline_start.to_px(containing_block.inline_size()),
+            solved_inline_sizes.margin_inline_start,
             writing_mode,
             direction,
         );
         self.dimensions_mut().set_margin(
             FlowSide::InlineEnd,
-            margin_inline_end.to_px(containing_block.inline_size()),
+            solved_inline_sizes.margin_inline_end,
             writing_mode,
             direction,
         );
@@ -384,10 +332,8 @@ impl LayoutBox {
             direction,
         );
 
-        self.dimensions_mut().set_inline_size(
-            inline_size.to_px(containing_block.inline_size()),
-            writing_mode,
-        );
+        self.dimensions_mut()
+            .set_inline_size(solved_inline_sizes.inline_size, writing_mode);
     }
 
     pub fn dimensions(&self) -> Dimensions {

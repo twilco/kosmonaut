@@ -1,11 +1,14 @@
 pub mod box_tree;
+pub mod containing_block;
 pub mod dimensions;
+pub mod flow;
 pub mod formatting_context;
 pub mod layout_box;
 pub mod rect;
 pub mod values;
 
 use crate::dom::tree::{NodeData, NodeRef};
+use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::PhysicalDimensions;
 use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
 use crate::layout::layout_box::{
@@ -21,37 +24,28 @@ use crate::style::values::CSSFloat;
 use std::io::Write;
 use std::rc::Rc;
 
-/// Given a `window` and what probably should be the root of a `box_tree`, perform a layout
-/// with the dimensions of the `window`.
+/// Given a `window` and a `layout_root_box`, perform a layout with the dimensions of the `window`.
 pub fn global_layout(
-    box_tree: &mut LayoutBox,
+    layout_root_box: &mut LayoutBox,
     inner_window_width: f32,
     inner_window_height: f32,
     scale_factor: f32,
 ) {
-    // box_tree.layout(
-    //     PhysicalDimensions {
-    //         content: Rect {
-    //             start_x: 0.0,
-    //             start_y: 0.0,
-    //             width: CSSPixelLength::new(inner_window_width),
-    //             height: CSSPixelLength::new(inner_window_height),
-    //         },
-    //         padding: Default::default(),
-    //         border: Default::default(),
-    //         margin: Default::default(),
-    //     },
-    //     scale_factor,
-    // );
-}
-
-/// https://drafts.csswg.org/css-writing-modes-4/#logical-directions
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum LogicalDirection {
-    BlockStart,
-    BlockEnd,
-    InlineStart,
-    InlineEnd,
+    let writing_mode = layout_root_box.computed_values().writing_mode;
+    let direction = layout_root_box.computed_values().direction;
+    layout_root_box.layout(
+        ContainingBlock::new(
+            Rect {
+                start_x: 0.0,
+                start_y: 0.0,
+                width: CSSPixelLength::new(inner_window_width),
+                height: CSSPixelLength::new(inner_window_height),
+            },
+            direction,
+            writing_mode,
+        ),
+        scale_factor,
+    );
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

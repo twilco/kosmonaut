@@ -1,5 +1,6 @@
+use crate::layout::flow::FlowSide;
 use crate::layout::rect::{EdgeSizes, Rect};
-use crate::layout::{BoxComponent, LogicalDirection};
+use crate::layout::BoxComponent;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::{Direction, WritingMode};
 use crate::style::values::CSSFloat;
@@ -29,7 +30,7 @@ impl LogicalDimensions {
         self.dimensions
     }
 
-    pub fn border_size(self, side: Side) -> CSSPixelLength {
+    pub fn phys_border_size(self, side: Side) -> CSSPixelLength {
         self.dimensions.border_size(side)
     }
 
@@ -161,22 +162,22 @@ impl LogicalDimensions {
 
     // Make sure the `get` and `set` tables stay in sync.  There's probably a better way to share
     // the lookup logic between get and set operations, but copy-paste will do for now.
-    pub fn get(&self, dir: LogicalDirection, box_component: BoxComponent) -> CSSPixelLength {
+    pub fn get(&self, side: FlowSide, box_component: BoxComponent) -> CSSPixelLength {
         // Maps to this table: https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical
-        match (self.writing_mode, self.direction, dir) {
+        match (self.writing_mode, self.direction, side) {
             (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Ltr,
-                LogicalDirection::InlineStart,
+                FlowSide::InlineStart,
             )
             | (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Rtl,
-                LogicalDirection::InlineEnd,
+                FlowSide::InlineEnd,
             )
-            | (WritingMode::SidewaysLr, Direction::Ltr, LogicalDirection::InlineEnd)
-            | (WritingMode::SidewaysLr, Direction::Rtl, LogicalDirection::InlineStart)
-            | (WritingMode::HorizontalTb, _, LogicalDirection::BlockStart) => match box_component {
+            | (WritingMode::SidewaysLr, Direction::Ltr, FlowSide::InlineEnd)
+            | (WritingMode::SidewaysLr, Direction::Rtl, FlowSide::InlineStart)
+            | (WritingMode::HorizontalTb, _, FlowSide::BlockStart) => match box_component {
                 BoxComponent::Border => self.dimensions.border.top,
                 BoxComponent::Margin => self.dimensions.margin.top,
                 BoxComponent::Padding => self.dimensions.padding.top,
@@ -184,42 +185,34 @@ impl LogicalDimensions {
             (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Ltr,
-                LogicalDirection::InlineEnd,
+                FlowSide::InlineEnd,
             )
             | (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Rtl,
-                LogicalDirection::InlineStart,
+                FlowSide::InlineStart,
             )
-            | (WritingMode::SidewaysLr, Direction::Ltr, LogicalDirection::InlineStart)
-            | (WritingMode::SidewaysLr, Direction::Rtl, LogicalDirection::InlineEnd)
-            | (WritingMode::HorizontalTb, _, LogicalDirection::BlockEnd) => match box_component {
+            | (WritingMode::SidewaysLr, Direction::Ltr, FlowSide::InlineStart)
+            | (WritingMode::SidewaysLr, Direction::Rtl, FlowSide::InlineEnd)
+            | (WritingMode::HorizontalTb, _, FlowSide::BlockEnd) => match box_component {
                 BoxComponent::Border => self.dimensions.border.bottom,
                 BoxComponent::Margin => self.dimensions.margin.bottom,
                 BoxComponent::Padding => self.dimensions.padding.bottom,
             },
-            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, LogicalDirection::BlockEnd)
-            | (
-                WritingMode::VerticalLr | WritingMode::SidewaysLr,
-                _,
-                LogicalDirection::BlockStart,
-            )
-            | (WritingMode::HorizontalTb, Direction::Ltr, LogicalDirection::InlineStart)
-            | (WritingMode::HorizontalTb, Direction::Rtl, LogicalDirection::InlineEnd) => {
+            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, FlowSide::BlockEnd)
+            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, FlowSide::BlockStart)
+            | (WritingMode::HorizontalTb, Direction::Ltr, FlowSide::InlineStart)
+            | (WritingMode::HorizontalTb, Direction::Rtl, FlowSide::InlineEnd) => {
                 match box_component {
                     BoxComponent::Border => self.dimensions.border.left,
                     BoxComponent::Margin => self.dimensions.margin.left,
                     BoxComponent::Padding => self.dimensions.padding.left,
                 }
             }
-            (
-                WritingMode::VerticalRl | WritingMode::SidewaysRl,
-                _,
-                LogicalDirection::BlockStart,
-            )
-            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, LogicalDirection::BlockEnd)
-            | (WritingMode::HorizontalTb, Direction::Ltr, LogicalDirection::InlineEnd)
-            | (WritingMode::HorizontalTb, Direction::Rtl, LogicalDirection::InlineStart) => {
+            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, FlowSide::BlockStart)
+            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, FlowSide::BlockEnd)
+            | (WritingMode::HorizontalTb, Direction::Ltr, FlowSide::InlineEnd)
+            | (WritingMode::HorizontalTb, Direction::Rtl, FlowSide::InlineStart) => {
                 match box_component {
                     BoxComponent::Border => self.dimensions.border.right,
                     BoxComponent::Margin => self.dimensions.margin.right,
@@ -229,22 +222,22 @@ impl LogicalDimensions {
         }
     }
 
-    pub fn set(&mut self, dir: LogicalDirection, box_component: BoxComponent, val: CSSPixelLength) {
+    pub fn set(&mut self, dir: FlowSide, box_component: BoxComponent, val: CSSPixelLength) {
         // Maps to this table: https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical
         match (self.writing_mode, self.direction, dir) {
             (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Ltr,
-                LogicalDirection::InlineStart,
+                FlowSide::InlineStart,
             )
             | (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Rtl,
-                LogicalDirection::InlineEnd,
+                FlowSide::InlineEnd,
             )
-            | (WritingMode::SidewaysLr, Direction::Ltr, LogicalDirection::InlineEnd)
-            | (WritingMode::SidewaysLr, Direction::Rtl, LogicalDirection::InlineStart)
-            | (WritingMode::HorizontalTb, _, LogicalDirection::BlockStart) => match box_component {
+            | (WritingMode::SidewaysLr, Direction::Ltr, FlowSide::InlineEnd)
+            | (WritingMode::SidewaysLr, Direction::Rtl, FlowSide::InlineStart)
+            | (WritingMode::HorizontalTb, _, FlowSide::BlockStart) => match box_component {
                 BoxComponent::Border => self.dimensions.border.top = val,
                 BoxComponent::Margin => self.dimensions.margin.top = val,
                 BoxComponent::Padding => self.dimensions.padding.top = val,
@@ -252,42 +245,34 @@ impl LogicalDimensions {
             (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Ltr,
-                LogicalDirection::InlineEnd,
+                FlowSide::InlineEnd,
             )
             | (
                 WritingMode::VerticalRl | WritingMode::SidewaysRl | WritingMode::VerticalLr,
                 Direction::Rtl,
-                LogicalDirection::InlineStart,
+                FlowSide::InlineStart,
             )
-            | (WritingMode::SidewaysLr, Direction::Ltr, LogicalDirection::InlineStart)
-            | (WritingMode::SidewaysLr, Direction::Rtl, LogicalDirection::InlineEnd)
-            | (WritingMode::HorizontalTb, _, LogicalDirection::BlockEnd) => match box_component {
+            | (WritingMode::SidewaysLr, Direction::Ltr, FlowSide::InlineStart)
+            | (WritingMode::SidewaysLr, Direction::Rtl, FlowSide::InlineEnd)
+            | (WritingMode::HorizontalTb, _, FlowSide::BlockEnd) => match box_component {
                 BoxComponent::Border => self.dimensions.border.bottom = val,
                 BoxComponent::Margin => self.dimensions.margin.bottom = val,
                 BoxComponent::Padding => self.dimensions.padding.bottom = val,
             },
-            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, LogicalDirection::BlockEnd)
-            | (
-                WritingMode::VerticalLr | WritingMode::SidewaysLr,
-                _,
-                LogicalDirection::BlockStart,
-            )
-            | (WritingMode::HorizontalTb, Direction::Ltr, LogicalDirection::InlineStart)
-            | (WritingMode::HorizontalTb, Direction::Rtl, LogicalDirection::InlineEnd) => {
+            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, FlowSide::BlockEnd)
+            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, FlowSide::BlockStart)
+            | (WritingMode::HorizontalTb, Direction::Ltr, FlowSide::InlineStart)
+            | (WritingMode::HorizontalTb, Direction::Rtl, FlowSide::InlineEnd) => {
                 match box_component {
                     BoxComponent::Border => self.dimensions.border.left = val,
                     BoxComponent::Margin => self.dimensions.margin.left = val,
                     BoxComponent::Padding => self.dimensions.padding.left = val,
                 }
             }
-            (
-                WritingMode::VerticalRl | WritingMode::SidewaysRl,
-                _,
-                LogicalDirection::BlockStart,
-            )
-            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, LogicalDirection::BlockEnd)
-            | (WritingMode::HorizontalTb, Direction::Ltr, LogicalDirection::InlineEnd)
-            | (WritingMode::HorizontalTb, Direction::Rtl, LogicalDirection::InlineStart) => {
+            (WritingMode::VerticalRl | WritingMode::SidewaysRl, _, FlowSide::BlockStart)
+            | (WritingMode::VerticalLr | WritingMode::SidewaysLr, _, FlowSide::BlockEnd)
+            | (WritingMode::HorizontalTb, Direction::Ltr, FlowSide::InlineEnd)
+            | (WritingMode::HorizontalTb, Direction::Rtl, FlowSide::InlineStart) => {
                 match box_component {
                     BoxComponent::Border => self.dimensions.border.right = val,
                     BoxComponent::Margin => self.dimensions.margin.right = val,

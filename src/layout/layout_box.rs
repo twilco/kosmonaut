@@ -236,6 +236,26 @@ impl LayoutBox {
             },
             Display::Box(DisplayBox::None) => unimplemented!(),
         }
+
+        // Layout all children.  This probably belongs somewhere else.
+        let direction = self.computed_values().direction;
+        let writing_mode = self.computed_values().writing_mode;
+        let self_containing_block = ContainingBlock::new(self.dimensions().content, direction, writing_mode);
+        match self {
+            LayoutBox::AnonymousBlock(abb) => {
+                abb.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
+            }
+            LayoutBox::AnonymousInline(aib) => {
+                aib.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
+            }
+            LayoutBox::BlockContainer(bc) => {
+                bc.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
+            }
+            LayoutBox::InlineBox(ib) => {
+                ib.children.iter_mut().for_each(|child| child.layout(self_containing_block, scale_factor))
+            }
+            LayoutBox::TextRun(_) => {}
+        }
     }
 
     /// Determines used inline-wise direction values.
@@ -254,6 +274,8 @@ impl LayoutBox {
         let padding_inline_start = computed_values.padding_flow_relative(FlowSide::InlineStart);
         let padding_inline_end = computed_values.padding_flow_relative(FlowSide::InlineEnd);
         let mut inline_size = computed_values.inline_size();
+        // Release this &self borrow so we can mutably borrow below.
+        drop(computed_values);
 
         let margin_box_inline_size = margin_inline_start.to_px(containing_block.inline_size())
             + margin_inline_end.to_px(containing_block.inline_size())
@@ -322,6 +344,50 @@ impl LayoutBox {
             (true, false, false) => margin_inline_start = remaining_inline_size,
             (false, false, true) => margin_inline_end = remaining_inline_size,
         }
+
+        let writing_mode = containing_block.writing_mode();
+        let direction = containing_block.direction();
+        self.dimensions_mut().set_margin(
+            FlowSide::InlineStart,
+            margin_inline_start.to_px(containing_block.inline_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_margin(
+            FlowSide::InlineEnd,
+            margin_inline_end.to_px(containing_block.inline_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_border(
+            FlowSide::InlineStart,
+            border_inline_start,
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_border(
+            FlowSide::InlineEnd,
+            border_inline_end,
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_padding(
+            FlowSide::InlineStart,
+            padding_inline_start.to_px(containing_block.inline_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_padding(
+            FlowSide::InlineEnd,
+            padding_inline_end.to_px(containing_block.inline_size()),
+            writing_mode,
+            direction,
+        );
+
+        self.dimensions_mut().set_inline_size(
+            inline_size.to_px(containing_block.inline_size()),
+            writing_mode,
+        );
     }
 
     pub fn dimensions(&self) -> Dimensions {
@@ -331,6 +397,16 @@ impl LayoutBox {
             LayoutBox::AnonymousInline(aib) => aib.dimensions(),
             LayoutBox::InlineBox(ib) => ib.dimensions(),
             LayoutBox::TextRun(tr) => tr.dimensions(),
+        }
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        match self {
+            LayoutBox::BlockContainer(bc) => bc.dimensions_mut(),
+            LayoutBox::AnonymousBlock(abb) => abb.dimensions_mut(),
+            LayoutBox::AnonymousInline(aib) => aib.dimensions_mut(),
+            LayoutBox::InlineBox(ib) => ib.dimensions_mut(),
+            LayoutBox::TextRun(tr) => tr.dimensions_mut(),
         }
     }
 }
@@ -408,6 +484,14 @@ impl BaseBox {
         self.node.computed_values()
     }
 
+    pub fn dimensions(&self) -> Dimensions {
+        self.dimensions
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        &mut self.dimensions
+    }
+
     pub fn formatting_context(&self) -> FormattingContextRef {
         self.formatting_context.clone()
     }
@@ -427,37 +511,44 @@ impl BaseBox {
     pub fn node(&self) -> NodeRef {
         self.node.clone()
     }
-
-    pub fn dimensions(&self) -> Dimensions {
-        self.dimensions
-    }
 }
 
 #[macro_export]
 macro_rules! base_box_passthrough_impls {
     () => {
+        #[inline(always)]
         pub fn computed_values(&self) -> Ref<ComputedValues> {
             self.base.computed_values()
         }
 
+        #[inline(always)]
+        pub fn dimensions(&self) -> Dimensions {
+            self.base.dimensions()
+        }
+
+        #[inline(always)]
+        pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+            self.base.dimensions_mut()
+        }
+
+        #[inline(always)]
         pub fn formatting_context(&self) -> FormattingContextRef {
             self.base.formatting_context()
         }
 
+        #[inline(always)]
         pub fn has_inline_formatting_context(&self) -> bool {
             self.base.has_inline_formatting_context()
         }
 
+        #[inline(always)]
         pub fn is_root(&self) -> bool {
             self.base.is_root()
         }
 
+        #[inline(always)]
         pub fn node(&self) -> NodeRef {
             self.base.node()
-        }
-
-        pub fn dimensions(&self) -> Dimensions {
-            self.base.dimensions()
         }
     };
 }

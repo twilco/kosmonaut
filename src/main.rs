@@ -109,14 +109,14 @@ fn run_layout_dump(
     verbose: bool,
 ) {
     let mut box_tree = build_box_tree(styled_dom, None).unwrap();
-    // global_layout(
-    //     &mut box_tree,
-    //     inner_width_opt
-    //         .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
-    //     inner_height_opt
-    //         .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
-    //     scale_factor,
-    // );
+    global_layout(
+        &mut box_tree,
+        inner_width_opt
+            .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
+        inner_height_opt
+            .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
+        scale_factor,
+    );
     box_tree.dump_layout(&mut std::io::stdout(), 0, verbose);
 }
 

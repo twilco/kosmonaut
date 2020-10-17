@@ -214,6 +214,39 @@ impl Dimensions {
         }
     }
 
+    #[inline(always)]
+    pub fn set_margin(
+        &mut self,
+        side: FlowSide,
+        val: CSSPixelLength,
+        writing_mode: WritingMode,
+        direction: Direction,
+    ) {
+        self.set(side, BoxComponent::Margin, val, writing_mode, direction)
+    }
+
+    #[inline(always)]
+    pub fn set_border(
+        &mut self,
+        side: FlowSide,
+        val: CSSPixelLength,
+        writing_mode: WritingMode,
+        direction: Direction,
+    ) {
+        self.set(side, BoxComponent::Border, val, writing_mode, direction)
+    }
+
+    #[inline(always)]
+    pub fn set_padding(
+        &mut self,
+        side: FlowSide,
+        val: CSSPixelLength,
+        writing_mode: WritingMode,
+        direction: Direction,
+    ) {
+        self.set(side, BoxComponent::Padding, val, writing_mode, direction);
+    }
+
     pub fn set(
         &mut self,
         side: FlowSide,

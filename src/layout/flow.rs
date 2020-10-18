@@ -70,8 +70,8 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
 
     // This can be be negative, indicating an overflow (this box has a larger inline-size than
     // the containing block).
-    let remaining_inline_size_px = containing_block.inline_size() - margin_box_inline_size;
-    let remaining_inline_size = LengthPercentageOrAuto::new_len_px(remaining_inline_size_px);
+    let available_inline_space_px = containing_block.inline_size() - margin_box_inline_size;
+    let available_inline_space = LengthPercentageOrAuto::new_len_px(available_inline_space_px);
     match (
         margin_inline_start == auto,
         inline_size == auto,
@@ -88,14 +88,14 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
             // to make the equality true. If the value of 'direction' is 'rtl', this happens to
             // 'margin-left' instead.
             match containing_block.direction() {
-                Direction::Ltr => margin_inline_end = remaining_inline_size,
-                Direction::Rtl => margin_inline_start = remaining_inline_size,
+                Direction::Ltr => margin_inline_end = available_inline_space,
+                Direction::Rtl => margin_inline_start = available_inline_space,
             }
         }
         (_, true, _) => {
             // If 'width' is set to 'auto', any other 'auto' values become '0' and 'width'
             // follows from the resulting equality.
-            inline_size = remaining_inline_size;
+            inline_size = available_inline_space;
             if margin_inline_start == auto {
                 margin_inline_start = zero;
             }
@@ -107,14 +107,14 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
             // If both inline-start and inline-end margins are 'auto', their used values are equal.
             // This centers the element in the inline-direction.
             let half_remaining_inline_size =
-                LengthPercentageOrAuto::new_len_px(remaining_inline_size_px / 2.0);
+                LengthPercentageOrAuto::new_len_px(available_inline_space_px / 2.0);
             margin_inline_start = half_remaining_inline_size;
             margin_inline_end = half_remaining_inline_size;
         }
         // If there is exactly one value specified as 'auto', its used value follows from the
         // equality.
-        (true, false, false) => margin_inline_start = remaining_inline_size,
-        (false, false, true) => margin_inline_end = remaining_inline_size,
+        (true, false, false) => margin_inline_start = available_inline_space,
+        (false, false, true) => margin_inline_end = available_inline_space,
     }
 
     SolveInlineSizeOutput {

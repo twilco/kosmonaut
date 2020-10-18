@@ -177,6 +177,26 @@ impl LayoutBox {
         }
     }
 
+    pub fn dimensions(&self) -> Dimensions {
+        match self {
+            LayoutBox::BlockContainer(bc) => bc.dimensions(),
+            LayoutBox::AnonymousBlock(abb) => abb.dimensions(),
+            LayoutBox::AnonymousInline(aib) => aib.dimensions(),
+            LayoutBox::InlineBox(ib) => ib.dimensions(),
+            LayoutBox::TextRun(tr) => tr.dimensions(),
+        }
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        match self {
+            LayoutBox::BlockContainer(bc) => bc.dimensions_mut(),
+            LayoutBox::AnonymousBlock(abb) => abb.dimensions_mut(),
+            LayoutBox::AnonymousInline(aib) => aib.dimensions_mut(),
+            LayoutBox::InlineBox(ib) => ib.dimensions_mut(),
+            LayoutBox::TextRun(tr) => tr.dimensions_mut(),
+        }
+    }
+
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             LayoutBox::AnonymousInline(aib) => aib.formatting_context(),
@@ -228,13 +248,19 @@ impl LayoutBox {
             Display::Full(full_display) => match full_display.outer() {
                 OuterDisplay::Block => {
                     self.solve_and_set_inline_level_properties(containing_block, scale_factor);
+                    // set xpos somewhere
+                    self.solve_and_set_block_level_properties(containing_block, scale_factor);
+                    // set ypos somewhere
                 }
                 OuterDisplay::Inline => unimplemented!(),
             },
             Display::Box(DisplayBox::None) => unimplemented!(),
         }
 
-        // Layout all children.  This probably belongs somewhere else.
+        self.layout_children(scale_factor);
+    }
+
+    pub fn layout_children(&mut self, scale_factor: f32) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
         let self_containing_block =
@@ -331,29 +357,83 @@ impl LayoutBox {
             writing_mode,
             direction,
         );
-
         self.dimensions_mut()
             .set_inline_size(solved_inline_sizes.inline_size, writing_mode);
     }
 
-    pub fn dimensions(&self) -> Dimensions {
-        match self {
-            LayoutBox::BlockContainer(bc) => bc.dimensions(),
-            LayoutBox::AnonymousBlock(abb) => abb.dimensions(),
-            LayoutBox::AnonymousInline(aib) => aib.dimensions(),
-            LayoutBox::InlineBox(ib) => ib.dimensions(),
-            LayoutBox::TextRun(tr) => tr.dimensions(),
-        }
-    }
+    /// Corresponds to CSS 2.1 section 10.6.3.  Currently no other sections are implemented.
+    /// https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#normal-block
+    pub fn solve_and_set_block_level_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        // Use the containing block's writing mode for resolving flow-relative directions.
+        // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
+        let writing_mode = containing_block.writing_mode();
 
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-        match self {
-            LayoutBox::BlockContainer(bc) => bc.dimensions_mut(),
-            LayoutBox::AnonymousBlock(abb) => abb.dimensions_mut(),
-            LayoutBox::AnonymousInline(aib) => aib.dimensions_mut(),
-            LayoutBox::InlineBox(ib) => ib.dimensions_mut(),
-            LayoutBox::TextRun(tr) => tr.dimensions_mut(),
+        let computed_values = self.computed_values();
+        let mut margin_block_start = computed_values.margin_flow_relative(FlowSide::BlockStart, writing_mode);
+        let mut margin_block_end = computed_values.margin_flow_relative(FlowSide::BlockEnd, writing_mode);
+        let border_block_start = computed_values.border_flow_relative(FlowSide::BlockStart, writing_mode);
+        let border_block_end = computed_values.border_flow_relative(FlowSide::BlockEnd, writing_mode);
+        let padding_block_start = computed_values.padding_flow_relative(FlowSide::BlockStart, writing_mode);
+        let padding_block_end = computed_values.padding_flow_relative(FlowSide::BlockEnd, writing_mode);
+        let block_size = computed_values.block_size(writing_mode);
+        // Release immutable borrow of &self so we can mutably borrow below.
+        drop(computed_values);
+
+        let zero = LengthPercentageOrAuto::new_len(0.);
+        let auto = LengthPercentageOrAuto::Auto;
+        // If the block-start or blond-end margins are auto, their used value is 0.
+        if margin_block_start == auto {
+            margin_block_start = zero
         }
+        if margin_block_end == auto {
+            margin_block_end = zero
+        }
+
+        self.layout_children(scale_factor);
+        // TODO: Layout children and add block heights
+        let direction = containing_block.direction();
+        self.dimensions_mut().set_margin(
+            FlowSide::BlockStart,
+            margin_block_start.to_px(containing_block.block_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_margin(
+            FlowSide::BlockEnd,
+            margin_block_end.to_px(containing_block.block_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_border(
+            FlowSide::BlockStart,
+            border_block_start,
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_border(
+            FlowSide::BlockEnd,
+            border_block_end,
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_padding(
+            FlowSide::BlockStart,
+            padding_block_start.to_px(containing_block.block_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut().set_padding(
+            FlowSide::BlockEnd,
+            padding_block_end.to_px(containing_block.block_size()),
+            writing_mode,
+            direction,
+        );
+        self.dimensions_mut()
+            .set_block_size(block_size);
     }
 }
 

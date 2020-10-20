@@ -19,14 +19,14 @@ So far, not much.  Only a very limited subset of CSS is currently supported, so 
 Here is a summary of things Kosmonaut can do, things I'm currently working on, and things that are towards the front of the todo list.
 
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
-- [x] Layout and paint of normal flow, block formatting context block-level boxes.
+- [x] Layout and paint of normal flow, non-replaced block-level boxes.
      - [x] Partial support for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] Layout-tree-dump based testing
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
-- [ ] Text rendering with FreeType (without support for text layout — see next item)
-- [ ] Support for normal flow, inline formatting context layout and paint
+- [x] Text rendering (without actual integration into layout — see next item)
+- [ ] Layout of basic non-replaced inline-level content (such as text)
 
-For those who are curious, here's what I'm specifically working on right now (I'll try to keep this up-to-date).  Commits will be infrequent but generally substantial depending on the size of the thing I'm working on.
+For those who are curious, here's what I'm working on right now (I'll try to keep this up-to-date).  Commits will be infrequent but generally substantial depending on the size of the thing I'm working on.
 
 * Rewriting block formatting context layout to be closer to-spec, and to fix some corner cases I broke recently.
 
@@ -42,8 +42,8 @@ To build from source:
 
 1. Install Rust: https://www.rust-lang.org/tools/install
 2. Install native dependencies, most of which are required for FreeType which Kosmonaut uses for text rendering.
-    * Windows 10
-        * Skip this step.
+    * Windows 10, MacOS
+        * Skip this step (Kosmonaut uses [font-kit](https://github.com/servo/font-kit), which uses the native font APIs for Windows and MacOS).
     * Ubuntu
         * Install the dependencies found in [this Dockerfile](docker/Dockerfile-ubuntu) on your machine (the `apt-get install` bit).
     * Arch Linux 

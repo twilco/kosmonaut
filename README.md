@@ -21,13 +21,15 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
 - [x] Layout and paint of normal flow, block formatting context block-level boxes.
      - [x] Partial support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
+- [x] Layout and paint of normal flow, non-replaced block-level boxes.
+     - [x] Partial support for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] Layout-tree-dump based testing
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
-- [ ] Text rendering with FreeType (without support for text layout — see next item)
-- [ ] Support for normal flow, inline formatting context layout and paint
+- [x] Text rendering (without actual integration into layout — see next item)
+- [ ] Layout of basic non-replaced inline-level content (such as text)
 
 <b id="f1">1</b> Orthogonal flows ([see spec](https://drafts.csswg.org/css-writing-modes-4/#orthogonal-flows)) not supported. 
-Mixed `writing-mode` support in general (including parallel flows) is currently iffy -- I recommend simply using `* { writing-mode: <val> }`.  `sideways-{lr, rl} and vertical-rl` currently don't work very well. [↩](#a1)
+Mixed `writing-mode` support in general (including parallel flows) is currently iffy — I recommend simply using `* { writing-mode: <val> }`.  `sideways-{lr, rl} and vertical-rl` currently don't work very well. [↩](#a1)
 
 ### Project goals
 
@@ -41,8 +43,8 @@ To build from source:
 
 1. Install Rust: https://www.rust-lang.org/tools/install
 2. Install native dependencies, most of which are required for FreeType which Kosmonaut uses for text rendering.
-    * Windows 10
-        * Skip this step.
+    * Windows 10, MacOS
+        * Skip this step (Kosmonaut uses [font-kit](https://github.com/servo/font-kit), which uses the native font APIs for Windows and MacOS).
     * Ubuntu
         * Install the dependencies found in [this Dockerfile](docker/Dockerfile-ubuntu) on your machine (the `apt-get install` bit).
     * Arch Linux 

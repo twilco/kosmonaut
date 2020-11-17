@@ -33,7 +33,7 @@ pub fn global_layout(
 ) {
     let writing_mode = layout_root_box.computed_values().writing_mode;
     let direction = layout_root_box.computed_values().direction;
-    layout_root_box.layout(
+    layout_root_box.layout(LayoutContext::new(
         ContainingBlock::new(
             Rect {
                 start_x: 0.0,
@@ -45,7 +45,7 @@ pub fn global_layout(
             writing_mode,
         ),
         scale_factor,
-    );
+    ));
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -53,6 +53,25 @@ pub enum BoxComponent {
     Border,
     Margin,
     Padding,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct LayoutContext {
+    containing_block: ContainingBlock,
+    scale_factor: f32,
+}
+
+impl LayoutContext {
+    pub fn new(containing_block: ContainingBlock, scale_factor: f32) -> Self {
+        LayoutContext {
+            containing_block,
+            scale_factor,
+        }
+    }
+}
+
+pub trait Layout {
+    fn layout(&mut self, context: LayoutContext);
 }
 
 /// Trait describing behavior necessary for dumping the layout tree, used in the `dump-layout`

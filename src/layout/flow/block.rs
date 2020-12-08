@@ -8,8 +8,10 @@ use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::{Direction, Display};
+use crate::style::values::computed::{Direction, Display, ComputedValues};
 use crate::style::values::used::ToPx;
+use accountable_refcell::Ref;
+use crate::layout::dimensions::Dimensions;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum BlockLevelBox {
@@ -22,20 +24,56 @@ pub enum BlockLevelBox {
 }
 
 impl BlockLevelBox {
+    pub fn add_child(&mut self, new_child: LayoutBox) {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
+            BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child)
+        }
+    }
+    
+    pub fn computed_values(&self) -> Ref<ComputedValues> {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.computed_values(),
+            BlockLevelBox::BlockContainer(bc) => bc.computed_values()
+        }
+    }
+
+    pub fn dimensions(&self) -> Dimensions {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.dimensions(),
+            BlockLevelBox::BlockContainer(bc) => bc.dimensions()
+        }
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.dimensions_mut(),
+            BlockLevelBox::BlockContainer(bc) => bc.dimensions_mut()
+        }
+    }
+
+    pub fn formatting_context(&self) -> FormattingContextRef {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.formatting_context(),
+            BlockLevelBox::BlockContainer(bc) => bc.formatting_context()
+        }
+    }
+
     pub fn layout_children(&mut self, scale_factor: f32) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
         let self_containing_block =
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
+        let layout_context = LayoutContext::new(self_containing_block, scale_factor);
         match self {
             BlockLevelBox::AnonymousBlock(abb) => abb
                 .children
                 .iter_mut()
-                .for_each(|child| child.layout(self_containing_block, scale_factor)),
+                .for_each(|child| child.layout(layout_context)),
             BlockLevelBox::BlockContainer(bc) => bc
                 .children
                 .iter_mut()
-                .for_each(|child| child.layout(self_containing_block, scale_factor)),
+                .for_each(|child| child.layout(layout_context)),
         }
     }
 
@@ -238,6 +276,10 @@ impl AnonymousBlockBox {
 
     pub fn add_child(&mut self, child: LayoutBox) {
         self.children.push(child)
+    }
+    
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        &self.children
     }
 }
 

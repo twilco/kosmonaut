@@ -18,9 +18,6 @@ use crate::style::values::used::ToPx;
 /// context (possibly generating anonymous block boxes to ensure this constraint, as defined in
 /// [CSS2§9.2.1.1](https://www.w3.org/TR/CSS2/visuren.html#anonymous-block-level).
 ///
-/// Note that this struct contains no children, and instead turns into one of the above upon adding
-/// a child via `add_inline_child` or `add_block_child`.
-///
 /// https://drafts.csswg.org/css-display-3/#block-container
 #[derive(Clone, Debug)]
 pub struct BlockContainer {
@@ -36,6 +33,14 @@ impl BlockContainer {
             base: BaseBox::new(node, fc),
             children: Vec::new(),
         }
+    }
+    
+    pub fn add_child(&mut self, new_child: LayoutBox) {
+        self.children.push(new_child)
+    }
+
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        &self.children
     }
 }
 

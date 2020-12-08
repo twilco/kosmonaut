@@ -2,6 +2,9 @@ use crate::dom::tree::NodeRef;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
 use crate::layout::{Layout, LayoutContext};
+use accountable_refcell::Ref;
+use crate::style::values::computed::ComputedValues;
+use crate::layout::dimensions::Dimensions;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelBox {
@@ -29,6 +32,56 @@ pub enum InlineLevelBox {
     TextRun(TextRun),
 }
 
+impl InlineLevelBox {
+    pub fn add_child(&mut self, new_child: LayoutBox) {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => {
+                aib.children.push(new_child)
+            }
+            InlineLevelBox::InlineBox(ib) => ib.children.push(new_child),
+            InlineLevelBox::TextRun(tr) => {
+                panic!("tried to add child of type {} to text run with contents {}", new_child.inner_box_type_name(), tr.contents)
+            }
+        }
+    }
+
+    pub fn computed_values(&self) -> Ref<ComputedValues> {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.computed_values(),
+            InlineLevelBox::InlineBox(ib) => ib.computed_values(),
+            InlineLevelBox::TextRun(tr) => tr.computed_values()
+        }
+    }
+
+    pub fn dimensions(&self) -> Dimensions {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.dimensions(),
+            InlineLevelBox::InlineBox(ib) => ib.dimensions(),
+            InlineLevelBox::TextRun(tr) => tr.dimensions()
+        }
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.dimensions_mut(),
+            InlineLevelBox::InlineBox(ib) => ib.dimensions_mut(),
+            InlineLevelBox::TextRun(tr) => tr.dimensions_mut()
+        }
+    }
+
+    pub fn formatting_context(&self) -> FormattingContextRef {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.formatting_context(),
+            InlineLevelBox::InlineBox(ib) => ib.formatting_context(),
+            InlineLevelBox::TextRun(tr) => tr.formatting_context()
+        }
+    }
+
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        &self.children
+    }
+}
+
 impl Layout for InlineLevelBox {
     fn layout(&mut self, _context: LayoutContext) {
         unimplemented!()
@@ -54,6 +107,10 @@ impl AnonymousInlineBox {
     pub fn add_child(&mut self, child: LayoutBox) {
         self.children.push(child)
     }
+
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        &self.children
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -70,6 +127,14 @@ impl InlineBox {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
         }
+    }
+
+    pub fn add_child(&mut self, child: LayoutBox) {
+        self.children.push(child)
+    }
+
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        &self.children
     }
 }
 

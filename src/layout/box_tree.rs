@@ -6,7 +6,9 @@ use crate::layout::layout_box::{AnonymousBlockBox, BlockContainer, InlineBox, La
 use crate::style::values::computed::display::{DisplayBox, InnerDisplay, OuterDisplay};
 use crate::style::values::computed::Display;
 use std::rc::Rc;
-use crate::layout::flow::inline::TextRun;
+use crate::layout::flow::inline::{TextRun, InlineBox};
+use crate::layout::flow::BlockContainer;
+use crate::layout::flow::block::AnonymousBlockBox;
 
 /// Takes a DOM node and builds the corresponding box tree of it and its children.  Returns
 /// `None` if `node` is a `Display::None`.

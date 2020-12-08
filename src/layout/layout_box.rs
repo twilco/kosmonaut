@@ -55,98 +55,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.add_child(child_box),
             LayoutBox::InlineLevel(ilb) => ilb.add_child(child_box),
         }
-        // match child_box {
-        //     LayoutBox::AnonymousBlock(ab) => self.add_anonymous_block_child(ab),
-        //     LayoutBox::AnonymousInline(aib) => self.add_anonymous_inline_child(aib),
-        //     LayoutBox::BlockContainer(bc) => self.add_block_container(bc),
-        //     LayoutBox::InlineBox(ib) => self.add_inline_box_child(ib),
-        //     LayoutBox::TextRun(tr) => self.add_text_run_child(tr),
-        // }
-    }
-
-    pub fn add_anonymous_block_child(&mut self, abb_child: AnonymousBlockBox) {
-        match self {
-            LayoutBox::AnonymousBlock(abb) => panic(type_name_of_val(abb)),
-            LayoutBox::AnonymousInline(aib) => panic(type_name_of_val(aib)),
-            LayoutBox::BlockContainer(bc) => bc.children.push(abb_child.into()),
-            LayoutBox::InlineBox(ib) => panic(type_name_of_val(ib)),
-            LayoutBox::TextRun(tr) => panic(type_name_of_val(tr)),
-        }
-
-        fn panic(type_name: &'static str) {
-            panic!(
-                "tried to add anonymous bloc box as a child of a(n) {} box.  is this correct?",
-                type_name
-            )
-        }
-    }
-
-    pub fn add_anonymous_inline_child(&mut self, aib_child: AnonymousInlineBox) {
-        match self {
-            LayoutBox::AnonymousBlock(ab) => panic(type_name_of_val(ab)),
-            LayoutBox::AnonymousInline(aib) => panic(type_name_of_val(aib)),
-            LayoutBox::BlockContainer(bc) => panic(type_name_of_val(bc)),
-            LayoutBox::InlineBox(ib) => panic(type_name_of_val(ib)),
-            LayoutBox::TextRun(tr) => panic(type_name_of_val(tr)),
-        }
-
-        fn panic(type_name: &'static str) {
-            panic!(
-                "tried to add anonymous inline box as a child of a(n) {} box.  is this correct?",
-                type_name
-            )
-        }
-    }
-
-    pub fn add_block_container(&mut self, bc_child: BlockContainer) {
-        match self {
-            LayoutBox::AnonymousBlock(abb) => abb.children.push(bc_child.into()),
-            LayoutBox::AnonymousInline(aib) => panic(type_name_of_val(aib)),
-            LayoutBox::BlockContainer(bc) => bc.children.push(bc_child.into()),
-            LayoutBox::InlineBox(ib) => panic(type_name_of_val(ib)),
-            LayoutBox::TextRun(tr) => panic(type_name_of_val(tr)),
-        }
-
-        fn panic(type_name: &'static str) {
-            panic!(
-                "Tried to add block container as a child of a(n) {} box.  Is this correct?",
-                type_name
-            )
-        }
-    }
-
-    pub fn add_inline_box_child(&mut self, ib_child: InlineBox) {
-        match self {
-            LayoutBox::AnonymousBlock(ab) => panic(type_name_of_val(ab)),
-            LayoutBox::AnonymousInline(aib) => aib.children.push(ib_child.into()),
-            LayoutBox::BlockContainer(bc) => panic(type_name_of_val(bc)),
-            LayoutBox::InlineBox(ib) => ib.children.push(ib_child.into()),
-            LayoutBox::TextRun(tr) => panic(type_name_of_val(tr)),
-        }
-
-        fn panic(type_name: &'static str) {
-            panic!(
-                "Tried to add inline box as a child of a(n) {} box.  Is this correct?",
-                type_name
-            )
-        }
-    }
-
-    pub fn add_text_run_child(&mut self, text_run_child: TextRun) {
-        match self {
-            LayoutBox::AnonymousBlock(ab) => panic(type_name_of_val(ab)),
-            LayoutBox::AnonymousInline(aib) => aib.children.push(text_run_child.into()),
-            LayoutBox::BlockContainer(bc) => panic(type_name_of_val(bc)),
-            LayoutBox::InlineBox(ib) => ib.children.push(text_run_child.into()),
-            LayoutBox::TextRun(tr) => panic(type_name_of_val(tr)),
-        }
-
-        fn panic(type_name: &'static str) {
-            panic!(
-                "Tried to add text run as a child of a(n) {} box.  Is this correct?",
-                type_name
-            )
-        }
     }
 
     pub fn computed_values(&self) -> Ref<ComputedValues> {
@@ -154,13 +62,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.computed_values(),
             LayoutBox::InlineLevel(ilb) => ilb.computed_values(),
         }
-        // match self {
-        //     LayoutBox::AnonymousBlock(abb) => abb.computed_values(),
-        //     LayoutBox::AnonymousInline(aib) => aib.computed_values(),
-        //     LayoutBox::BlockContainer(bc) => bc.computed_values(),
-        //     LayoutBox::InlineBox(ib) => ib.computed_values(),
-        //     LayoutBox::TextRun(tr) => tr.computed_values(),
-        // }
     }
 
     pub fn dimensions(&self) -> Dimensions {
@@ -168,13 +69,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.dimensions(),
             LayoutBox::InlineLevel(ilb) => ilb.dimensions(),
         }
-        // match self {
-        //     LayoutBox::BlockContainer(bc) => bc.dimensions(),
-        //     LayoutBox::AnonymousBlock(abb) => abb.dimensions(),
-        //     LayoutBox::AnonymousInline(aib) => aib.dimensions(),
-        //     LayoutBox::InlineBox(ib) => ib.dimensions(),
-        //     LayoutBox::TextRun(tr) => tr.dimensions(),
-        // }
     }
 
     pub fn dimensions_mut(&mut self) -> &mut Dimensions {
@@ -182,13 +76,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.dimensions_mut(),
             LayoutBox::InlineLevel(ilb) => ilb.dimensions_mut(),
         }
-        // match self {
-        //     LayoutBox::BlockContainer(bc) => bc.dimensions_mut(),
-        //     LayoutBox::AnonymousBlock(abb) => abb.dimensions_mut(),
-        //     LayoutBox::AnonymousInline(aib) => aib.dimensions_mut(),
-        //     LayoutBox::InlineBox(ib) => ib.dimensions_mut(),
-        //     LayoutBox::TextRun(tr) => tr.dimensions_mut(),
-        // }
     }
 
     pub fn formatting_context(&self) -> FormattingContextRef {
@@ -196,13 +83,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.formatting_context(),
             LayoutBox::InlineLevel(ilb) => ilb.formatting_context(),
         }
-        // match self {
-        //     LayoutBox::AnonymousInline(aib) => aib.formatting_context(),
-        //     LayoutBox::AnonymousBlock(ab) => ab.formatting_context(),
-        //     LayoutBox::BlockContainer(bc) => bc.formatting_context(),
-        //     LayoutBox::InlineBox(ib) => ib.formatting_context(),
-        //     LayoutBox::TextRun(tr) => tr.formatting_context(),
-        // }
     }
 
     /// Returns a box capable of containing inline children.  If `self` is already an inline-box,
@@ -368,10 +248,11 @@ macro_rules! base_box_passthrough_impls {
 impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool) {
         let node_name_and_data = match self {
-            LayoutBox::AnonymousBlock(_) | LayoutBox::AnonymousInline(_) => "".to_owned(),
-            LayoutBox::BlockContainer(bc) => bc.node().data().dump_layout_format(),
-            LayoutBox::InlineBox(ib) => ib.node().data().dump_layout_format(),
-            LayoutBox::TextRun(tr) => tr.node().data().dump_layout_format(),
+            LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(_)) => "".to_owned(),
+            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => bc.node().data().dump_layout_format(),
+            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => aib.node().data().dump_layout_format(),
+            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => ib.node().data().dump_layout_format(),
+            LayoutBox::InlineLevel(InlineLevelBox::TextRun(tr)) => tr.node().data().dump_layout_format(),
         };
         let dimensions = self.dimensions();
         let verbose_str = if verbose {
@@ -414,11 +295,11 @@ impl DumpLayout for LayoutBox {
         .expect("error writing layout dump");
 
         match self {
-            LayoutBox::AnonymousBlock(abb) => Some(&abb.children),
-            LayoutBox::AnonymousInline(aib) => Some(&aib.children),
-            LayoutBox::BlockContainer(bc) => Some(&bc.children),
-            LayoutBox::InlineBox(ib) => Some(&ib.children),
-            LayoutBox::TextRun(_) => None,
+            LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(abb)) => Some(abb.children()),
+            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => Some(bc.children()),
+            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => Some(aib.children()),
+            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => Some(ib.children()),
+            LayoutBox::InlineLevel(InlineLevelBox::TextRun(_)) => None,
         }
         .map(|children| {
             let new_indent = indent_spaces + 2;

@@ -249,10 +249,18 @@ impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool) {
         let node_name_and_data = match self {
             LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(_)) => "".to_owned(),
-            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => bc.node().data().dump_layout_format(),
-            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => aib.node().data().dump_layout_format(),
-            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => ib.node().data().dump_layout_format(),
-            LayoutBox::InlineLevel(InlineLevelBox::TextRun(tr)) => tr.node().data().dump_layout_format(),
+            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => {
+                bc.node().data().dump_layout_format()
+            }
+            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => {
+                aib.node().data().dump_layout_format()
+            }
+            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => {
+                ib.node().data().dump_layout_format()
+            }
+            LayoutBox::InlineLevel(InlineLevelBox::TextRun(tr)) => {
+                tr.node().data().dump_layout_format()
+            }
         };
         let dimensions = self.dimensions();
         let verbose_str = if verbose {

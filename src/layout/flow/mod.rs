@@ -1,6 +1,7 @@
 pub mod block;
 pub mod inline;
 
+use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::formatting_context::FormattingContextRef;
@@ -12,7 +13,6 @@ use crate::style::values::computed::length::{
 };
 use crate::style::values::computed::Direction;
 use crate::style::values::used::ToPx;
-use crate::base_box_passthrough_impls;
 
 /// A box that contains either contains only inline-level boxes participating in an inline
 /// formatting context, or contains only block-level boxes participating in a block formatting
@@ -35,7 +35,7 @@ impl BlockContainer {
             children: Vec::new(),
         }
     }
-    
+
     pub fn add_child(&mut self, new_child: LayoutBox) {
         self.children.push(new_child)
     }

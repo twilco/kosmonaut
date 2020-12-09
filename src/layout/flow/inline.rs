@@ -1,11 +1,11 @@
+use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
+use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
 use crate::layout::{Layout, LayoutContext};
-use accountable_refcell::Ref;
 use crate::style::values::computed::ComputedValues;
-use crate::layout::dimensions::Dimensions;
-use crate::base_box_passthrough_impls;
+use accountable_refcell::Ref;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelBox {
@@ -36,12 +36,14 @@ pub enum InlineLevelBox {
 impl InlineLevelBox {
     pub fn add_child(&mut self, new_child: LayoutBox) {
         match self {
-            InlineLevelBox::AnonymousInline(aib) => {
-                aib.children.push(new_child)
-            }
+            InlineLevelBox::AnonymousInline(aib) => aib.children.push(new_child),
             InlineLevelBox::InlineBox(ib) => ib.children.push(new_child),
             InlineLevelBox::TextRun(tr) => {
-                panic!("tried to add child of type {} to text run with contents {}", new_child.inner_box_type_name(), tr.contents)
+                panic!(
+                    "tried to add child of type {} to text run with contents {}",
+                    new_child.inner_box_type_name(),
+                    tr.contents
+                )
             }
         }
     }
@@ -50,7 +52,7 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.computed_values(),
             InlineLevelBox::InlineBox(ib) => ib.computed_values(),
-            InlineLevelBox::TextRun(tr) => tr.computed_values()
+            InlineLevelBox::TextRun(tr) => tr.computed_values(),
         }
     }
 
@@ -58,7 +60,7 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.dimensions(),
             InlineLevelBox::InlineBox(ib) => ib.dimensions(),
-            InlineLevelBox::TextRun(tr) => tr.dimensions()
+            InlineLevelBox::TextRun(tr) => tr.dimensions(),
         }
     }
 
@@ -66,7 +68,7 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.dimensions_mut(),
             InlineLevelBox::InlineBox(ib) => ib.dimensions_mut(),
-            InlineLevelBox::TextRun(tr) => tr.dimensions_mut()
+            InlineLevelBox::TextRun(tr) => tr.dimensions_mut(),
         }
     }
 
@@ -74,7 +76,7 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.formatting_context(),
             InlineLevelBox::InlineBox(ib) => ib.formatting_context(),
-            InlineLevelBox::TextRun(tr) => tr.formatting_context()
+            InlineLevelBox::TextRun(tr) => tr.formatting_context(),
         }
     }
 
@@ -88,7 +90,7 @@ impl InlineLevelBox {
             // InlineLevelContent { TextRun(TextRun), InlineLevelBox(InlineLevelBox)
             // Yeah, that's actually the correct thing to do: https://drafts.csswg.org/css-display/#inline-level
             //   inline-level
-            //     Content that participates in inline layout. Specifically, inline-level boxes and text runs. 
+            //     Content that participates in inline layout. Specifically, inline-level boxes and text runs.
             InlineLevelBox::TextRun(_) => {}
         }
     }

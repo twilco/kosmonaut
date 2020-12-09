@@ -1,5 +1,7 @@
+use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
+use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::{BlockContainer, FlowSide};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
@@ -8,11 +10,9 @@ use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::{Direction, Display, ComputedValues};
+use crate::style::values::computed::{ComputedValues, Direction, Display};
 use crate::style::values::used::ToPx;
 use accountable_refcell::Ref;
-use crate::layout::dimensions::Dimensions;
-use crate::base_box_passthrough_impls;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum BlockLevelBox {
@@ -28,35 +28,35 @@ impl BlockLevelBox {
     pub fn add_child(&mut self, new_child: LayoutBox) {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
-            BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child)
+            BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child),
         }
     }
-    
+
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.computed_values(),
-            BlockLevelBox::BlockContainer(bc) => bc.computed_values()
+            BlockLevelBox::BlockContainer(bc) => bc.computed_values(),
         }
     }
 
     pub fn dimensions(&self) -> Dimensions {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.dimensions(),
-            BlockLevelBox::BlockContainer(bc) => bc.dimensions()
+            BlockLevelBox::BlockContainer(bc) => bc.dimensions(),
         }
     }
 
     pub fn dimensions_mut(&mut self) -> &mut Dimensions {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.dimensions_mut(),
-            BlockLevelBox::BlockContainer(bc) => bc.dimensions_mut()
+            BlockLevelBox::BlockContainer(bc) => bc.dimensions_mut(),
         }
     }
 
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.formatting_context(),
-            BlockLevelBox::BlockContainer(bc) => bc.formatting_context()
+            BlockLevelBox::BlockContainer(bc) => bc.formatting_context(),
         }
     }
 
@@ -278,7 +278,7 @@ impl AnonymousBlockBox {
     pub fn add_child(&mut self, child: LayoutBox) {
         self.children.push(child)
     }
-    
+
     pub fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }

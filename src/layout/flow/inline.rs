@@ -5,6 +5,7 @@ use crate::layout::{Layout, LayoutContext};
 use accountable_refcell::Ref;
 use crate::style::values::computed::ComputedValues;
 use crate::layout::dimensions::Dimensions;
+use crate::base_box_passthrough_impls;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelBox {
@@ -78,7 +79,18 @@ impl InlineLevelBox {
     }
 
     pub fn children(&self) -> &Vec<LayoutBox> {
-        &self.children
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.children(),
+            InlineLevelBox::InlineBox(ib) => ib.children(),
+            // TODO: Text runs aren't really boxes, which makes this method and maybe others kinda
+            // awkward (text runs have no children, so would need to make this return an Option<Vec>,
+            // which sucks.  Maybe a new `InlineLevelContent` enum:
+            // InlineLevelContent { TextRun(TextRun), InlineLevelBox(InlineLevelBox)
+            // Yeah, that's actually the correct thing to do: https://drafts.csswg.org/css-display/#inline-level
+            //   inline-level
+            //     Content that participates in inline layout. Specifically, inline-level boxes and text runs. 
+            InlineLevelBox::TextRun(_) => {}
+        }
     }
 }
 

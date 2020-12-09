@@ -12,6 +12,7 @@ use crate::style::values::computed::{Direction, Display, ComputedValues};
 use crate::style::values::used::ToPx;
 use accountable_refcell::Ref;
 use crate::layout::dimensions::Dimensions;
+use crate::base_box_passthrough_impls;
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum BlockLevelBox {

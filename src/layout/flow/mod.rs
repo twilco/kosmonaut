@@ -13,6 +13,7 @@ use crate::style::values::computed::length::{
 };
 use crate::style::values::computed::Direction;
 use crate::style::values::used::ToPx;
+use crate::layout::DumpLayoutFormat;
 
 /// A box that contains either contains only inline-level boxes participating in an inline
 /// formatting context, or contains only block-level boxes participating in a block formatting
@@ -42,6 +43,12 @@ impl BlockContainer {
 
     pub fn children(&self) -> &Vec<LayoutBox> {
         &self.children
+    }
+}
+
+impl DumpLayoutFormat for BlockContainer {
+    fn dump_layout_format(&self) -> String {
+        self.node().data().dump_layout_format()
     }
 }
 

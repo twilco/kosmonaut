@@ -2,7 +2,7 @@ use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
-use crate::layout::flow::inline::{AnonymousInlineBox, InlineBox, InlineLevelBox, TextRun};
+use crate::layout::flow::inline::{AnonymousInlineBox, InlineBox, InlineLevelBox, TextRun, InlineLevelContent};
 use crate::layout::flow::{
     solve_block_level_inline_size, BlockContainer, BlockLevelBox, FlowSide, InlineLevelBox,
     SolveInlineSizeInput,
@@ -27,7 +27,8 @@ use std::mem::discriminant;
 use std::rc::Rc;
 use strum_macros::IntoStaticStr;
 
-/// The `LayoutBox` is Kosmonaut's representation of the box tree.
+/// The `LayoutBox` is Kosmonaut's representation of the box tree.  Note that, per-spec, the box 
+/// tree also contains things that are not strictly boxes, like text runs.
 ///
 /// Loosely maps to the "Generated box" column from the table in this section,
 /// https://drafts.csswg.org/css-display/#the-display-properties, with the addition of other
@@ -35,7 +36,7 @@ use strum_macros::IntoStaticStr;
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum LayoutBox {
     BlockLevel(BlockLevelBox),
-    InlineLevel(InlineLevelBox),
+    InlineLevel(InlineLevelContent),
 }
 
 impl LayoutBox {
@@ -44,10 +45,10 @@ impl LayoutBox {
     /// The given node should be that of the element generating root inline box.
     pub fn create_root_inline_box(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         assert!(formatting_context.is_inline_formatting_context());
-        LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(AnonymousInlineBox::new(
+        AnonymousInlineBox::new(
             node,
             formatting_context,
-        )))
+        ).into()
     }
 
     pub fn add_child(&mut self, child_box: LayoutBox) {
@@ -119,6 +120,18 @@ impl LayoutBox {
             LayoutBox::BlockLevel(_) => false,
             LayoutBox::InlineLevel(ilb) => ilb.is_anonymous_inline(),
         }
+    }
+}
+
+impl From<AnonymousBlockBox> for LayoutBox {
+    fn from(abb: AnonymousBlockBox) -> Self {
+        LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(abb))
+    }
+}
+
+impl From<AnonymousInlineBox> for LayoutBox {
+    fn from(aib: AnonymousInlineBox) -> Self {
+        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(InlineLevelBox::AnonymousInline(aib)))
     }
 }
 
@@ -248,19 +261,8 @@ macro_rules! base_box_passthrough_impls {
 impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool) {
         let node_name_and_data = match self {
-            LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(_)) => "".to_owned(),
-            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => {
-                bc.node().data().dump_layout_format()
-            }
-            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => {
-                aib.node().data().dump_layout_format()
-            }
-            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => {
-                ib.node().data().dump_layout_format()
-            }
-            LayoutBox::InlineLevel(InlineLevelBox::TextRun(tr)) => {
-                tr.node().data().dump_layout_format()
-            }
+            LayoutBox::BlockLevel(blb) => blb.dump_layout_format(),
+            LayoutBox::InlineLevel(ilc) => ilc.dump_layout_format()
         };
         let dimensions = self.dimensions();
         let verbose_str = if verbose {
@@ -303,11 +305,9 @@ impl DumpLayout for LayoutBox {
         .expect("error writing layout dump");
 
         match self {
-            LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(abb)) => Some(abb.children()),
-            LayoutBox::BlockLevel(BlockLevelBox::BlockContainer(bc)) => Some(bc.children()),
-            LayoutBox::InlineLevel(InlineLevelBox::AnonymousInline(aib)) => Some(aib.children()),
-            LayoutBox::InlineLevel(InlineLevelBox::InlineBox(ib)) => Some(ib.children()),
-            LayoutBox::InlineLevel(InlineLevelBox::TextRun(_)) => None,
+            LayoutBox::BlockLevel(blb) => Some(blb.children()),
+            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ib)) => Some(ib.children()),
+            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => None,
         }
         .map(|children| {
             let new_indent = indent_spaces + 2;

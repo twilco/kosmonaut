@@ -5,7 +5,7 @@ use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::{BlockContainer, FlowSide};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
-use crate::layout::{Layout, LayoutContext};
+use crate::layout::{Layout, LayoutContext, DumpLayoutFormat};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -29,6 +29,13 @@ impl BlockLevelBox {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
             BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child),
+        }
+    }
+    
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.children(),
+            BlockLevelBox::BlockContainer(bc) => bc.children()
         }
     }
 
@@ -234,6 +241,15 @@ impl BlockLevelBox {
     }
 }
 
+impl DumpLayoutFormat for BlockLevelBox {
+    fn dump_layout_format(&self) -> String {
+        match self {
+            BlockLevelBox::AnonymousBlock(ab) => ab.dump_layout_format(),
+            BlockLevelBox::BlockContainer(bc) => bc.dump_layout_format()
+        }
+    }
+}
+
 impl Layout for BlockLevelBox {
     fn layout(&mut self, context: LayoutContext) {
         let LayoutContext {
@@ -281,6 +297,14 @@ impl AnonymousBlockBox {
 
     pub fn children(&self) -> &Vec<LayoutBox> {
         &self.children
+    }
+}
+
+impl DumpLayoutFormat for AnonymousBlockBox {
+    fn dump_layout_format(&self) -> String {
+        // Anonymous boxes are not generated from an element of the DOM, only to fix up the box
+        // tree, so return no node data here.
+        "".to_string()
     }
 }
 

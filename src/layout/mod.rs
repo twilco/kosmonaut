@@ -83,6 +83,10 @@ pub trait DumpLayout {
 
 /// Trait describing behavior necessary for formatting ones data in preparation for a layout tree
 /// dump.
+/// TODO: Write a custom derive for this.  A bunch of impls of this are just enums calling
+/// `dump_layout_format` on their variants.  This trait will still need to be implemented by hand
+/// at the leaves, though (sort of like the Debug trait)
+/// https://doc.rust-lang.org/book/ch19-06-macros.html#how-to-write-a-custom-derive-macrok
 pub trait DumpLayoutFormat {
     fn dump_layout_format(&self) -> String;
 }

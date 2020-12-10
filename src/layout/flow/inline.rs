@@ -3,9 +3,60 @@ use crate::dom::tree::NodeRef;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
-use crate::layout::{Layout, LayoutContext};
+use crate::layout::{Layout, LayoutContext, DumpLayoutFormat};
 use crate::style::values::computed::ComputedValues;
 use accountable_refcell::Ref;
+
+/// Content that participates in inline layout. Specifically, inline-level boxes and text runs.
+/// 
+/// https://drafts.csswg.org/css-display/#inline-level
+#[derive(Clone, Debug, IntoStaticStr)]
+pub enum InlineLevelContent {
+    InlineLevelBox(InlineLevelBox),
+    /// A representation of the contents of a text DOM node.
+    ///
+    /// https://drafts.csswg.org/css-display-3/#text-run
+    TextRun(TextRun),
+}
+
+impl InlineLevelContent {
+    pub fn computed_values(&self) -> Ref<ComputedValues> {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.computed_values(),
+            InlineLevelContent::TextRun(tr) => tr.computed_values()
+        }
+    }
+
+    pub fn dimensions(&self) -> Dimensions {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions(),
+            InlineLevelContent::TextRun(tr) => tr.dimensions()
+        }
+    }
+
+    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions_mut(),
+            InlineLevelContent::TextRun(tr) => tr.dimensions_mut()
+        }
+    }
+
+    pub fn formatting_context(&self) -> FormattingContextRef {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.formatting_context(),
+            InlineLevelContent::TextRun(tr) => tr.formatting_context()
+        }
+    }
+}
+
+impl DumpLayoutFormat for InlineLevelContent {
+    fn dump_layout_format(&self) -> String {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.dump_layout_format(),
+            InlineLevelContent::TextRun(tr) => tr.dump_layout_format()
+        }
+    }
+}
 
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelBox {
@@ -27,10 +78,6 @@ pub enum InlineLevelBox {
     ///
     /// https://drafts.csswg.org/css-display/#inline-box
     InlineBox(InlineBox),
-    /// A representation of the contents of a text DOM node.
-    ///
-    /// https://drafts.csswg.org/css-display-3/#text-run
-    TextRun(TextRun),
 }
 
 impl InlineLevelBox {
@@ -38,13 +85,6 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children.push(new_child),
             InlineLevelBox::InlineBox(ib) => ib.children.push(new_child),
-            InlineLevelBox::TextRun(tr) => {
-                panic!(
-                    "tried to add child of type {} to text run with contents {}",
-                    new_child.inner_box_type_name(),
-                    tr.contents
-                )
-            }
         }
     }
 
@@ -52,7 +92,6 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.computed_values(),
             InlineLevelBox::InlineBox(ib) => ib.computed_values(),
-            InlineLevelBox::TextRun(tr) => tr.computed_values(),
         }
     }
 
@@ -60,7 +99,6 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.dimensions(),
             InlineLevelBox::InlineBox(ib) => ib.dimensions(),
-            InlineLevelBox::TextRun(tr) => tr.dimensions(),
         }
     }
 
@@ -68,7 +106,6 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.dimensions_mut(),
             InlineLevelBox::InlineBox(ib) => ib.dimensions_mut(),
-            InlineLevelBox::TextRun(tr) => tr.dimensions_mut(),
         }
     }
 
@@ -76,7 +113,6 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.formatting_context(),
             InlineLevelBox::InlineBox(ib) => ib.formatting_context(),
-            InlineLevelBox::TextRun(tr) => tr.formatting_context(),
         }
     }
 
@@ -84,14 +120,15 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children(),
             InlineLevelBox::InlineBox(ib) => ib.children(),
-            // TODO: Text runs aren't really boxes, which makes this method and maybe others kinda
-            // awkward (text runs have no children, so would need to make this return an Option<Vec>,
-            // which sucks.  Maybe a new `InlineLevelContent` enum:
-            // InlineLevelContent { TextRun(TextRun), InlineLevelBox(InlineLevelBox)
-            // Yeah, that's actually the correct thing to do: https://drafts.csswg.org/css-display/#inline-level
-            //   inline-level
-            //     Content that participates in inline layout. Specifically, inline-level boxes and text runs.
-            InlineLevelBox::TextRun(_) => {}
+        }
+    }
+}
+
+impl DumpLayoutFormat for InlineLevelBox {
+    fn dump_layout_format(&self) -> String {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.dump_layout_format(),
+            InlineLevelBox::InlineBox(ib) => ib.dump_layout_format()
         }
     }
 }
@@ -127,6 +164,16 @@ impl AnonymousInlineBox {
     }
 }
 
+impl DumpLayoutFormat for AnonymousInlineBox {
+    fn dump_layout_format(&self) -> String {
+        // Anonymous boxes are not generaed from an element of the DOM, so return empty string.
+        // `impl DumpLayout for LayoutBox` _should_ log this boxes type (AnonymousInlineBox)
+        // TODO: ...it would probably be better just to log DOM node data _and_ box type here and
+        // in other box DumpLayoutFormat impls
+        "".to_string()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct InlineBox {
     base: BaseBox,
@@ -152,6 +199,12 @@ impl InlineBox {
     }
 }
 
+impl DumpLayoutFormat for InlineBox {
+    fn dump_layout_format(&self) -> String {
+        self.node().data().dump_layout_format()
+    }
+}
+
 /// A representation of the contents of a text DOM node.
 ///
 /// https://drafts.csswg.org/css-display-3/#text-run
@@ -173,5 +226,11 @@ impl TextRun {
             base: BaseBox::new(node, formatting_context),
             contents,
         }
+    }
+}
+
+impl DumpLayoutFormat for TextRun {
+    fn dump_layout_format(&self) -> String {
+        self.node().data().dump_layout_format()
     }
 }

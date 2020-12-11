@@ -8,12 +8,12 @@ use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{
     AnonymousBlockBox, AnonymousInlineBox, BaseBox, BlockContainer, InlineBox, LayoutBox, TextRun,
 };
+use crate::layout::DumpLayoutFormat;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
 use crate::style::values::computed::Direction;
 use crate::style::values::used::ToPx;
-use crate::layout::DumpLayoutFormat;
 
 /// A box that contains either contains only inline-level boxes participating in an inline
 /// formatting context, or contains only block-level boxes participating in a block formatting

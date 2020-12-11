@@ -3,12 +3,12 @@ use crate::dom::tree::NodeRef;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
-use crate::layout::{Layout, LayoutContext, DumpLayoutFormat};
+use crate::layout::{DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::ComputedValues;
 use accountable_refcell::Ref;
 
 /// Content that participates in inline layout. Specifically, inline-level boxes and text runs.
-/// 
+///
 /// https://drafts.csswg.org/css-display/#inline-level
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelContent {
@@ -23,28 +23,28 @@ impl InlineLevelContent {
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.computed_values(),
-            InlineLevelContent::TextRun(tr) => tr.computed_values()
+            InlineLevelContent::TextRun(tr) => tr.computed_values(),
         }
     }
 
     pub fn dimensions(&self) -> Dimensions {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions(),
-            InlineLevelContent::TextRun(tr) => tr.dimensions()
+            InlineLevelContent::TextRun(tr) => tr.dimensions(),
         }
     }
 
     pub fn dimensions_mut(&mut self) -> &mut Dimensions {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions_mut(),
-            InlineLevelContent::TextRun(tr) => tr.dimensions_mut()
+            InlineLevelContent::TextRun(tr) => tr.dimensions_mut(),
         }
     }
 
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.formatting_context(),
-            InlineLevelContent::TextRun(tr) => tr.formatting_context()
+            InlineLevelContent::TextRun(tr) => tr.formatting_context(),
         }
     }
 }
@@ -53,7 +53,7 @@ impl DumpLayoutFormat for InlineLevelContent {
     fn dump_layout_format(&self) -> String {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.dump_layout_format(),
-            InlineLevelContent::TextRun(tr) => tr.dump_layout_format()
+            InlineLevelContent::TextRun(tr) => tr.dump_layout_format(),
         }
     }
 }
@@ -128,7 +128,7 @@ impl DumpLayoutFormat for InlineLevelBox {
     fn dump_layout_format(&self) -> String {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.dump_layout_format(),
-            InlineLevelBox::InlineBox(ib) => ib.dump_layout_format()
+            InlineLevelBox::InlineBox(ib) => ib.dump_layout_format(),
         }
     }
 }

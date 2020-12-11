@@ -2,7 +2,9 @@ use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
-use crate::layout::flow::inline::{AnonymousInlineBox, InlineBox, InlineLevelBox, TextRun, InlineLevelContent};
+use crate::layout::flow::inline::{
+    AnonymousInlineBox, InlineBox, InlineLevelBox, InlineLevelContent, TextRun,
+};
 use crate::layout::flow::{
     solve_block_level_inline_size, BlockContainer, BlockLevelBox, FlowSide, InlineLevelBox,
     SolveInlineSizeInput,
@@ -27,7 +29,7 @@ use std::mem::discriminant;
 use std::rc::Rc;
 use strum_macros::IntoStaticStr;
 
-/// The `LayoutBox` is Kosmonaut's representation of the box tree.  Note that, per-spec, the box 
+/// The `LayoutBox` is Kosmonaut's representation of the box tree.  Note that, per-spec, the box
 /// tree also contains things that are not strictly boxes, like text runs.
 ///
 /// Loosely maps to the "Generated box" column from the table in this section,
@@ -45,10 +47,7 @@ impl LayoutBox {
     /// The given node should be that of the element generating root inline box.
     pub fn create_root_inline_box(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         assert!(formatting_context.is_inline_formatting_context());
-        AnonymousInlineBox::new(
-            node,
-            formatting_context,
-        ).into()
+        AnonymousInlineBox::new(node, formatting_context).into()
     }
 
     pub fn add_child(&mut self, child_box: LayoutBox) {
@@ -131,7 +130,9 @@ impl From<AnonymousBlockBox> for LayoutBox {
 
 impl From<AnonymousInlineBox> for LayoutBox {
     fn from(aib: AnonymousInlineBox) -> Self {
-        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(InlineLevelBox::AnonymousInline(aib)))
+        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(
+            InlineLevelBox::AnonymousInline(aib),
+        ))
     }
 }
 
@@ -274,7 +275,7 @@ impl DumpLayout for LayoutBox {
     fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool) {
         let node_name_and_data = match self {
             LayoutBox::BlockLevel(blb) => blb.dump_layout_format(),
-            LayoutBox::InlineLevel(ilc) => ilc.dump_layout_format()
+            LayoutBox::InlineLevel(ilc) => ilc.dump_layout_format(),
         };
         let dimensions = self.dimensions();
         let verbose_str = if verbose {

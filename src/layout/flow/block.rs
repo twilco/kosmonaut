@@ -5,7 +5,7 @@ use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::{BlockContainer, FlowSide};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
-use crate::layout::{Layout, LayoutContext, DumpLayoutFormat};
+use crate::layout::{DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -31,11 +31,11 @@ impl BlockLevelBox {
             BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child),
         }
     }
-    
+
     pub fn children(&self) -> &Vec<LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.children(),
-            BlockLevelBox::BlockContainer(bc) => bc.children()
+            BlockLevelBox::BlockContainer(bc) => bc.children(),
         }
     }
 
@@ -245,7 +245,7 @@ impl DumpLayoutFormat for BlockLevelBox {
     fn dump_layout_format(&self) -> String {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.dump_layout_format(),
-            BlockLevelBox::BlockContainer(bc) => bc.dump_layout_format()
+            BlockLevelBox::BlockContainer(bc) => bc.dump_layout_format(),
         }
     }
 }

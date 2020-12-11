@@ -135,6 +135,18 @@ impl From<AnonymousInlineBox> for LayoutBox {
     }
 }
 
+impl From<Inlinebox> for LayoutBox {
+    fn from(ib: InlineBox) -> Self {
+        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox::InlineBox(ib))
+    }
+}
+
+impl From<TextRun> for LayoutBox {
+    fn from(tr: TextRun) -> Self {
+        LayoutBox::InlineLevel(InlineLevelContent::TextRun(tr))
+    }
+}
+
 impl Layout for LayoutBox {
     fn layout(&mut self, context: LayoutContext) {
         match self {

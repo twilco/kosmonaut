@@ -11,9 +11,6 @@ use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
-use crate::layout::layout_box::{
-    AnonymousBlockBox, AnonymousInlineBox, BlockContainer, InlineBox, LayoutBox, TextRun,
-};
 use crate::layout::rect::Rect;
 use crate::style::values::computed::display::{
     DisplayBox, FullDisplay, InnerDisplay, OuterDisplay,
@@ -23,6 +20,7 @@ use crate::style::values::computed::Display;
 use crate::style::values::CSSFloat;
 use std::io::Write;
 use std::rc::Rc;
+use crate::layout::layout_box::LayoutBox;
 
 /// Given a `window` and a `layout_root_box`, perform a layout with the dimensions of the `window`.
 pub fn global_layout(

@@ -21,9 +21,9 @@ use crate::style::values::computed::length::{
 use crate::style::values::computed::{ComputedValues, Direction, Display, WritingMode};
 use crate::style::values::used::ToPx;
 use crate::Side;
+use accountable_refcell::Ref;
 use image::error::UnsupportedErrorKind::Format;
 use std::any::type_name_of_val;
-use std::cell::Ref;
 use std::io::Write;
 use std::mem::discriminant;
 use std::rc::Rc;
@@ -53,71 +53,63 @@ impl LayoutBox {
     pub fn add_child(&mut self, child_box: LayoutBox) {
         match self {
             LayoutBox::BlockLevel(blb) => blb.add_child(child_box),
-            LayoutBox::InlineLevel(ilb) => ilb.add_child(child_box),
+            LayoutBox::InlineLevel(ilc) => ilb.add_child(child_box),
         }
     }
 
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             LayoutBox::BlockLevel(blb) => blb.computed_values(),
-            LayoutBox::InlineLevel(ilb) => ilb.computed_values(),
+            LayoutBox::InlineLevel(ilc) => ilb.computed_values(),
         }
     }
 
     pub fn dimensions(&self) -> Dimensions {
         match self {
             LayoutBox::BlockLevel(blb) => blb.dimensions(),
-            LayoutBox::InlineLevel(ilb) => ilb.dimensions(),
+            LayoutBox::InlineLevel(ilc) => ilb.dimensions(),
         }
     }
 
     pub fn dimensions_mut(&mut self) -> &mut Dimensions {
         match self {
             LayoutBox::BlockLevel(blb) => blb.dimensions_mut(),
-            LayoutBox::InlineLevel(ilb) => ilb.dimensions_mut(),
+            LayoutBox::InlineLevel(ilc) => ilb.dimensions_mut(),
         }
     }
 
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             LayoutBox::BlockLevel(blb) => blb.formatting_context(),
-            LayoutBox::InlineLevel(ilb) => ilb.formatting_context(),
+            LayoutBox::InlineLevel(ilc) => ilb.formatting_context(),
         }
     }
 
-    /// Returns a box capable of containing inline children.  If `self` is already an inline-box,
-    /// this will be `self`.  In other cases, we may need to get and or create a child box capable
-    /// of containing inline children.
+    /// Returns a box capable of containing inline children.  If `self` is already an inline-level
+    /// box, this will be `self`.  In other cases, we may need to get and or create a child box
+    /// capable of containing inline children.
     pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
         match self {
-            LayoutBox::InlineBox(_) | LayoutBox::AnonymousInline(_) => Some(self),
-            LayoutBox::BlockContainer(bc) => bc
-                .children
-                .iter_mut()
-                .last()
-                .map(|last_child| match last_child {
-                    LayoutBox::AnonymousBlock(abb) => {
-                        get_anonymous_inline_layout_box(&mut abb.children)
-                    }
-                    _ => None,
-                })
-                .flatten(),
-            LayoutBox::AnonymousBlock(abb) => get_anonymous_inline_layout_box(&mut abb.children),
-            LayoutBox::TextRun(_) => panic!("get_inline_container_box called on text run"),
+            LayoutBox::BlockLevel(blb) => blb.get_mut_inline_container(),
+            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => Some(match ilb {
+                InlineLevelBox::AnonymousInline(_) => self,
+                InlineLevelBox::InlineBox(_) => self,
+            }),
+            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => None,
         }
     }
 
     pub fn inner_box_type_name(&self) -> &'static str {
         match self {
             LayoutBox::BlockLevel(blb) => blb.into(),
-            LayoutBox::InlineLevel(ilb) => ilb.into(),
+            LayoutBox::InlineLevel(ilc) => ilc.into(),
         }
     }
 
     pub fn is_anonymous_inline(&self) -> bool {
         match self {
             LayoutBox::BlockLevel(_) => false,
-            LayoutBox::InlineLevel(ilb) => ilb.is_anonymous_inline(),
+            LayoutBox::InlineLevel(ilc) => ilc.is_anonymous_inline(),
         }
     }
 }
@@ -136,9 +128,11 @@ impl From<AnonymousInlineBox> for LayoutBox {
     }
 }
 
-impl From<Inlinebox> for LayoutBox {
+impl From<InlineBox> for LayoutBox {
     fn from(ib: InlineBox) -> Self {
-        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox::InlineBox(ib))
+        LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(
+            InlineLevelBox::InlineBox(ib),
+        ))
     }
 }
 
@@ -152,12 +146,12 @@ impl Layout for LayoutBox {
     fn layout(&mut self, context: LayoutContext) {
         match self {
             LayoutBox::BlockLevel(blb) => blb.layout(context),
-            LayoutBox::InlineLevel(ilb) => ilb.layout(context),
+            LayoutBox::InlineLevel(ilc) => ilc.layout(context),
         }
     }
 }
 
-fn get_anonymous_inline_layout_box(boxes: &mut Vec<LayoutBox>) -> Option<&mut LayoutBox> {
+pub fn get_anonymous_inline_layout_box(boxes: &mut Vec<LayoutBox>) -> Option<&mut LayoutBox> {
     boxes.iter_mut().find(|child| child.is_anonymous_inline())
 }
 

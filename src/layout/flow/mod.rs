@@ -4,6 +4,7 @@ pub mod inline;
 use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
+use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{
     AnonymousBlockBox, AnonymousInlineBox, BaseBox, BlockContainer, InlineBox, LayoutBox, TextRun,
@@ -12,6 +13,7 @@ use crate::layout::DumpLayoutFormat;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
+use crate::style::values::computed::ComputedValues;
 use crate::style::values::computed::Direction;
 use crate::style::values::used::ToPx;
 

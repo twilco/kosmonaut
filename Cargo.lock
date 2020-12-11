@@ -3,8 +3,6 @@
 [[package]]
 name = "accountable-refcell"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e9a97321189341ee9b728321237b564caf993ab578297fdf7af1172c9623ca4"
 dependencies = [
  "backtrace",
 ]

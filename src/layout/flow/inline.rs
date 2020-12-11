@@ -47,6 +47,13 @@ impl InlineLevelContent {
             InlineLevelContent::TextRun(tr) => tr.formatting_context(),
         }
     }
+
+    pub fn is_anonymous_inline(&self) -> bool {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.is_anonymous_inline(),
+            InlineLevelContent::TextRun(_) => false,
+        }
+    }
 }
 
 impl DumpLayoutFormat for InlineLevelContent {
@@ -54,6 +61,18 @@ impl DumpLayoutFormat for InlineLevelContent {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.dump_layout_format(),
             InlineLevelContent::TextRun(tr) => tr.dump_layout_format(),
+        }
+    }
+}
+
+impl Layout for InlineLevelContent {
+    fn layout(&mut self, context: LayoutContext) {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => ilb.layout(context),
+            InlineLevelContent::TextRun(tr) => unimplemented!(
+                "layout called on text run with contents",
+                tr.contents.clone()
+            ),
         }
     }
 }
@@ -88,6 +107,13 @@ impl InlineLevelBox {
         }
     }
 
+    pub fn children(&self) -> &Vec<LayoutBox> {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.children(),
+            InlineLevelBox::InlineBox(ib) => ib.children(),
+        }
+    }
+
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.computed_values(),
@@ -116,10 +142,10 @@ impl InlineLevelBox {
         }
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    pub fn is_anonymous_inline(&self) -> bool {
         match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.children(),
-            InlineLevelBox::InlineBox(ib) => ib.children(),
+            InlineLevelBox::AnonymousInline(_) => true,
+            InlineLevelBox::InlineBox(_) => false,
         }
     }
 }

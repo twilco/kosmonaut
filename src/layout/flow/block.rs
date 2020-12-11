@@ -4,7 +4,7 @@ use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::{BlockContainer, FlowSide};
 use crate::layout::formatting_context::FormattingContextRef;
-use crate::layout::layout_box::{BaseBox, LayoutBox};
+use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
 use crate::layout::{DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
@@ -64,6 +64,25 @@ impl BlockLevelBox {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.formatting_context(),
             BlockLevelBox::BlockContainer(bc) => bc.formatting_context(),
+        }
+    }
+
+    pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
+        match self {
+            BlockLevelBox::AnonymousBlock(abb) => {
+                get_anonymous_inline_layout_box(&mut abb.children)
+            }
+            BlockLevelBox::BlockContainer(bc) => bc
+                .children()
+                .iter_mut()
+                .last()
+                .map(|last_child| match last_child {
+                    LayoutBox::BlockLevel(BlockLevelBox::AnonymousBlock(ref mut abb)) => {
+                        get_anonymous_inline_layout_box(abb.children_mut())
+                    }
+                    _ => None,
+                })
+                .flatten(),
         }
     }
 
@@ -237,7 +256,10 @@ impl BlockLevelBox {
             writing_mode,
             direction,
         );
-        self.dimensions_mut().set_block_size(block_size);
+        self.dimensions_mut().set_block_size(
+            block_size.to_px(containing_block.block_size()),
+            writing_mode,
+        );
     }
 }
 
@@ -297,6 +319,10 @@ impl AnonymousBlockBox {
 
     pub fn children(&self) -> &Vec<LayoutBox> {
         &self.children
+    }
+
+    pub fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
+        &mut self.children
     }
 }
 

@@ -32,6 +32,10 @@ impl BlockLevelBox {
         }
     }
 
+    pub fn new_block_container(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+        BlockLevelBox::BlockContainer(BlockContainer::new(node, formatting_context))
+    }
+
     pub fn children(&self) -> &Vec<LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.children(),
@@ -73,7 +77,7 @@ impl BlockLevelBox {
                 get_anonymous_inline_layout_box(&mut abb.children)
             }
             BlockLevelBox::BlockContainer(bc) => bc
-                .children()
+                .children_mut()
                 .iter_mut()
                 .last()
                 .map(|last_child| match last_child {

@@ -1,5 +1,4 @@
 #![feature(or_patterns)]
-#![feature(refcell_take)]
 #![feature(type_name_of_val)]
 // TODO: Remove after layout refactor.
 #![allow(dead_code)]

@@ -1,11 +1,11 @@
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::flow::block::AnonymousBlockBox;
+use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
 use crate::layout::flow::inline::{InlineBox, TextRun};
 use crate::layout::flow::BlockContainer;
 use crate::layout::formatting_context::{
     FormattingContext, FormattingContextRef, QualifiedFormattingContext,
 };
-use crate::layout::layout_box::{AnonymousBlockBox, BlockContainer, InlineBox, LayoutBox, TextRun};
+use crate::layout::layout_box::LayoutBox;
 use crate::style::values::computed::display::{DisplayBox, InnerDisplay, OuterDisplay};
 use crate::style::values::computed::Display;
 use std::rc::Rc;
@@ -59,7 +59,7 @@ pub fn build_box_tree(
         }
         let pfc = parent_context.unwrap();
         assert!(pfc.is_inline_formatting_context());
-        LayoutBox::TextRun(TextRun::new(node.clone(), pfc, contents))
+        TextRun::new(node.clone(), pfc, contents).into()
     } else {
         match build_box_from_display(node.clone(), parent_context) {
             Some(layout_box) => layout_box,
@@ -78,11 +78,14 @@ pub fn build_box_tree(
 
             // Get (or create, if necessary) an inline container for this new text-run.
             let inline_container = get_or_create_inline_container(&mut layout_box, child.clone());
-            inline_container.add_child(LayoutBox::TextRun(TextRun::new(
-                child.clone(),
-                inline_container.formatting_context(),
-                text.clone().take().trim().to_owned(),
-            )));
+            inline_container.add_child(
+                TextRun::new(
+                    child.clone(),
+                    inline_container.formatting_context(),
+                    text.clone().take().trim().to_owned(),
+                )
+                .into(),
+            );
             continue;
         }
         handle_child_node_by_display(&mut layout_box, child);
@@ -154,13 +157,14 @@ fn build_box_from_display(
                         // There is no parent formatting context -- create a new BFC.
                         _ => FormattingContextRef::new_independent_block(),
                     };
-                    LayoutBox::BlockContainer(BlockContainer::new(node.clone(), formatting_context))
+                    BlockLevelBox::new_block_container(node.clone(), formatting_context).into()
                 }
                 (OuterDisplay::Block, InnerDisplay::FlowRoot) => {
-                    LayoutBox::BlockContainer(BlockContainer::new(
+                    BlockLevelBox::new_block_container(
                         node.clone(),
                         FormattingContextRef::new_independent_block(),
-                    ))
+                    )
+                    .into()
                 }
                 (OuterDisplay::Inline, InnerDisplay::Flow) => {
                     let formatting_context = match parent_context.clone() {
@@ -177,7 +181,7 @@ fn build_box_from_display(
                             panic!("there was no parent formatting context to add inline box to")
                         }
                     };
-                    LayoutBox::InlineBox(InlineBox::new(node.clone(), formatting_context))
+                    InlineBox::new(node.clone(), formatting_context).into()
                 }
                 (OuterDisplay::Inline, InnerDisplay::FlowRoot) => unimplemented!(),
             }
@@ -191,7 +195,7 @@ fn get_or_create_inline_container(
     node_for_container: NodeRef,
 ) -> &mut LayoutBox {
     if layout_box.get_mut_inline_container().is_none() {
-        layout_box.add_child(create_inline_container(node_for_container.clone()));
+        layout_box.add_child(create_inline_container(node_for_container));
     }
     // TODO: There must be another way to get the anonymous inline box we just added.
     // This could cause poor runtime performance for boxes with a lot of children, but works for now.
@@ -204,7 +208,7 @@ fn create_inline_container(node: NodeRef) -> LayoutBox {
     let mut anonymous_block_box =
         AnonymousBlockBox::new(node.clone(), FormattingContextRef::new_independent_inline());
     anonymous_block_box.add_child(LayoutBox::create_root_inline_box(
-        node.clone(),
+        node,
         anonymous_block_box.formatting_context(),
     ));
     anonymous_block_box.into()

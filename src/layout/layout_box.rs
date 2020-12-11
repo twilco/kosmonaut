@@ -5,10 +5,6 @@ use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
 use crate::layout::flow::inline::{
     AnonymousInlineBox, InlineBox, InlineLevelBox, InlineLevelContent, TextRun,
 };
-use crate::layout::flow::{
-    solve_block_level_inline_size, BlockContainer, BlockLevelBox, FlowSide, InlineLevelBox,
-    SolveInlineSizeInput,
-};
 use crate::layout::formatting_context::{
     FormattingContext, FormattingContextRef, QualifiedFormattingContext,
 };
@@ -53,35 +49,43 @@ impl LayoutBox {
     pub fn add_child(&mut self, child_box: LayoutBox) {
         match self {
             LayoutBox::BlockLevel(blb) => blb.add_child(child_box),
-            LayoutBox::InlineLevel(ilc) => ilb.add_child(child_box),
+            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
+                ilb.add_child(child_box)
+            }
+            LayoutBox::InlineLevel(InlineLevelContent::TextRun(tr)) => {
+                panic!(
+                    "tried to add child to text run with contents '{}'",
+                    tr.contents()
+                )
+            }
         }
     }
 
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             LayoutBox::BlockLevel(blb) => blb.computed_values(),
-            LayoutBox::InlineLevel(ilc) => ilb.computed_values(),
+            LayoutBox::InlineLevel(ilc) => ilc.computed_values(),
         }
     }
 
     pub fn dimensions(&self) -> Dimensions {
         match self {
             LayoutBox::BlockLevel(blb) => blb.dimensions(),
-            LayoutBox::InlineLevel(ilc) => ilb.dimensions(),
+            LayoutBox::InlineLevel(ilc) => ilc.dimensions(),
         }
     }
 
     pub fn dimensions_mut(&mut self) -> &mut Dimensions {
         match self {
             LayoutBox::BlockLevel(blb) => blb.dimensions_mut(),
-            LayoutBox::InlineLevel(ilc) => ilb.dimensions_mut(),
+            LayoutBox::InlineLevel(ilc) => ilc.dimensions_mut(),
         }
     }
 
     pub fn formatting_context(&self) -> FormattingContextRef {
         match self {
             LayoutBox::BlockLevel(blb) => blb.formatting_context(),
-            LayoutBox::InlineLevel(ilc) => ilb.formatting_context(),
+            LayoutBox::InlineLevel(ilc) => ilc.formatting_context(),
         }
     }
 
@@ -125,6 +129,12 @@ impl From<AnonymousInlineBox> for LayoutBox {
         LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(
             InlineLevelBox::AnonymousInline(aib),
         ))
+    }
+}
+
+impl From<BlockLevelBox> for LayoutBox {
+    fn from(blb: BlockLevelBox) -> Self {
+        LayoutBox::BlockLevel(blb)
     }
 }
 
@@ -173,7 +183,7 @@ impl BaseBox {
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> BaseBox {
         BaseBox {
             dimensions: Dimensions::default(),
-            formatting_context: formatting_context.clone(),
+            formatting_context,
             node,
         }
     }
@@ -291,7 +301,7 @@ impl DumpLayout for LayoutBox {
         } else {
             "".to_owned()
         };
-        let node_dump = if node_name_and_data.len() > 0 {
+        let node_dump = if !node_name_and_data.is_empty() {
             format!("{} ", node_name_and_data)
         } else {
             "".to_owned()

@@ -70,7 +70,7 @@ impl Layout for InlineLevelContent {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.layout(context),
             InlineLevelContent::TextRun(tr) => unimplemented!(
-                "layout called on text run with contents",
+                "layout called on text run with contents '{}'",
                 tr.contents.clone()
             ),
         }
@@ -252,6 +252,10 @@ impl TextRun {
             base: BaseBox::new(node, formatting_context),
             contents,
         }
+    }
+
+    pub fn contents(&self) -> String {
+        self.contents.clone()
     }
 }
 

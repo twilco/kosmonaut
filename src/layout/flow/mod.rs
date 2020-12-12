@@ -55,7 +55,12 @@ impl BlockContainer {
 
 impl DumpLayoutFormat for BlockContainer {
     fn dump_layout_format(&self) -> String {
-        self.node().data().dump_layout_format()
+        let node_data = self.node().data().dump_layout_format();
+        if node_data.is_empty() {
+            "BlockContainer".to_string()
+        } else {
+            format!("{} {}", node_data, "BlockContainer")
+        }
     }
 }
 

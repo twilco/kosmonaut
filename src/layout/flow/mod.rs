@@ -64,6 +64,17 @@ impl DumpLayoutFormat for BlockContainer {
     }
 }
 
+/// The direction in which block-level boxes and line boxes stack within a block container.
+/// The block flow direction is determined by the `writing-mode` property.
+///
+/// https://drafts.csswg.org/css-writing-modes-4/#block-flow-direction
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum BlockFlowDirection {
+    TopToBottom,
+    RightToLeft,
+    LeftToRight,
+}
+
 /// Sides relative to the flow of the page, rather than physical sides (e.g. left, top, ...).
 ///
 /// https://drafts.csswg.org/css-writing-modes-4/#logical-directions

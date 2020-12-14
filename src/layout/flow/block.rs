@@ -10,7 +10,7 @@ use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::{ComputedValues, Direction, Display};
+use crate::style::values::computed::{ComputedValues, Direction, Display, WritingMode};
 use crate::style::values::used::ToPx;
 use accountable_refcell::Ref;
 
@@ -91,22 +91,42 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn layout_children(&mut self, scale_factor: f32) {
+    fn layout_children(&mut self, scale_factor: f32, containing_writing_mode: WritingMode) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
         let self_containing_block =
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
         let layout_context = LayoutContext::new(self_containing_block, scale_factor);
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => abb
-                .children
-                .iter_mut()
-                .for_each(|child| child.layout(layout_context)),
-            BlockLevelBox::BlockContainer(bc) => bc
-                .children
-                .iter_mut()
-                .for_each(|child| child.layout(layout_context)),
-        }
+        let children_total_block_size =
+            match self {
+                BlockLevelBox::AnonymousBlock(abb) => abb.children_mut().iter_mut().fold(
+                    CSSPixelLength::new(0.),
+                    |accumulator, child| {
+                        child.layout(layout_context);
+                        accumulator
+                            + child
+                                .dimensions()
+                                .get_content_block_size(self_containing_block.writing_mode())
+                    },
+                ),
+                BlockLevelBox::BlockContainer(bc) => bc.children_mut().iter_mut().fold(
+                    CSSPixelLength::new(0.),
+                    |accumulator, child| {
+                        child.layout(layout_context);
+                        accumulator
+                            + child
+                                .dimensions()
+                                .get_content_block_size(self_containing_block.writing_mode())
+                    },
+                ),
+            };
+        let current_block_size = self
+            .dimensions()
+            .get_content_block_size(containing_writing_mode);
+        self.dimensions_mut().set_block_size(
+            current_block_size + children_total_block_size,
+            containing_writing_mode,
+        );
     }
 
     pub fn solve_and_set_inline_level_properties(
@@ -222,8 +242,6 @@ impl BlockLevelBox {
             margin_block_end = zero
         }
 
-        self.layout_children(scale_factor);
-        // TODO: Layout children and add block heights
         let direction = containing_block.direction();
         self.dimensions_mut().set_margin(
             FlowSide::BlockStart,
@@ -261,10 +279,22 @@ impl BlockLevelBox {
             writing_mode,
             direction,
         );
+
+        // TODO: `layout_children` computes and assigns `self`s block_size by adding up the block_size
+        // of all its children.  However, if the author explicitly provides a block size (height or width),
+        // it should be used instead.
+        //
+        // We could flop the order of these statements to accomplish this, but that results
+        // in boxes without an explicit block size to always receive zero here, even if they have children
+        // with non-zero block-sizes.
+        // We could probably check for the presence of box.base.node.contextual_decls.longhands.{BLOCK_SIZE_PROP?}
+        //   If present, the author has specified a value.  So use the computed block_size here.
+        //   Else, use the total_children_block_size.
         self.dimensions_mut().set_block_size(
             block_size.to_px(containing_block.block_size()),
             writing_mode,
         );
+        self.layout_children(scale_factor, containing_block.writing_mode());
     }
 }
 
@@ -359,7 +389,7 @@ pub struct SolveInlineSizeOutput {
     pub inline_size: CSSPixelLength,
 }
 
-/// Pure function to determine used inline-wise direction values.
+/// Pure function to determine used inline-wise direction sizes for a block-level box.
 ///
 /// Corresponds to CSS 2.1 section 10.3.3.  https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#blockwidth
 /// No other sections besides 10.3.3 are currently handled.

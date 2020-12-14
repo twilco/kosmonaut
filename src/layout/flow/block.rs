@@ -92,34 +92,35 @@ impl BlockLevelBox {
     }
 
     fn layout_children(&mut self, scale_factor: f32, containing_writing_mode: WritingMode) {
+        fn layout_and_get_block_size(
+            layout_box: &mut LayoutBox,
+            layout_context: LayoutContext,
+        ) -> CSSPixelLength {
+            layout_box.layout(layout_context);
+            layout_box
+                .dimensions()
+                .get_content_block_size(layout_context.containing_block.writing_mode())
+        }
+
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
         let self_containing_block =
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
         let layout_context = LayoutContext::new(self_containing_block, scale_factor);
-        let children_total_block_size =
-            match self {
-                BlockLevelBox::AnonymousBlock(abb) => abb.children_mut().iter_mut().fold(
-                    CSSPixelLength::new(0.),
-                    |accumulator, child| {
-                        child.layout(layout_context);
-                        accumulator
-                            + child
-                                .dimensions()
-                                .get_content_block_size(self_containing_block.writing_mode())
-                    },
-                ),
-                BlockLevelBox::BlockContainer(bc) => bc.children_mut().iter_mut().fold(
-                    CSSPixelLength::new(0.),
-                    |accumulator, child| {
-                        child.layout(layout_context);
-                        accumulator
-                            + child
-                                .dimensions()
-                                .get_content_block_size(self_containing_block.writing_mode())
-                    },
-                ),
-            };
+        let children_total_block_size = match self {
+            BlockLevelBox::AnonymousBlock(abb) => abb
+                .children_mut()
+                .iter_mut()
+                .fold(CSSPixelLength::new(0.), |accumulator, child| {
+                    accumulator + layout_and_get_block_size(child, layout_context)
+                }),
+            BlockLevelBox::BlockContainer(bc) => bc
+                .children_mut()
+                .iter_mut()
+                .fold(CSSPixelLength::new(0.), |accumulator, child| {
+                    accumulator + layout_and_get_block_size(child, layout_context)
+                }),
+        };
         let current_block_size = self
             .dimensions()
             .get_content_block_size(containing_writing_mode);
@@ -284,7 +285,7 @@ impl BlockLevelBox {
         // of all its children.  However, if the author explicitly provides a block size (height or width),
         // it should be used instead.
         //
-        // We could flop the order of these statements to accomplish this, but that results
+        // We could flip the order of these statements to accomplish this, but that results
         // in boxes without an explicit block size to always receive zero here, even if they have children
         // with non-zero block-sizes.
         // We could probably check for the presence of box.base.node.contextual_decls.longhands.{BLOCK_SIZE_PROP?}
@@ -294,6 +295,8 @@ impl BlockLevelBox {
             block_size.to_px(containing_block.block_size()),
             writing_mode,
         );
+        // TODO: It is not intuitive that this method sets the block_size of this box.  Rename or
+        // refactor
         self.layout_children(scale_factor, containing_block.writing_mode());
     }
 }

@@ -281,16 +281,6 @@ impl BlockLevelBox {
             direction,
         );
 
-        // TODO: `layout_children` computes and assigns `self`s block_size by adding up the block_size
-        // of all its children.  However, if the author explicitly provides a block size (height or width),
-        // it should be used instead.
-        //
-        // We could flip the order of these statements to accomplish this, but that results
-        // in boxes without an explicit block size to always receive zero here, even if they have children
-        // with non-zero block-sizes.
-        // We could probably check for the presence of box.base.node.contextual_decls.longhands.{BLOCK_SIZE_PROP?}
-        //   If present, the author has specified a value.  So use the computed block_size here.
-        //   Else, use the total_children_block_size.
         self.dimensions_mut().set_block_size(
             block_size.to_px(containing_block.block_size()),
             writing_mode,
@@ -298,6 +288,29 @@ impl BlockLevelBox {
         // TODO: It is not intuitive that this method sets the block_size of this box.  Rename or
         // refactor
         self.layout_children(scale_factor, containing_block.writing_mode());
+    }
+
+    /// If this block has any explicitly set values (e.g. length or percentage values, NOT auto) for
+    /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
+    /// function will set them.  Otherwise, the used values will be those given by other layout
+    /// equations.
+    fn apply_physical_properties(&mut self, containing_block: ContainingBlock, scale_factor: f32) {
+        let width = self.computed_values().width.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
+            self.dimensions_mut()
+                .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
+        }
+
+        let height = self.computed_values().height.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
+            self.dimensions_mut()
+                .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
+        }
+        // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
+        // are broken in non-horizontal writing modes because they are applied logically, when
+        // these properties should instead be applied physically.  E.g., margin-left should always affect
+        // the page-relative left margin of the box, but instead reflects the flow relative margin
+        // left, which physically ends up being the top margin.
     }
 }
 
@@ -326,6 +339,7 @@ impl Layout for BlockLevelBox {
                     // set xpos somewhere
                     self.solve_and_set_block_level_properties(containing_block, scale_factor);
                     // set ypos somewhere
+                    self.apply_physical_properties(containing_block, scale_factor);
                 }
                 // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
                 OuterDisplay::Inline => {}

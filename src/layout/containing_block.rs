@@ -46,8 +46,8 @@ impl ContainingBlock {
         }
     }
 
-    pub fn rect(&self) -> Rect {
-        self.rect
+    pub fn rect(&self) -> &Rect {
+        &self.rect
     }
 
     pub fn writing_mode(&self) -> WritingMode {

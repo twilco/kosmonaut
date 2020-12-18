@@ -100,16 +100,18 @@ impl BlockLevelBox {
                 (containing_block.self_relative_inline_start_coord() + margin_inline_start).px()
             }
             OriginRelativeProgression::TowardsOrigin => {
+                // TODO: I think this computation is mostly correct, but should be verified after
+                // box-painting is hooked up again.
                 let containing_block_inline_end_coord = containing_block
                     .self_relative_inline_start_coord()
                     + containing_block.self_relative_inline_size();
-                let inline_margin_box_size = self
+                let inline_border_box_size = self
                     .dimensions()
-                    .margin_box_inline_size(containing_block.writing_mode());
+                    .border_box_inline_size(containing_block.writing_mode());
                 (containing_block_inline_end_coord
-                    - inline_margin_box_size
+                    - inline_border_box_size
                     - self.dimensions().get(
-                        FlowSide::InlineEnd,
+                        FlowSide::InlineStart,
                         BoxComponent::Margin,
                         containing_block.writing_mode(),
                         containing_block.direction(),
@@ -151,8 +153,16 @@ impl BlockLevelBox {
 
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
+
+        // This will need to change when we support other `position` property types.  For now,
+        // the behavior of the default `position` value, "static" is hardcoded here.
+        // https://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+        // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
+        // 'static', the containing block is formed by the content edge of the nearest block
+        // container ancestor box.
         let self_containing_block =
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
+
         let layout_context = LayoutContext::new(self_containing_block, scale_factor);
         let children_total_block_size = match self {
             BlockLevelBox::AnonymousBlock(abb) => abb
@@ -253,7 +263,7 @@ impl BlockLevelBox {
         // Before computing the `inline_start_coord` of this box, we need to apply values the author
         // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
         // `height` in the other `writing-modes`.
-        // self.apply_inline_physical_properties(containing_block, scale_factor);
+        self.apply_inline_physical_properties(containing_block, scale_factor);
         // TODO: Need to apply block-direction physical property
         let inline_start_coord = self.compute_inline_start_coord(containing_block, scale_factor);
         self.dimensions_mut()

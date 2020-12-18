@@ -35,6 +35,8 @@ impl Dimensions {
 
     /// The area covered by the content area plus its padding.
     pub fn padding_box(self) -> Rect {
+        // TODO: This can result in a negative start_x and start_y...maybe expanded_by shouldn't
+        // alter those values?
         self.content.expanded_by(self.padding)
     }
 
@@ -58,8 +60,16 @@ impl Dimensions {
         self.content.width = val;
     }
 
+    pub fn start_x(&self) -> CSSFloat {
+        self.content.start_x
+    }
+
     pub fn set_start_x(&mut self, val: CSSFloat) {
         self.content.start_x = val;
+    }
+
+    pub fn start_y(&self) -> CSSFloat {
+        self.content.start_y
     }
 
     pub fn set_start_y(&mut self, val: CSSFloat) {
@@ -99,8 +109,16 @@ impl Dimensions {
         self.get_block_size(Some(BoxComponent::Padding), writing_mode)
     }
 
+    pub fn padding_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+        self.get_inline_size(Some(BoxComponent::Padding), writing_mode)
+    }
+
     pub fn border_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(Some(BoxComponent::Border), writing_mode)
+    }
+
+    pub fn border_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+        self.get_inline_size(Some(BoxComponent::Border), writing_mode)
     }
 
     pub fn margin_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {

@@ -107,15 +107,19 @@ impl Dimensions {
         self.get_block_size(Some(BoxComponent::Margin), writing_mode)
     }
 
-    /// Gets the block size of these dimensions, optionally expanded by:
+    pub fn margin_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+        self.get_inline_size(Some(BoxComponent::Margin), writing_mode)
+    }
+
+    /// Gets the block-size of these dimensions, optionally expanded by:
     ///
     ///  1. Padding only
     ///  2. Padding and borders
     ///  3. Padding, borders, and margins
     ///
-    /// If `None`, only the block size of the box content will be returned.
+    /// If `None`, only the block-size of the box content will be returned.
     ///
-    /// Note that the block size is also referred to as the logical height.
+    /// Note that the block-size is also referred to as the logical height.
     fn get_block_size(
         &self,
         expanded_by: Option<BoxComponent>,
@@ -150,14 +154,36 @@ impl Dimensions {
         }
     }
 
-    /// Note that the inline size is also known as the logical width.
-    pub fn get_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    /// Gets the inline-size of these dimensions, optionally expanded by:
+    ///
+    ///  1. Padding only
+    ///  2. Padding and borders
+    ///  3. Padding, borders, and margins
+    ///
+    /// If `None`, only the inline-size of the box content will be returned.
+    ///
+    /// Note that the inline-size is also referred to as the logical width.
+    pub fn get_inline_size(
+        &self,
+        expanded_by: Option<BoxComponent>,
+        writing_mode: WritingMode,
+    ) -> CSSPixelLength {
         match writing_mode {
-            WritingMode::HorizontalTb => self.content.width,
+            WritingMode::HorizontalTb => match expanded_by {
+                None => self.content.height,
+                Some(BoxComponent::Padding) => self.padding_box().width,
+                Some(BoxComponent::Border) => self.border_box().width,
+                Some(BoxComponent::Margin) => self.margin_box().width,
+            },
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.content.height,
+            | WritingMode::SidewaysLr => match expanded_by {
+                None => self.content.width,
+                Some(BoxComponent::Padding) => self.padding_box().height,
+                Some(BoxComponent::Border) => self.border_box().height,
+                Some(BoxComponent::Margin) => self.margin_box().height,
+            },
         }
     }
 

@@ -131,9 +131,7 @@ impl OriginRelativeProgression {
                 | WritingMode::SidewaysRl,
                 Direction::Rtl,
             )
-            | (WritingMode::SidewaysLr, Direction::Ltr) => {
-                OriginRelativeProgression::AwayFromOrigin
-            }
+            | (WritingMode::SidewaysLr, Direction::Ltr) => OriginRelativeProgression::TowardsOrigin,
         }
     }
 

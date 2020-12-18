@@ -2,16 +2,17 @@ use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
-use crate::layout::flow::{BlockContainer, FlowSide};
+use crate::layout::flow::{BlockContainer, FlowSide, OriginRelativeProgression};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
-use crate::layout::{DumpLayoutFormat, Layout, LayoutContext};
+use crate::layout::{BoxComponent, DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
 use crate::style::values::computed::{ComputedValues, Direction, Display, WritingMode};
 use crate::style::values::used::ToPx;
+use crate::style::values::CSSFloat;
 use accountable_refcell::Ref;
 
 #[derive(Clone, Debug, IntoStaticStr)]
@@ -69,6 +70,52 @@ impl BlockLevelBox {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.formatting_context(),
             BlockLevelBox::BlockContainer(bc) => bc.formatting_context(),
+        }
+    }
+
+    pub fn compute_block_start_coord(
+        &self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) -> CSSFloat {
+        0.
+    }
+
+    pub fn compute_inline_start_coord(
+        &self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) -> CSSFloat {
+        match OriginRelativeProgression::inline_start_origin_relative_direction(
+            containing_block.writing_mode(),
+            containing_block.direction(),
+        ) {
+            OriginRelativeProgression::AwayFromOrigin => {
+                let margin_inline_start = self.dimensions().get(
+                    FlowSide::InlineStart,
+                    BoxComponent::Margin,
+                    containing_block.writing_mode(),
+                    containing_block.direction(),
+                );
+                (containing_block.self_relative_inline_start_coord() + margin_inline_start).px()
+            }
+            OriginRelativeProgression::TowardsOrigin => {
+                let containing_block_inline_end_coord = containing_block
+                    .self_relative_inline_start_coord()
+                    + containing_block.self_relative_inline_size();
+                let inline_margin_box_size = self
+                    .dimensions()
+                    .margin_box_inline_size(containing_block.writing_mode());
+                (containing_block_inline_end_coord
+                    - inline_margin_box_size
+                    - self.dimensions().get(
+                        FlowSide::InlineEnd,
+                        BoxComponent::Margin,
+                        containing_block.writing_mode(),
+                        containing_block.direction(),
+                    ))
+                .px()
+            }
         }
     }
 
@@ -191,18 +238,26 @@ impl BlockLevelBox {
         );
         self.dimensions_mut().set_padding(
             FlowSide::InlineStart,
-            padding_inline_start.to_px(containing_block.inline_size()),
+            padding_inline_start.to_px(containing_block.self_relative_inline_size()),
             writing_mode,
             direction,
         );
         self.dimensions_mut().set_padding(
             FlowSide::InlineEnd,
-            padding_inline_end.to_px(containing_block.inline_size()),
+            padding_inline_end.to_px(containing_block.self_relative_inline_size()),
             writing_mode,
             direction,
         );
         self.dimensions_mut()
             .set_inline_size(solved_inline_sizes.inline_size, writing_mode);
+        // Before computing the `inline_start_coord` of this box, we need to apply values the author
+        // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
+        // `height` in the other `writing-modes`.
+        // self.apply_inline_physical_properties(containing_block, scale_factor);
+        // TODO: Need to apply block-direction physical property
+        let inline_start_coord = self.compute_inline_start_coord(containing_block, scale_factor);
+        self.dimensions_mut()
+            .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());
     }
 
     /// Corresponds to CSS 2.1 section 10.6.3.  Currently no other sections are implemented.
@@ -246,13 +301,13 @@ impl BlockLevelBox {
         let direction = containing_block.direction();
         self.dimensions_mut().set_margin(
             FlowSide::BlockStart,
-            margin_block_start.to_px(containing_block.block_size()),
+            margin_block_start.to_px(containing_block.self_relative_block_size()),
             writing_mode,
             direction,
         );
         self.dimensions_mut().set_margin(
             FlowSide::BlockEnd,
-            margin_block_end.to_px(containing_block.block_size()),
+            margin_block_end.to_px(containing_block.self_relative_block_size()),
             writing_mode,
             direction,
         );
@@ -270,26 +325,57 @@ impl BlockLevelBox {
         );
         self.dimensions_mut().set_padding(
             FlowSide::BlockStart,
-            padding_block_start.to_px(containing_block.block_size()),
+            padding_block_start.to_px(containing_block.self_relative_block_size()),
             writing_mode,
             direction,
         );
         self.dimensions_mut().set_padding(
             FlowSide::BlockEnd,
-            padding_block_end.to_px(containing_block.block_size()),
+            padding_block_end.to_px(containing_block.self_relative_block_size()),
             writing_mode,
             direction,
         );
 
         self.dimensions_mut().set_block_size(
-            block_size.to_px(containing_block.block_size()),
+            block_size.to_px(containing_block.self_relative_block_size()),
             writing_mode,
         );
+
+        // TODO: This block-start-coord calculation needs to go somewhere else.  Refactor with `layout_children`
+        // block-size refactor
+        let block_start_coord = self.compute_block_start_coord(containing_block, scale_factor);
+        self.dimensions_mut()
+            .set_block_start_coord(block_start_coord, containing_block.writing_mode());
         // TODO: It is not intuitive that this method sets the block_size of this box.  Rename or
         // refactor
         self.layout_children(scale_factor, containing_block.writing_mode());
     }
 
+    fn apply_inline_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match containing_block.writing_mode() {
+            WritingMode::HorizontalTb => {
+                let width = self.computed_values().width.size;
+                if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
+                    self.dimensions_mut()
+                        .set_width(dbg!(lp.to_px(containing_block.rect().width) * scale_factor));
+                }
+            }
+            WritingMode::VerticalRl
+            | WritingMode::SidewaysRl
+            | WritingMode::VerticalLr
+            | WritingMode::SidewaysLr => {
+                let height = self.computed_values().height.size;
+                if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
+                    self.dimensions_mut()
+                        .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
+                }
+            }
+        }
+    }
     /// If this block has any explicitly set values (e.g. length or percentage values, NOT auto) for
     /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
     /// function will set them.  Otherwise, the used values will be those given by other layout
@@ -324,6 +410,11 @@ impl DumpLayoutFormat for BlockLevelBox {
 }
 
 impl Layout for BlockLevelBox {
+    // TODO: Throughout block-level layout, we use the self_relative_* [1] methods of containing blocks
+    // when making calculations.  We need to confirm that this is correct.
+    //
+    // [1] "self-relative" means the containing block evaluates abstract flow directions against its
+    // own writing-mode, rather than that of it's own containing block.
     fn layout(&mut self, context: LayoutContext) {
         let LayoutContext {
             containing_block,
@@ -336,9 +427,7 @@ impl Layout for BlockLevelBox {
             Display::Full(full_display) => match full_display.outer() {
                 OuterDisplay::Block => {
                     self.solve_and_set_inline_level_properties(containing_block, scale_factor);
-                    // set xpos somewhere
                     self.solve_and_set_block_level_properties(containing_block, scale_factor);
-                    // set ypos somewhere
                     self.apply_physical_properties(containing_block, scale_factor);
                 }
                 // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
@@ -422,13 +511,14 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
         mut inline_size,
     } = input;
 
-    let margin_box_inline_size = margin_inline_start.to_px(containing_block.inline_size())
-        + margin_inline_end.to_px(containing_block.inline_size())
+    let margin_box_inline_size = margin_inline_start
+        .to_px(containing_block.self_relative_inline_size())
+        + margin_inline_end.to_px(containing_block.self_relative_inline_size())
         + border_inline_start
         + border_inline_end
-        + padding_inline_start.to_px(containing_block.inline_size())
-        + padding_inline_end.to_px(containing_block.inline_size())
-        + inline_size.to_px(containing_block.inline_size());
+        + padding_inline_start.to_px(containing_block.self_relative_inline_size())
+        + padding_inline_end.to_px(containing_block.self_relative_inline_size())
+        + inline_size.to_px(containing_block.self_relative_inline_size());
 
     let zero = LengthPercentageOrAuto::new_len(0.);
     let auto = LengthPercentageOrAuto::Auto;
@@ -436,14 +526,16 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
     // + 'border-right-width' (plus any of 'margin-left' or 'margin-right' that are not 'auto')
     // is larger than the width of the containing block, then any 'auto' values for 'margin-left'
     // or 'margin-right' are, for the following rules, treated as zero.
-    if inline_size != auto && margin_box_inline_size > containing_block.inline_size() {
+    if inline_size != auto && margin_box_inline_size > containing_block.self_relative_inline_size()
+    {
         margin_inline_start = zero;
         margin_inline_end = zero;
     }
 
     // This can be be negative, indicating an overflow (this box has a larger inline-size than
     // the containing block).
-    let available_inline_space_px = containing_block.inline_size() - margin_box_inline_size;
+    let available_inline_space_px =
+        containing_block.self_relative_inline_size() - margin_box_inline_size;
     let available_inline_space = LengthPercentageOrAuto::new_len_px(available_inline_space_px);
     match (
         margin_inline_start == auto,
@@ -491,8 +583,9 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
     }
 
     SolveInlineSizeOutput {
-        margin_inline_start: margin_inline_start.to_px(containing_block.inline_size()),
-        margin_inline_end: margin_inline_end.to_px(containing_block.inline_size()),
-        inline_size: inline_size.to_px(containing_block.inline_size()),
+        margin_inline_start: margin_inline_start
+            .to_px(containing_block.self_relative_inline_size()),
+        margin_inline_end: margin_inline_end.to_px(containing_block.self_relative_inline_size()),
+        inline_size: inline_size.to_px(containing_block.self_relative_inline_size()),
     }
 }

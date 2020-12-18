@@ -66,6 +66,31 @@ impl Dimensions {
         self.content.start_y = val;
     }
 
+    pub fn set_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+        match writing_mode {
+            WritingMode::HorizontalTb => self.set_start_y(val),
+            WritingMode::VerticalRl
+            | WritingMode::SidewaysRl
+            | WritingMode::VerticalLr
+            | WritingMode::SidewaysLr => self.set_start_x(val),
+        }
+    }
+
+    /// The inline-directions for `horizontal-tb` are left-right, so set `start_x` for that
+    /// `writing-mode`.  The inline-directions of the other `writing-mode`s are bottom-top, so
+    /// set `start_y` for them here.
+    ///
+    /// https://github.com/twilco/kosmonaut/blob/master/src/layout/dimensions.rs
+    pub fn set_inline_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+        match writing_mode {
+            WritingMode::HorizontalTb => self.set_start_x(val),
+            WritingMode::VerticalRl
+            | WritingMode::SidewaysRl
+            | WritingMode::VerticalLr
+            | WritingMode::SidewaysLr => self.set_start_y(val),
+        }
+    }
+
     pub fn get_content_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(None, writing_mode)
     }

@@ -13,8 +13,8 @@ use crate::layout::DumpLayoutFormat;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::ComputedValues;
 use crate::style::values::computed::Direction;
+use crate::style::values::computed::{ComputedValues, WritingMode};
 use crate::style::values::used::ToPx;
 use accountable_refcell::Ref;
 
@@ -84,4 +84,77 @@ pub enum FlowSide {
     BlockEnd,
     InlineStart,
     InlineEnd,
+}
+
+/// Represents the direction boxes progress physically (relative to the origin).  For example,
+/// in a `writing-mode: horizontal-tb; direction: ltr;` layout, inline progression is left-to-right,
+/// moving `AwayFromOrigin` (which is an (x, y) of (0, 0)).  Conversely, a `writing-mode` and
+/// `direction` resulting in right-to-left or bottom-to-top progression would be progression
+/// `TowardsOrigin`.
+///
+/// This has implications in layout when calculating box (x, y) position.
+///
+/// This table showing `writing-mode` and `direction` to logical and physical direction is relevant:
+/// https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum OriginRelativeProgression {
+    AwayFromOrigin,
+    TowardsOrigin,
+}
+
+impl OriginRelativeProgression {
+    /// Determine whether or not the given `writing-mode` and `direction` represents an
+    /// `AwayFromOrigin` or `TowardsOrigin` progression for the inline-start direction.
+    ///
+    /// Maps to https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical.
+    pub fn inline_start_origin_relative_direction(
+        writing_mode: WritingMode,
+        direction: Direction,
+    ) -> OriginRelativeProgression {
+        match (writing_mode, direction) {
+            // left-to-right and top-to-bottom start-to-end flows are `AwayFromOrigin` progressions.
+            (
+                WritingMode::HorizontalTb
+                | WritingMode::VerticalRl
+                | WritingMode::VerticalLr
+                | WritingMode::SidewaysRl,
+                Direction::Ltr,
+            )
+            | (WritingMode::SidewaysLr, Direction::Rtl) => {
+                OriginRelativeProgression::AwayFromOrigin
+            }
+            // right-to-left and bottom-to-top start-to-end flows are `TowardsOrigin` progression.
+            (
+                WritingMode::HorizontalTb
+                | WritingMode::VerticalRl
+                | WritingMode::VerticalLr
+                | WritingMode::SidewaysRl,
+                Direction::Rtl,
+            )
+            | (WritingMode::SidewaysLr, Direction::Ltr) => {
+                OriginRelativeProgression::AwayFromOrigin
+            }
+        }
+    }
+
+    /// Determine whether or not the given `writing-mode` represents an `AwayFromOrigin` or
+    /// `TowardsOrigin` progression.  Determining progression for the block-start direction only requires
+    /// the `writing-mode`, whereas determining progression for the inline direction requires both
+    /// the `writing-mode` and the `direction`.
+    ///
+    /// Maps to https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical.
+    pub fn block_start_origin_relative_direction(
+        writing_mode: WritingMode,
+    ) -> OriginRelativeProgression {
+        match writing_mode {
+            // left-to-right and top-to-bottom start-to-end flows are `AwayFromOrigin` progressions.
+            WritingMode::HorizontalTb | WritingMode::VerticalLr | WritingMode::SidewaysLr => {
+                OriginRelativeProgression::AwayFromOrigin
+            }
+            // right-to-left start-to-end flows are `TowardsOrigin` progressions.
+            WritingMode::VerticalRl | WritingMode::SidewaysRl => {
+                OriginRelativeProgression::TowardsOrigin
+            }
+        }
+    }
 }

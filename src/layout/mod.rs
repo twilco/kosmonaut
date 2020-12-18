@@ -10,6 +10,7 @@ pub mod values;
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
+use crate::layout::flow::OriginRelativeProgression;
 use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
@@ -65,6 +66,19 @@ impl LayoutContext {
             containing_block,
             scale_factor,
         }
+    }
+
+    pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        OriginRelativeProgression::inline_start_origin_relative_direction(
+            self.containing_block.writing_mode(),
+            self.containing_block.direction(),
+        )
+    }
+
+    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        OriginRelativeProgression::block_start_origin_relative_direction(
+            self.containing_block.writing_mode(),
+        )
     }
 }
 

@@ -361,7 +361,7 @@ impl BlockLevelBox {
                 let width = self.computed_values().width.size;
                 if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
                     self.dimensions_mut()
-                        .set_width(dbg!(lp.to_px(containing_block.rect().width) * scale_factor));
+                        .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
                 }
             }
             WritingMode::VerticalRl

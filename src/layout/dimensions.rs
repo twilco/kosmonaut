@@ -170,7 +170,7 @@ impl Dimensions {
     ) -> CSSPixelLength {
         match writing_mode {
             WritingMode::HorizontalTb => match expanded_by {
-                None => self.content.height,
+                None => self.content.width,
                 Some(BoxComponent::Padding) => self.padding_box().width,
                 Some(BoxComponent::Border) => self.border_box().width,
                 Some(BoxComponent::Margin) => self.margin_box().width,
@@ -179,7 +179,7 @@ impl Dimensions {
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
             | WritingMode::SidewaysLr => match expanded_by {
-                None => self.content.width,
+                None => self.content.height,
                 Some(BoxComponent::Padding) => self.padding_box().height,
                 Some(BoxComponent::Border) => self.border_box().height,
                 Some(BoxComponent::Margin) => self.margin_box().height,

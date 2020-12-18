@@ -552,10 +552,7 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
             // specified value of 'margin-right' is ignored and the value is calculated so as
             // to make the equality true. If the value of 'direction' is 'rtl', this happens to
             // 'margin-left' instead.
-            match containing_block.direction() {
-                Direction::Ltr => margin_inline_end = available_inline_space,
-                Direction::Rtl => margin_inline_start = available_inline_space,
-            }
+            margin_inline_end = available_inline_space
         }
         (_, true, _) => {
             // If 'width' is set to 'auto', any other 'auto' values become '0' and 'width'

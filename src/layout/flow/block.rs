@@ -140,7 +140,11 @@ impl BlockLevelBox {
         }
     }
 
-    fn layout_children(&mut self, scale_factor: f32, containing_writing_mode: WritingMode) {
+    /// Lays out children and returns the sum of their content-block block-sizes.
+    fn layout_children(&mut self, scale_factor: f32) -> CSSPixelLength {
+        // We may eventually want to refactor this function to not return child total block size and
+        // actually _just_ layout children, but this works for now.
+
         fn layout_and_get_block_size(
             layout_box: &mut LayoutBox,
             layout_context: LayoutContext,
@@ -164,7 +168,7 @@ impl BlockLevelBox {
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
 
         let layout_context = LayoutContext::new(self_containing_block, scale_factor);
-        let children_total_block_size = match self {
+        match self {
             BlockLevelBox::AnonymousBlock(abb) => abb
                 .children_mut()
                 .iter_mut()
@@ -177,14 +181,7 @@ impl BlockLevelBox {
                 .fold(CSSPixelLength::new(0.), |accumulator, child| {
                     accumulator + layout_and_get_block_size(child, layout_context)
                 }),
-        };
-        let current_block_size = self
-            .dimensions()
-            .get_content_block_size(containing_writing_mode);
-        self.dimensions_mut().set_block_size(
-            current_block_size + children_total_block_size,
-            containing_writing_mode,
-        );
+        }
     }
 
     pub fn solve_and_set_inline_level_properties(
@@ -351,14 +348,13 @@ impl BlockLevelBox {
             writing_mode,
         );
 
-        // TODO: This block-start-coord calculation needs to go somewhere else.  Refactor with `layout_children`
-        // block-size refactor
+        // TODO: This block-start-coord calculation needs to go somewhere else.
         let block_start_coord = self.compute_block_start_coord(containing_block, scale_factor);
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord, containing_block.writing_mode());
-        // TODO: It is not intuitive that this method sets the block_size of this box.  Rename or
-        // refactor
-        self.layout_children(scale_factor, containing_block.writing_mode());
+        let children_total_block_size = self.layout_children(scale_factor);
+        self.dimensions_mut()
+            .set_block_size(children_total_block_size, containing_block.writing_mode());
     }
 
     fn apply_inline_physical_properties(

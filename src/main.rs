@@ -34,8 +34,9 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    dump_layout_tree, dump_layout_tree_verbose, html_file_path_from_files, inner_window_height,
-    inner_window_width, scale_factor, setup_and_get_cli_args, stylesheets_from_files,
+    css_file_paths_from_files, dump_layout_tree, dump_layout_tree_verbose,
+    html_file_path_from_files, inner_window_height, inner_window_width, scale_factor,
+    setup_and_get_cli_args, DumpLayoutVerbosity,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
@@ -43,6 +44,8 @@ use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
 use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
+use crate::style::stylesheet::Stylesheet;
+use clap::ArgMatches;
 pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
@@ -67,21 +70,20 @@ fn main() {
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or_else(|| {
-        vec![style::stylesheet::parse_css_to_stylesheet(
-            Some("rainbow-divs.css".to_owned()),
-            &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
-        )
-        .expect("parse stylesheet fail")]
-    });
-    apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
+    apply_styles(
+        dom.clone(),
+        &[ua_sheet],
+        &[],
+        &get_author_sheets(&arg_matches),
+    );
     let (inner_width_opt, inner_height_opt) = (
         inner_window_width(&arg_matches),
         inner_window_height(&arg_matches),
     );
 
     let scale_factor_opt = scale_factor(&arg_matches);
-    let verbose_dump_layout = dump_layout_tree_verbose(&arg_matches).unwrap_or(false);
+    let verbose_dump_layout =
+        dump_layout_tree_verbose(&arg_matches).unwrap_or(DumpLayoutVerbosity::NonVerbose);
     if dump_layout_tree(&arg_matches) {
         let scale_factor = scale_factor_opt
             .expect("scale factor must be explicitly specified when running layout dump");
@@ -100,12 +102,36 @@ fn main() {
     run_event_loop(event_loop, gl, dom, windowed_context, scale_factor_opt);
 }
 
+fn get_author_sheets(arg_matches: &ArgMatches) -> Vec<Stylesheet> {
+    css_file_paths_from_files(&arg_matches)
+        .map(|css_file_paths| {
+            css_file_paths
+                .iter()
+                .map(|&css_file_path| {
+                    style::stylesheet::parse_css_to_stylesheet(
+                        Some(css_file_path.to_owned()),
+                        &mut std::fs::read_to_string(css_file_path)
+                            .expect("couldn't read css file to string"),
+                    )
+                    .expect("error parsing stylesheet")
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_else(|| {
+            vec![style::stylesheet::parse_css_to_stylesheet(
+                Some("rainbow-divs.css".to_owned()),
+                &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
+            )
+            .expect("parse stylesheet fail")]
+        })
+}
+
 fn run_layout_dump(
     styled_dom: NodeRef,
     inner_width_opt: Option<f32>,
     inner_height_opt: Option<f32>,
     scale_factor: f32,
-    verbose: bool,
+    verbosity: DumpLayoutVerbosity,
 ) {
     let mut box_tree = build_box_tree(styled_dom, None).unwrap();
     global_layout(
@@ -116,7 +142,7 @@ fn run_layout_dump(
             .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
         scale_factor,
     );
-    box_tree.dump_layout(&mut std::io::stdout(), 0, verbose);
+    box_tree.dump_layout(&mut std::io::stdout(), 0, verbosity);
 }
 
 pub fn run_event_loop(

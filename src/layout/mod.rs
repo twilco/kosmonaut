@@ -7,6 +7,7 @@ pub mod layout_box;
 pub mod rect;
 pub mod values;
 
+use crate::cli::DumpLayoutVerbosity;
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
@@ -90,7 +91,12 @@ pub trait Layout {
 /// tests and debugging.  Should be implemented by "container"-style entities, such as members
 /// of the layout tree, formatting individual struct members via the `DumpLayoutFormat` trait.
 pub trait DumpLayout {
-    fn dump_layout<W: Write>(&self, write_to: &mut W, indent_spaces: usize, verbose: bool);
+    fn dump_layout<W: Write>(
+        &self,
+        write_to: &mut W,
+        indent_spaces: usize,
+        verbosity: DumpLayoutVerbosity,
+    );
 }
 
 /// Trait describing behavior necessary for formatting ones data in preparation for a layout tree

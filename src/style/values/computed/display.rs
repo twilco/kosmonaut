@@ -12,6 +12,18 @@ pub enum Display {
 }
 
 impl Display {
+    /// Create a new `Display` equivalent to what one would get specifying `display: block` in a
+    /// stylesheet.
+    pub fn new_block() -> Display {
+        Display::new_full_display(OuterDisplay::Block, InnerDisplay::Flow)
+    }
+
+    /// Create a new `Display` equivalent to what one would get specifying `display: inline` in a
+    /// stylesheet.
+    pub fn new_inline() -> Display {
+        Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)
+    }
+
     pub fn new_none() -> Display {
         Display::Box(DisplayBox::None)
     }

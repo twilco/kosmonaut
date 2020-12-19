@@ -687,12 +687,12 @@ mod tests {
     fn decl_sort_order_of_appearance() {
         let mut decls = ContextualPropertyDeclarations::new();
         decls.add(font_size_px(12.0));
-        decls.add(display_by_type(Display::Block));
+        decls.add(display_by_type(Display::new_block()));
         decls.add(font_size_px(14.0));
         decls.add(font_size_px(16.0));
         decls.add(font_size_px(18.0));
         decls.add(font_size_px(20.0));
-        decls.add(display_by_type(Display::Inline));
+        decls.add(display_by_type(Display::new_inline()));
 
         decls.cascade_sort();
         assert!(decls.is_sorted);
@@ -707,7 +707,7 @@ mod tests {
             .expect("decl_sort_order_of_appearance should get display");
         match first_display.inner_decl {
             PropertyDeclaration::Display(display_type) => {
-                assert_eq!(display_type, Display::Inline);
+                assert_eq!(display_type, Display::new_inline());
             }
             _ => panic!("`first_display` should have property decl type of display"),
         }
@@ -725,7 +725,7 @@ mod tests {
             specificity: Specificity::new(0),
         };
         let display = ContextualPropertyDeclaration {
-            inner_decl: PropertyDeclaration::Display(Display::Block),
+            inner_decl: PropertyDeclaration::Display(Display::new_block()),
             important: false,
             origin: CssOrigin::Inline,
             source_location: None,

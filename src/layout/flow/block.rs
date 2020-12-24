@@ -73,6 +73,14 @@ impl BlockLevelBox {
         }
     }
 
+    pub fn is_root(&self) -> bool {
+        match self {
+            BlockLevelBox::AnonymousBlock(abb) => abb.is_root(),
+            BlockLevelBox::BlockContainer(bc) => bc.is_root(),
+        }
+    }
+
+    // TODO: Fix
     pub fn compute_block_start_coord(
         &self,
         containing_block: ContainingBlock,

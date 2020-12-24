@@ -62,6 +62,15 @@ impl LayoutBox {
         }
     }
 
+    /// Returns the children of this layout box, if there are any.
+    pub fn children(&self) -> Option<&Vec<LayoutBox>> {
+        match self {
+            LayoutBox::BlockLevel(blb) => Some(blb.children()),
+            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => Some(ilb.children()),
+            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => None,
+        }
+    }
+
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         match self {
             LayoutBox::BlockLevel(blb) => blb.computed_values(),
@@ -115,6 +124,14 @@ impl LayoutBox {
         match self {
             LayoutBox::BlockLevel(_) => false,
             LayoutBox::InlineLevel(ilc) => ilc.is_anonymous_inline(),
+        }
+    }
+
+    pub fn is_root(&self) -> bool {
+        match self {
+            LayoutBox::BlockLevel(blb) => blb.is_root(),
+            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => false,
+            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => ilb.is_root(),
         }
     }
 }
@@ -327,12 +344,7 @@ impl DumpLayout for LayoutBox {
         )
         .expect("error writing layout dump");
 
-        match self {
-            LayoutBox::BlockLevel(blb) => Some(blb.children()),
-            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ib)) => Some(ib.children()),
-            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => None,
-        }
-        .map(|children| {
+        self.children().map(|children| {
             let new_indent = indent_spaces + 2;
             children.iter().for_each(|child| {
                 child.dump_layout(write_to, new_indent, verbosity);

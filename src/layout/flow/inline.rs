@@ -148,6 +148,13 @@ impl InlineLevelBox {
             InlineLevelBox::InlineBox(_) => false,
         }
     }
+
+    pub fn is_root(&self) -> bool {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => aib.is_root(),
+            InlineLevelBox::InlineBox(ib) => ib.is_root(),
+        }
+    }
 }
 
 impl DumpLayoutFormat for InlineLevelBox {

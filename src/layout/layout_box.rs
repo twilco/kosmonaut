@@ -344,11 +344,11 @@ impl DumpLayout for LayoutBox {
         )
         .expect("error writing layout dump");
 
-        self.children().map(|children| {
+        if let Some(children) = self.children() {
             let new_indent = indent_spaces + 2;
             children.iter().for_each(|child| {
                 child.dump_layout(write_to, new_indent, verbosity);
             })
-        });
+        }
     }
 }

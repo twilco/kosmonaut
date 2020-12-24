@@ -152,11 +152,11 @@ fn prepare_layout_box(display_list: &mut DisplayList, layout_box: &LayoutBox) {
         }
     }
 
-    layout_box.children().map(|children| {
+    if let Some(children) = layout_box.children() {
         for child in children {
             prepare_layout_box(display_list, child);
         }
-    });
+    }
 }
 
 /// Preparation for step 2 from: https://www.w3.org/TR/CSS22/zindex.html

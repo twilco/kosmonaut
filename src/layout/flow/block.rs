@@ -226,22 +226,14 @@ impl BlockLevelBox {
         // their parent's block start margin.
         // This is kind of hacky, as this `set_block_start_coord` here will be overwritten by this
         // box's parent with the correct value, but it works for now.
-        let margin_bumped_block_start_coord = self
-            .dimensions()
-            .get(
-                FlowSide::BlockStart,
-                BoxComponent::Margin,
-                containing_block.writing_mode(),
-                containing_block.direction(),
-            )
-            .px()
-            + self
-                .dimensions()
-                .get_block_start_coord(containing_block.writing_mode());
-        self.dimensions_mut().set_block_start_coord(
-            margin_bumped_block_start_coord,
+        let margin_block_start = self.dimensions().get(
+            FlowSide::BlockStart,
+            BoxComponent::Margin,
             containing_block.writing_mode(),
+            containing_block.direction(),
         );
+        self.dimensions_mut()
+            .add_to_block_start_coord(margin_block_start.px(), containing_block.writing_mode());
 
         // The rectangle selected as the containing block will need to change when we support other
         // `position` property types (e.g. some may want the content-box, others the margin-box, etc).
@@ -352,7 +344,6 @@ impl BlockLevelBox {
         // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
         // `height` in the other `writing-modes`.
         self.apply_inline_physical_properties(containing_block, scale_factor);
-        // TODO: Need to apply block-direction physical property
         let inline_start_coord = self.compute_inline_start_coord(containing_block, scale_factor);
         self.dimensions_mut()
             .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());

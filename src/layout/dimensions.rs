@@ -105,6 +105,11 @@ impl Dimensions {
         }
     }
 
+    pub fn add_to_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+        let block_start_coord = self.get_block_start_coord(writing_mode);
+        self.set_block_start_coord(val + block_start_coord, writing_mode)
+    }
+
     /// The inline-directions for `horizontal-tb` are left-right, so set `start_x` for that
     /// `writing-mode`.  The inline-directions of the other `writing-mode`s are bottom-top, so
     /// set `start_y` for them here.

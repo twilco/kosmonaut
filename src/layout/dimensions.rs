@@ -19,6 +19,15 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
+    pub fn expanded_by(self, other: Dimensions) -> Dimensions {
+        Dimensions {
+            content: self.content.expanded_by_rect(other.content),
+            padding: self.padding.expanded_by_edges(other.padding),
+            border: self.border.expanded_by_edges(other.border),
+            margin: self.margin.expanded_by_edges(other.margin),
+        }
+    }
+
     pub fn border_size(self, side: Side) -> CSSPixelLength {
         match side {
             Side::Bottom => self.border.bottom,
@@ -30,20 +39,20 @@ impl Dimensions {
 
     /// The area covered by the content area plus padding and borders.
     pub fn border_box(self) -> Rect {
-        self.padding_box().expanded_by(self.border)
+        self.padding_box().expanded_by_edges(self.border)
     }
 
     /// The area covered by the content area plus its padding.
     pub fn padding_box(self) -> Rect {
         // TODO: This can result in a negative start_x and start_y...maybe expanded_by shouldn't
         // alter those values?
-        self.content.expanded_by(self.padding)
+        self.content.expanded_by_edges(self.padding)
     }
 
     /// The area covered by the content area plus padding, borders, and margin.
     // TODO: This will need to change when we implement margin collapsing: http://www.w3.org/TR/CSS2/box.html#collapsing-margins
     pub fn margin_box(self) -> Rect {
-        self.border_box().expanded_by(self.margin)
+        self.border_box().expanded_by_edges(self.margin)
     }
 
     pub fn scale_edges_by(&mut self, scale_factor: f32) {
@@ -74,6 +83,16 @@ impl Dimensions {
 
     pub fn set_start_y(&mut self, val: CSSFloat) {
         self.content.start_y = val;
+    }
+
+    pub fn get_block_start_coord(&mut self, writing_mode: WritingMode) -> CSSFloat {
+        match writing_mode {
+            WritingMode::HorizontalTb => self.start_y(),
+            WritingMode::VerticalRl
+            | WritingMode::SidewaysRl
+            | WritingMode::VerticalLr
+            | WritingMode::SidewaysLr => self.start_x(),
+        }
     }
 
     pub fn set_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {

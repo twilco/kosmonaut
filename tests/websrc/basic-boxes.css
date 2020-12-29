@@ -25,7 +25,6 @@ div {
     border-right-color: black;
 }
 
-body {
+* {
     writing-mode: horizontal-tb;
-    direction: rtl;
 }

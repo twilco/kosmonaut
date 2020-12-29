@@ -1,5 +1,6 @@
 use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
+use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
@@ -104,6 +105,51 @@ impl InlineLevelBox {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children.push(new_child),
             InlineLevelBox::InlineBox(ib) => ib.children.push(new_child),
+        }
+    }
+
+    pub fn apply_block_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => {
+                aib.apply_block_physical_properties(containing_block, scale_factor)
+            }
+            InlineLevelBox::InlineBox(ib) => {
+                ib.apply_block_physical_properties(containing_block, scale_factor)
+            }
+        }
+    }
+
+    pub fn apply_inline_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => {
+                aib.apply_inline_physical_properties(containing_block, scale_factor)
+            }
+            InlineLevelBox::InlineBox(ib) => {
+                ib.apply_inline_physical_properties(containing_block, scale_factor)
+            }
+        }
+    }
+
+    pub fn apply_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            InlineLevelBox::AnonymousInline(aib) => {
+                aib.apply_physical_properties(containing_block, scale_factor)
+            }
+            InlineLevelBox::InlineBox(ib) => {
+                ib.apply_physical_properties(containing_block, scale_factor)
+            }
         }
     }
 

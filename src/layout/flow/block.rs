@@ -2,9 +2,12 @@ use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
-use crate::layout::flow::{BlockContainer, FlowSide, OriginRelativeProgression};
+use crate::layout::flow::{
+    BlockContainer, BlockFlowDirection, FlowSide, OriginRelativeProgression,
+};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
+use crate::layout::rect::Rect;
 use crate::layout::{BoxComponent, DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
@@ -30,6 +33,51 @@ impl BlockLevelBox {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
             BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child),
+        }
+    }
+
+    pub fn apply_block_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            BlockLevelBox::AnonymousBlock(abb) => {
+                abb.apply_block_physical_properties(containing_block, scale_factor)
+            }
+            BlockLevelBox::BlockContainer(bc) => {
+                bc.apply_block_physical_properties(containing_block, scale_factor)
+            }
+        }
+    }
+
+    pub fn apply_inline_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            BlockLevelBox::AnonymousBlock(abb) => {
+                abb.apply_inline_physical_properties(containing_block, scale_factor)
+            }
+            BlockLevelBox::BlockContainer(bc) => {
+                bc.apply_inline_physical_properties(containing_block, scale_factor)
+            }
+        }
+    }
+
+    pub fn apply_physical_properties(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) {
+        match self {
+            BlockLevelBox::AnonymousBlock(abb) => {
+                abb.apply_physical_properties(containing_block, scale_factor)
+            }
+            BlockLevelBox::BlockContainer(bc) => {
+                bc.apply_physical_properties(containing_block, scale_factor)
+            }
         }
     }
 
@@ -78,15 +126,6 @@ impl BlockLevelBox {
             BlockLevelBox::AnonymousBlock(abb) => abb.is_root(),
             BlockLevelBox::BlockContainer(bc) => bc.is_root(),
         }
-    }
-
-    // TODO: Fix
-    pub fn compute_block_start_coord(
-        &self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) -> CSSFloat {
-        0.
     }
 
     pub fn compute_inline_start_coord(
@@ -148,26 +187,65 @@ impl BlockLevelBox {
         }
     }
 
-    /// Lays out children and returns the sum of their content-block block-sizes.
-    fn layout_children(&mut self, scale_factor: f32) -> CSSPixelLength {
-        // We may eventually want to refactor this function to not return child total block size and
+    /// Lays out children and returns the extent of their summed dimensions.
+    fn layout_children(
+        &mut self,
+        containing_block: ContainingBlock,
+        scale_factor: f32,
+    ) -> Dimensions {
+        // We may eventually want to refactor this function to not return child total dimensions and
         // actually _just_ layout children, but this works for now.
 
-        fn layout_and_get_block_size(
+        fn layout_and_get_dimensions(
             layout_box: &mut LayoutBox,
+            preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
             layout_context: LayoutContext,
-        ) -> CSSPixelLength {
+        ) -> Dimensions {
             layout_box.layout(layout_context);
+            let (containing_block, scale_factor) =
+                (layout_context.containing_block, layout_context.scale_factor);
+            // Before calculating this boxes block start coordinate, ensure we've applied the authors
+            // specified styles.
+            layout_box.apply_block_physical_properties(containing_block, scale_factor);
+            let block_start_coord = compute_block_start_coord(
+                layout_box,
+                preceeding_sibling_blockwise_space_consumed,
+                layout_context,
+            );
             layout_box
-                .dimensions()
-                .get_content_block_size(layout_context.containing_block.writing_mode())
+                .dimensions_mut()
+                .set_block_start_coord(block_start_coord, containing_block.writing_mode());
+            layout_box.dimensions()
         }
 
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
+        // Bump this box's block_start_coord by the block start margin.  This is necessary because
+        // when children are laid out below, they use their parent's block_start_coord (so this block_start_coord)
+        // to determine their own block_start_coord, and without this they won't take into account
+        // their parent's block start margin.
+        // This is kind of hacky, as this `set_block_start_coord` here will be overwritten by this
+        // box's parent with the correct value, but it works for now.
+        let margin_bumped_block_start_coord = self
+            .dimensions()
+            .get(
+                FlowSide::BlockStart,
+                BoxComponent::Margin,
+                containing_block.writing_mode(),
+                containing_block.direction(),
+            )
+            .px()
+            + self
+                .dimensions()
+                .get_block_start_coord(containing_block.writing_mode());
+        self.dimensions_mut().set_block_start_coord(
+            margin_bumped_block_start_coord,
+            containing_block.writing_mode(),
+        );
 
-        // This will need to change when we support other `position` property types.  For now,
-        // the behavior of the default `position` value, "static" is hardcoded here.
+        // The rectangle selected as the containing block will need to change when we support other
+        // `position` property types (e.g. some may want the content-box, others the margin-box, etc).
+        // For now, the behavior of the default `position` value, "static" is hardcoded here.
         // https://www.w3.org/TR/CSS2/visudet.html#containing-block-details
         // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
         // 'static', the containing block is formed by the content edge of the nearest block
@@ -176,19 +254,24 @@ impl BlockLevelBox {
             ContainingBlock::new(self.dimensions().content, direction, writing_mode);
 
         let layout_context = LayoutContext::new(self_containing_block, scale_factor);
+        let layout_and_fold = |child_dimensions_accumulator: Dimensions,
+                               child: &mut LayoutBox|
+         -> Dimensions {
+            let sibling_margin_box_block_extent = child_dimensions_accumulator
+                .margin_box_block_size(layout_context.containing_block.writing_mode());
+            let child_dimensions =
+                layout_and_get_dimensions(child, sibling_margin_box_block_extent, layout_context);
+            child_dimensions.expanded_by(child_dimensions_accumulator)
+        };
         match self {
             BlockLevelBox::AnonymousBlock(abb) => abb
                 .children_mut()
                 .iter_mut()
-                .fold(CSSPixelLength::new(0.), |accumulator, child| {
-                    accumulator + layout_and_get_block_size(child, layout_context)
-                }),
+                .fold(Dimensions::default(), layout_and_fold),
             BlockLevelBox::BlockContainer(bc) => bc
                 .children_mut()
                 .iter_mut()
-                .fold(CSSPixelLength::new(0.), |accumulator, child| {
-                    accumulator + layout_and_get_block_size(child, layout_context)
-                }),
+                .fold(Dimensions::default(), layout_and_fold),
         }
     }
 
@@ -351,66 +434,11 @@ impl BlockLevelBox {
             direction,
         );
 
+        let children_dimensions_extent = self.layout_children(containing_block, scale_factor);
         self.dimensions_mut().set_block_size(
-            block_size.to_px(containing_block.self_relative_block_size()),
-            writing_mode,
+            children_dimensions_extent.get_content_block_size(writing_mode),
+            containing_block.writing_mode(),
         );
-
-        // TODO: This block-start-coord calculation needs to go somewhere else.
-        let block_start_coord = self.compute_block_start_coord(containing_block, scale_factor);
-        self.dimensions_mut()
-            .set_block_start_coord(block_start_coord, containing_block.writing_mode());
-        let children_total_block_size = self.layout_children(scale_factor);
-        self.dimensions_mut()
-            .set_block_size(children_total_block_size, containing_block.writing_mode());
-    }
-
-    fn apply_inline_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
-        match containing_block.writing_mode() {
-            WritingMode::HorizontalTb => {
-                let width = self.computed_values().width.size;
-                if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
-                    self.dimensions_mut()
-                        .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
-                }
-            }
-            WritingMode::VerticalRl
-            | WritingMode::SidewaysRl
-            | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => {
-                let height = self.computed_values().height.size;
-                if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
-                    self.dimensions_mut()
-                        .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
-                }
-            }
-        }
-    }
-    /// If this block has any explicitly set values (e.g. length or percentage values, NOT auto) for
-    /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
-    /// function will set them.  Otherwise, the used values will be those given by other layout
-    /// equations.
-    fn apply_physical_properties(&mut self, containing_block: ContainingBlock, scale_factor: f32) {
-        let width = self.computed_values().width.size;
-        if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
-            self.dimensions_mut()
-                .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
-        }
-
-        let height = self.computed_values().height.size;
-        if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
-            self.dimensions_mut()
-                .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
-        }
-        // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
-        // are broken in non-horizontal writing modes because they are applied logically, when
-        // these properties should instead be applied physically.  E.g., margin-left should always affect
-        // the page-relative left margin of the box, but instead reflects the flow relative margin
-        // left, which physically ends up being the top margin.
     }
 }
 
@@ -442,7 +470,6 @@ impl Layout for BlockLevelBox {
                 OuterDisplay::Block => {
                     self.solve_and_set_inline_level_properties(containing_block, scale_factor);
                     self.solve_and_set_block_level_properties(containing_block, scale_factor);
-                    self.apply_physical_properties(containing_block, scale_factor);
                 }
                 // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
                 OuterDisplay::Inline => {}
@@ -599,4 +626,32 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
         margin_inline_end: margin_inline_end.to_px(containing_block.self_relative_inline_size()),
         inline_size: inline_size.to_px(containing_block.self_relative_inline_size()),
     }
+}
+
+/// Computes the block start coordinate value (`x` or `y` depending on the writing mode) for
+/// the given box according to the rules of block layout.
+fn compute_block_start_coord(
+    layout_box: &LayoutBox,
+    preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
+    layout_context: LayoutContext,
+) -> CSSFloat {
+    let containing_block = layout_context.containing_block;
+    let containing_block_start_coord = containing_block.self_relative_block_start_coord();
+
+    match layout_context.block_start_origin_relative_progression() {
+        OriginRelativeProgression::AwayFromOrigin => {
+            containing_block_start_coord
+                + preceeding_sibling_blockwise_space_consumed
+                + layout_box.dimensions().get(
+                    FlowSide::BlockStart,
+                    BoxComponent::Margin,
+                    containing_block.writing_mode(),
+                    containing_block.direction(),
+                )
+        }
+        OriginRelativeProgression::TowardsOrigin => {
+            unimplemented!("towards origin block_start_coord computation")
+        }
+    }
+    .px()
 }

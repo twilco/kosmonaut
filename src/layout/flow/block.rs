@@ -144,7 +144,19 @@ impl BlockLevelBox {
                     containing_block.writing_mode(),
                     containing_block.direction(),
                 );
-                (containing_block.self_relative_inline_start_coord() + margin_inline_start).px()
+                let border_inline_start = self.dimensions().get(
+                    FlowSide::InlineStart,
+                    BoxComponent::Border,
+                    containing_block.writing_mode(),
+                    containing_block.direction(),
+                );
+                let padding_inline_start = self.dimensions().get(
+                    FlowSide::InlineStart,
+                    BoxComponent::Padding,
+                    containing_block.writing_mode(),
+                    containing_block.direction(),
+                );
+                (containing_block.self_relative_inline_start_coord() + margin_inline_start + border_inline_start + padding_inline_start).px()
             }
             OriginRelativeProgression::TowardsOrigin => {
                 // TODO: I think this computation is mostly correct, but should be verified after
@@ -188,82 +200,34 @@ impl BlockLevelBox {
     }
 
     /// Lays out children and returns the extent of their summed dimensions.
-    fn layout_children(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) -> Dimensions {
-        // We may eventually want to refactor this function to not return child total dimensions and
-        // actually _just_ layout children, but this works for now.
-
-        fn layout_and_get_dimensions(
-            layout_box: &mut LayoutBox,
-            preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
-            layout_context: LayoutContext,
-        ) -> Dimensions {
-            layout_box.layout(layout_context);
-            let (containing_block, scale_factor) =
-                (layout_context.containing_block, layout_context.scale_factor);
-            // Before calculating this boxes block start coordinate, ensure we've applied the authors
-            // specified styles.
-            layout_box.apply_block_physical_properties(containing_block, scale_factor);
-            let block_start_coord = compute_block_start_coord(
-                layout_box,
-                preceeding_sibling_blockwise_space_consumed,
-                layout_context,
-            );
-            layout_box
-                .dimensions_mut()
-                .set_block_start_coord(block_start_coord, containing_block.writing_mode());
-            layout_box.dimensions()
-        }
-
+    fn layout_children(&mut self, containing_block: ContainingBlock, scale_factor: f32) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
-        // Bump this box's block_start_coord by the block start margin.  This is necessary because
-        // when children are laid out below, they use their parent's block_start_coord (so this block_start_coord)
-        // to determine their own block_start_coord, and without this they won't take into account
-        // their parent's block start margin.
-        // This is kind of hacky, as this `set_block_start_coord` here will be overwritten by this
-        // box's parent with the correct value, but it works for now.
-        let margin_block_start = self.dimensions().get(
-            FlowSide::BlockStart,
-            BoxComponent::Margin,
-            containing_block.writing_mode(),
-            containing_block.direction(),
-        );
-        self.dimensions_mut()
-            .add_to_block_start_coord(margin_block_start.px(), containing_block.writing_mode());
 
-        // The rectangle selected as the containing block will need to change when we support other
-        // `position` property types (e.g. some may want the content-box, others the margin-box, etc).
-        // For now, the behavior of the default `position` value, "static" is hardcoded here.
-        // https://www.w3.org/TR/CSS2/visudet.html#containing-block-details
-        // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
-        // 'static', the containing block is formed by the content edge of the nearest block
-        // container ancestor box.
-        let self_containing_block =
-            ContainingBlock::new(self.dimensions().content, direction, writing_mode);
-
-        let layout_context = LayoutContext::new(self_containing_block, scale_factor);
-        let layout_and_fold = |child_dimensions_accumulator: Dimensions,
-                               child: &mut LayoutBox|
-         -> Dimensions {
-            let sibling_margin_box_block_extent = child_dimensions_accumulator
-                .margin_box_block_size(layout_context.containing_block.writing_mode());
-            let child_dimensions =
-                layout_and_get_dimensions(child, sibling_margin_box_block_extent, layout_context);
-            child_dimensions.expanded_by(child_dimensions_accumulator)
+        let (children, self_dimensions) = match self {
+            BlockLevelBox::AnonymousBlock(abb) => (&mut abb.children, abb.base.dimensions_mut()),
+            BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut())
         };
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => abb
-                .children_mut()
-                .iter_mut()
-                .fold(Dimensions::default(), layout_and_fold),
-            BlockLevelBox::BlockContainer(bc) => bc
-                .children_mut()
-                .iter_mut()
-                .fold(Dimensions::default(), layout_and_fold),
+        for child in children {
+            // The rectangle selected as the containing block will need to change when we support other
+            // `position` property types (e.g. some may want the content-box, others the margin-box, etc).
+            // For now, the behavior of the default `position` value, "static" is hardcoded here.
+            // https://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+            // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
+            // 'static', the containing block is formed by the content edge of the nearest block
+            // container ancestor box.
+            child.layout(
+                LayoutContext::new(
+                    ContainingBlock::new(self_dimensions.content, direction, writing_mode),
+                    scale_factor,
+                )
+            );
+            // Add this child's margin-box to our content box so the next child is laid out after
+            // this one.
+            self_dimensions.add_to_block_size(
+                child.dimensions().margin_box_block_size(writing_mode),
+                containing_block.writing_mode(),
+            );
         }
     }
 
@@ -373,7 +337,6 @@ impl BlockLevelBox {
             computed_values.padding_flow_relative(FlowSide::BlockStart, writing_mode);
         let padding_block_end =
             computed_values.padding_flow_relative(FlowSide::BlockEnd, writing_mode);
-        let block_size = computed_values.block_size(writing_mode);
         // Release immutable borrow of &self so we can mutably borrow below.
         drop(computed_values);
 
@@ -425,11 +388,40 @@ impl BlockLevelBox {
             direction,
         );
 
-        let children_dimensions_extent = self.layout_children(containing_block, scale_factor);
-        self.dimensions_mut().set_block_size(
-            children_dimensions_extent.get_content_block_size(writing_mode),
-            containing_block.writing_mode(),
-        );
+        // This is sort of a hack, but if the containing block is the viewport (i.e. this is the
+        // root box), don't include it in the calculation for the block_start_coord.
+        let container_block_size = if self.is_root() {
+            CSSPixelLength::new(0.)
+        } else {
+            containing_block.self_relative_block_size()
+        };
+        // Before calculating this boxes block start coordinate, ensure we've applied the authors
+        // specified styles.
+        self.apply_block_physical_properties(containing_block, scale_factor);
+        let block_start_coord = containing_block.self_relative_block_start_coord()
+            + container_block_size
+            + self.dimensions().get(
+                FlowSide::BlockStart,
+                BoxComponent::Margin,
+                containing_block.writing_mode(),
+                containing_block.direction(),
+            )
+            + self.dimensions().get(
+                FlowSide::BlockStart,
+                BoxComponent::Border,
+                containing_block.writing_mode(),
+                containing_block.direction(),
+            )
+            + self.dimensions().get(
+                FlowSide::BlockStart,
+                BoxComponent::Padding,
+                containing_block.writing_mode(),
+                containing_block.direction(),
+            );
+        self.dimensions_mut()
+            .set_block_start_coord(block_start_coord.px(), containing_block.writing_mode());
+
+        self.layout_children(containing_block, scale_factor);
     }
 }
 
@@ -624,6 +616,7 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
 fn compute_block_start_coord(
     layout_box: &LayoutBox,
     preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
+    parent_block_border_padding_size: CSSPixelLength,
     layout_context: LayoutContext,
 ) -> CSSFloat {
     let containing_block = layout_context.containing_block;
@@ -632,6 +625,7 @@ fn compute_block_start_coord(
     match layout_context.block_start_origin_relative_progression() {
         OriginRelativeProgression::AwayFromOrigin => {
             containing_block_start_coord
+                + parent_block_border_padding_size
                 + preceeding_sibling_blockwise_space_consumed
                 + layout_box.dimensions().get(
                     FlowSide::BlockStart,

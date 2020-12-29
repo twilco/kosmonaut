@@ -4,9 +4,9 @@ use crate::style::values::CSSFloat;
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Rect {
-    /// The exact point Where the rectangle begins on the x-axis.
+    /// The exact point where the rectangle begins on the x-axis.
     pub start_x: CSSFloat,
-    /// The exact point Where the rectangle begins on the y-axis.
+    /// The exact point where the rectangle begins on the y-axis.
     pub start_y: CSSFloat,
     pub width: CSSPixelLength,
     pub height: CSSPixelLength,

@@ -125,7 +125,7 @@ impl Dimensions {
         }
     }
 
-    pub fn get_content_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    pub fn content_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(None, writing_mode)
     }
 
@@ -184,6 +184,11 @@ impl Dimensions {
                 Some(BoxComponent::Margin) => self.margin_box().width,
             },
         }
+    }
+
+    pub fn add_to_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
+        let current_block_size = self.get_block_size(None, writing_mode);
+        self.set_block_size(current_block_size + val, writing_mode)
     }
 
     pub fn set_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {

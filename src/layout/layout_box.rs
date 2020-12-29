@@ -347,9 +347,18 @@ impl BaseBox {
 
     /// Determines if this layout box is associated with the root DOM node (<html>).
     pub fn is_root(&self) -> bool {
-        match self.node.parent() {
-            None => false,
-            Some(parent) => matches!(*parent.data(), NodeData::Document(_)),
+        let parent_node_is_document = if let Some(parent) = self.node.parent() {
+            match parent.data() {
+                NodeData::Document(_) => true,
+                _ => false
+            }
+        } else {
+            false
+        };
+        parent_node_is_document || match self.node().data() {
+            NodeData::Document(_) => true,
+            NodeData::Element(element_data) => element_data.name.local == local_name!("html"),
+            _ => false
         }
     }
 

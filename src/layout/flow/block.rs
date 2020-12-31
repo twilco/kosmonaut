@@ -373,9 +373,12 @@ impl BlockLevelBox {
             direction,
         );
 
-        // This is sort of a hack, but if the containing block is the viewport (i.e. this is the
-        // root box), don't include it in the calculation for the block_start_coord.
-        let container_block_size = if self.is_root() {
+        let preceeding_sibling_blockwise_space_consumed = if self.is_root() {
+            // This is sort of a hack, but if the containing block is the viewport (i.e. this is the
+            // root box), then there are no preceeding siblings and thus this should be zero.
+            // Without this hack, the block size of the containing block is the viewport block size,
+            // meaning boxes will be laid out past the block-end of the viewport (meaning they will
+            // not be visible).
             CSSPixelLength::new(0.)
         } else {
             containing_block.self_relative_block_size()
@@ -383,16 +386,16 @@ impl BlockLevelBox {
         // Before calculating this boxes block start coordinate, ensure we've applied the authors
         // specified styles.
         self.apply_block_physical_properties(containing_block, scale_factor);
-        let block_start_coord = containing_block.self_relative_block_start_coord()
-            // The container_block_size is the sum of the preceeding siblings block sizes (since they
-            // will have already been added), ensuring this box gets laid out after it's preceeding
-            // siblings.
-            + container_block_size
-            // Since block_start_coord is the start of the box content, also factor in this boxes
-            // margin, border, and padding to the calculation.
-            + self.dimensions().get_mbp(FlowSide::BlockStart, containing_block.writing_mode(), containing_block.direction());
+        let block_start_coord = compute_block_start_coord(
+            &self.dimensions(),
+            preceeding_sibling_blockwise_space_consumed,
+            LayoutContext::new(
+                containing_block,
+                scale_factor
+            )
+        );
         self.dimensions_mut()
-            .set_block_start_coord(block_start_coord.px(), containing_block.writing_mode());
+            .set_block_start_coord(block_start_coord, containing_block.writing_mode());
     }
 }
 
@@ -586,29 +589,21 @@ pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInline
 /// Computes the block start coordinate value (`x` or `y` depending on the writing mode) for
 /// the given box according to the rules of block layout.
 fn compute_block_start_coord(
-    layout_box: &LayoutBox,
+    box_dimensions: &Dimensions,
     preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
-    parent_block_border_padding_size: CSSPixelLength,
     layout_context: LayoutContext,
 ) -> CSSFloat {
     let containing_block = layout_context.containing_block;
-    let containing_block_start_coord = containing_block.self_relative_block_start_coord();
-
     match layout_context.block_start_origin_relative_progression() {
         OriginRelativeProgression::AwayFromOrigin => {
-            containing_block_start_coord
-                + parent_block_border_padding_size
+            containing_block.self_relative_block_start_coord()
                 + preceeding_sibling_blockwise_space_consumed
-                + layout_box.dimensions().get(
-                    FlowSide::BlockStart,
-                    BoxComponent::Margin,
-                    containing_block.writing_mode(),
-                    containing_block.direction(),
-                )
+                // Since block_start_coord is the start of the box content, also factor in this boxes
+                // margin, border, and padding to the calculation.
+                + box_dimensions.get_mbp(FlowSide::BlockStart, containing_block.writing_mode(), containing_block.direction())
         }
         OriginRelativeProgression::TowardsOrigin => {
             unimplemented!("towards origin block_start_coord computation")
         }
-    }
-    .px()
+    }.px()
 }

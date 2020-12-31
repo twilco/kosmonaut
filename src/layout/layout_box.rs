@@ -350,16 +350,17 @@ impl BaseBox {
         let parent_node_is_document = if let Some(parent) = self.node.parent() {
             match parent.data() {
                 NodeData::Document(_) => true,
-                _ => false
+                _ => false,
             }
         } else {
             false
         };
-        parent_node_is_document || match self.node().data() {
-            NodeData::Document(_) => true,
-            NodeData::Element(element_data) => element_data.name.local == local_name!("html"),
-            _ => false
-        }
+        parent_node_is_document
+            || match self.node().data() {
+                NodeData::Document(_) => true,
+                NodeData::Element(element_data) => element_data.name.local == local_name!("html"),
+                _ => false,
+            }
     }
 
     pub fn node(&self) -> NodeRef {

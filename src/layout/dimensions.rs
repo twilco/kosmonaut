@@ -312,6 +312,18 @@ impl Dimensions {
         }
     }
 
+    /// Get the sum of the margin, border, and padding box components for the given `FlowSide`.
+    pub fn get_mbp(
+        &self,
+        side: FlowSide,
+        writing_mode: WritingMode,
+        direction: Direction,
+    ) -> CSSPixelLength {
+        self.get(side, BoxComponent::Margin, writing_mode, direction)
+            + self.get(side, BoxComponent::Border, writing_mode, direction)
+            + self.get(side, BoxComponent::Padding, writing_mode, direction)
+    }
+
     #[inline(always)]
     pub fn set_margin(
         &mut self,

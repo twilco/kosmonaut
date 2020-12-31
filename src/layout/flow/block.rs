@@ -138,25 +138,12 @@ impl BlockLevelBox {
             containing_block.direction(),
         ) {
             OriginRelativeProgression::AwayFromOrigin => {
-                let margin_inline_start = self.dimensions().get(
+                let mbp_inline_start = self.dimensions().get_mbp(
                     FlowSide::InlineStart,
-                    BoxComponent::Margin,
                     containing_block.writing_mode(),
                     containing_block.direction(),
                 );
-                let border_inline_start = self.dimensions().get(
-                    FlowSide::InlineStart,
-                    BoxComponent::Border,
-                    containing_block.writing_mode(),
-                    containing_block.direction(),
-                );
-                let padding_inline_start = self.dimensions().get(
-                    FlowSide::InlineStart,
-                    BoxComponent::Padding,
-                    containing_block.writing_mode(),
-                    containing_block.direction(),
-                );
-                (containing_block.self_relative_inline_start_coord() + margin_inline_start + border_inline_start + padding_inline_start).px()
+                (containing_block.self_relative_inline_start_coord() + mbp_inline_start).px()
             }
             OriginRelativeProgression::TowardsOrigin => {
                 // TODO: I think this computation is mostly correct, but should be verified after
@@ -206,7 +193,7 @@ impl BlockLevelBox {
 
         let (children, self_dimensions) = match self {
             BlockLevelBox::AnonymousBlock(abb) => (&mut abb.children, abb.base.dimensions_mut()),
-            BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut())
+            BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut()),
         };
         for child in children {
             // The rectangle selected as the containing block will need to change when we support other
@@ -216,12 +203,10 @@ impl BlockLevelBox {
             // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
             // 'static', the containing block is formed by the content edge of the nearest block
             // container ancestor box.
-            child.layout(
-                LayoutContext::new(
-                    ContainingBlock::new(self_dimensions.content, direction, writing_mode),
-                    scale_factor,
-                )
-            );
+            child.layout(LayoutContext::new(
+                ContainingBlock::new(self_dimensions.content, direction, writing_mode),
+                scale_factor,
+            ));
             // Add this child's margin-box to our content box so the next child is laid out after
             // this one.
             self_dimensions.add_to_block_size(
@@ -399,29 +384,15 @@ impl BlockLevelBox {
         // specified styles.
         self.apply_block_physical_properties(containing_block, scale_factor);
         let block_start_coord = containing_block.self_relative_block_start_coord()
+            // The container_block_size is the sum of the preceeding siblings block sizes (since they
+            // will have already been added), ensuring this box gets laid out after it's preceeding
+            // siblings.
             + container_block_size
-            + self.dimensions().get(
-                FlowSide::BlockStart,
-                BoxComponent::Margin,
-                containing_block.writing_mode(),
-                containing_block.direction(),
-            )
-            + self.dimensions().get(
-                FlowSide::BlockStart,
-                BoxComponent::Border,
-                containing_block.writing_mode(),
-                containing_block.direction(),
-            )
-            + self.dimensions().get(
-                FlowSide::BlockStart,
-                BoxComponent::Padding,
-                containing_block.writing_mode(),
-                containing_block.direction(),
-            );
+            // Since block_start_coord is the start of the box content, also factor in this boxes
+            // margin, border, and padding to the calculation.
+            + self.dimensions().get_mbp(FlowSide::BlockStart, containing_block.writing_mode(), containing_block.direction());
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord.px(), containing_block.writing_mode());
-
-        self.layout_children(containing_block, scale_factor);
     }
 }
 
@@ -453,6 +424,7 @@ impl Layout for BlockLevelBox {
                 OuterDisplay::Block => {
                     self.solve_and_set_inline_level_properties(containing_block, scale_factor);
                     self.solve_and_set_block_level_properties(containing_block, scale_factor);
+                    self.layout_children(containing_block, scale_factor);
                 }
                 // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
                 OuterDisplay::Inline => {}

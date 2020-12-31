@@ -157,8 +157,9 @@ pub fn run_event_loop(
     // instead only needing a clone.
     let clean_box_tree = build_box_tree(styled_dom, None).unwrap();
     let char_handle = CharHandle::new(&gl);
-    let mut scale =
-        cli_specified_scale_factor.unwrap_or(windowed_context.window().scale_factor() as f32);
+    let mut scale = cli_specified_scale_factor.unwrap_or(sanitize_windowed_context_scale_factor(
+        windowed_context.window().scale_factor() as f32,
+    ));
     let mut master_painter = MasterPainter::new(&gl, scale).unwrap();
     paint(
         clean_box_tree.clone(),
@@ -221,4 +222,14 @@ pub fn run_event_loop(
         let display_list = build_display_list(&box_tree, &char_handle, scale_factor);
         painter.paint(&windowed_context, &display_list);
     }
+}
+
+fn sanitize_windowed_context_scale_factor(scale_factor: f32) -> f32 {
+    // Round the scale factor Glutin / Winit reports to the nearest integer.
+    // This is a hack, and should go away eventually.  I've done it to make Kosmonaut match Firefox's
+    // scale factor on X11, as before we were getting a scale factor of 1.16 while Firefox and others
+    // use a scale factor of 1.  This behavior is definitely wrong, as sometimes fractional scaling
+    // _is_ correct (e.g. Windows allows 1.25, 1.5, etc).  Read more here:
+    // https://docs.rs/winit/0.24.0/winit/dpi/index.html#how-is-the-scale-factor-calculated
+    scale_factor.round()
 }

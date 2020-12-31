@@ -62,51 +62,33 @@ impl LayoutBox {
         }
     }
 
-    pub fn apply_block_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            LayoutBox::BlockLevel(blb) => {
-                blb.apply_block_physical_properties(containing_block, scale_factor)
-            }
+            LayoutBox::BlockLevel(blb) => blb.apply_block_physical_properties(containing_block),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_block_physical_properties(containing_block, scale_factor)
+                ilb.apply_block_physical_properties(containing_block)
             }
             // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
             LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
         }
     }
 
-    pub fn apply_inline_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            LayoutBox::BlockLevel(blb) => {
-                blb.apply_inline_physical_properties(containing_block, scale_factor)
-            }
+            LayoutBox::BlockLevel(blb) => blb.apply_inline_physical_properties(containing_block),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_inline_physical_properties(containing_block, scale_factor)
+                ilb.apply_inline_physical_properties(containing_block)
             }
             // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
             LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
         }
     }
 
-    pub fn apply_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            LayoutBox::BlockLevel(blb) => {
-                blb.apply_physical_properties(containing_block, scale_factor)
-            }
+            LayoutBox::BlockLevel(blb) => blb.apply_physical_properties(containing_block),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_physical_properties(containing_block, scale_factor)
+                ilb.apply_physical_properties(containing_block)
             }
             // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
             LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
@@ -257,42 +239,34 @@ impl BaseBox {
         }
     }
 
-    pub fn apply_block_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
         if containing_block.writing_mode().is_horizontal() {
             let height = self.computed_values().height.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
                 self.dimensions_mut()
-                    .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
+                    .set_height(lp.to_px(containing_block.rect().height));
             }
         } else {
             let width = self.computed_values().width.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
                 self.dimensions_mut()
-                    .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
+                    .set_width(lp.to_px(containing_block.rect().width));
             }
         }
     }
 
-    pub fn apply_inline_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
         if containing_block.writing_mode().is_horizontal() {
             let width = self.computed_values().width.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
                 self.dimensions_mut()
-                    .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
+                    .set_width(lp.to_px(containing_block.rect().width));
             }
         } else {
             let height = self.computed_values().height.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
                 self.dimensions_mut()
-                    .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
+                    .set_height(lp.to_px(containing_block.rect().height));
             }
         }
     }
@@ -301,21 +275,17 @@ impl BaseBox {
     /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
     /// function will set them.  Otherwise, the used values will be those given by other layout
     /// equations.
-    pub fn apply_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
         let width = self.computed_values().width.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
             self.dimensions_mut()
-                .set_width(lp.to_px(containing_block.rect().width) * scale_factor);
+                .set_width(lp.to_px(containing_block.rect().width));
         }
 
         let height = self.computed_values().height.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
             self.dimensions_mut()
-                .set_height(lp.to_px(containing_block.rect().height) * scale_factor);
+                .set_height(lp.to_px(containing_block.rect().height));
         }
         // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
         // are broken in non-horizontal writing modes because they are applied logically, when
@@ -373,33 +343,18 @@ macro_rules! base_box_passthrough_impls {
     () => {
         // TODO: Do we need `apply_{block, inline}_physical_properties _and_ `apply_physical_properties`?
         #[inline(always)]
-        pub fn apply_block_physical_properties(
-            &mut self,
-            containing_block: ContainingBlock,
-            scale_factor: f32,
-        ) {
-            self.base
-                .apply_block_physical_properties(containing_block, scale_factor);
+        pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
+            self.base.apply_block_physical_properties(containing_block);
         }
 
         #[inline(always)]
-        pub fn apply_inline_physical_properties(
-            &mut self,
-            containing_block: ContainingBlock,
-            scale_factor: f32,
-        ) {
-            self.base
-                .apply_inline_physical_properties(containing_block, scale_factor);
+        pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
+            self.base.apply_inline_physical_properties(containing_block);
         }
 
         #[inline(always)]
-        pub fn apply_physical_properties(
-            &mut self,
-            containing_block: ContainingBlock,
-            scale_factor: f32,
-        ) {
-            self.base
-                .apply_physical_properties(containing_block, scale_factor);
+        pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
+            self.base.apply_physical_properties(containing_block);
         }
 
         #[inline(always)]

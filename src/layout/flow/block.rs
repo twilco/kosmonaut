@@ -36,48 +36,32 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn apply_block_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
             BlockLevelBox::AnonymousBlock(abb) => {
-                abb.apply_block_physical_properties(containing_block, scale_factor)
+                abb.apply_block_physical_properties(containing_block)
             }
             BlockLevelBox::BlockContainer(bc) => {
-                bc.apply_block_physical_properties(containing_block, scale_factor)
+                bc.apply_block_physical_properties(containing_block)
             }
         }
     }
 
-    pub fn apply_inline_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
             BlockLevelBox::AnonymousBlock(abb) => {
-                abb.apply_inline_physical_properties(containing_block, scale_factor)
+                abb.apply_inline_physical_properties(containing_block)
             }
             BlockLevelBox::BlockContainer(bc) => {
-                bc.apply_inline_physical_properties(containing_block, scale_factor)
+                bc.apply_inline_physical_properties(containing_block)
             }
         }
     }
 
-    pub fn apply_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            BlockLevelBox::AnonymousBlock(abb) => {
-                abb.apply_physical_properties(containing_block, scale_factor)
-            }
-            BlockLevelBox::BlockContainer(bc) => {
-                bc.apply_physical_properties(containing_block, scale_factor)
-            }
+            BlockLevelBox::AnonymousBlock(abb) => abb.apply_physical_properties(containing_block),
+            BlockLevelBox::BlockContainer(bc) => bc.apply_physical_properties(containing_block),
         }
     }
 
@@ -148,7 +132,7 @@ impl BlockLevelBox {
     }
 
     /// Lays out children and returns the extent of their summed dimensions.
-    fn layout_children(&mut self, containing_block: ContainingBlock, scale_factor: f32) {
+    fn layout_children(&mut self, containing_block: ContainingBlock) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
 
@@ -164,10 +148,11 @@ impl BlockLevelBox {
             // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
             // 'static', the containing block is formed by the content edge of the nearest block
             // container ancestor box.
-            child.layout(LayoutContext::new(
-                ContainingBlock::new(self_dimensions.content, direction, writing_mode),
-                scale_factor,
-            ));
+            child.layout(LayoutContext::new(ContainingBlock::new(
+                self_dimensions.content,
+                direction,
+                writing_mode,
+            )));
             // Add this child's margin-box to our content box so the next child is laid out after
             // this one.
             self_dimensions.add_to_block_size(
@@ -177,11 +162,7 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn solve_and_set_inline_level_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn solve_and_set_inline_level_properties(&mut self, containing_block: ContainingBlock) {
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
         let writing_mode = containing_block.writing_mode();
@@ -253,20 +234,15 @@ impl BlockLevelBox {
         // Before computing the `inline_start_coord` of this box, we need to apply values the author
         // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
         // `height` in the other `writing-modes`.
-        self.apply_inline_physical_properties(containing_block, scale_factor);
-        let inline_start_coord =
-            compute_inline_start_coord(&self.dimensions(), containing_block, scale_factor);
+        self.apply_inline_physical_properties(containing_block);
+        let inline_start_coord = compute_inline_start_coord(&self.dimensions(), containing_block);
         self.dimensions_mut()
             .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());
     }
 
     /// Corresponds to CSS 2.1 section 10.6.3.  Currently no other sections are implemented.
     /// https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#normal-block
-    pub fn solve_and_set_block_level_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn solve_and_set_block_level_properties(&mut self, containing_block: ContainingBlock) {
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
         let writing_mode = containing_block.writing_mode();
@@ -347,11 +323,11 @@ impl BlockLevelBox {
         };
         // Before calculating this boxes block start coordinate, ensure we've applied the authors
         // specified styles.
-        self.apply_block_physical_properties(containing_block, scale_factor);
+        self.apply_block_physical_properties(containing_block);
         let block_start_coord = compute_block_start_coord(
             &self.dimensions(),
             preceeding_sibling_blockwise_space_consumed,
-            LayoutContext::new(containing_block, scale_factor),
+            LayoutContext::new(containing_block),
         );
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord, containing_block.writing_mode());
@@ -374,19 +350,16 @@ impl Layout for BlockLevelBox {
     // [1] "self-relative" means the containing block evaluates abstract flow directions against its
     // own writing-mode, rather than that of it's own containing block.
     fn layout(&mut self, context: LayoutContext) {
-        let LayoutContext {
-            containing_block,
-            scale_factor,
-        } = context;
+        let LayoutContext { containing_block } = context;
         let display = self.computed_values().display;
         match display {
             // The outer display determines how this box participates in layout.
             // https://drafts.csswg.org/css-display/#outer-display-type
             Display::Full(full_display) => match full_display.outer() {
                 OuterDisplay::Block => {
-                    self.solve_and_set_inline_level_properties(containing_block, scale_factor);
-                    self.solve_and_set_block_level_properties(containing_block, scale_factor);
-                    self.layout_children(containing_block, scale_factor);
+                    self.solve_and_set_inline_level_properties(containing_block);
+                    self.solve_and_set_block_level_properties(containing_block);
+                    self.layout_children(containing_block);
                 }
                 // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
                 OuterDisplay::Inline => {}
@@ -570,7 +543,6 @@ fn compute_block_start_coord(
 fn compute_inline_start_coord(
     box_dimensions: &Dimensions,
     containing_block: ContainingBlock,
-    scale_factor: f32,
 ) -> CSSFloat {
     match OriginRelativeProgression::inline_start_origin_relative_direction(
         containing_block.writing_mode(),

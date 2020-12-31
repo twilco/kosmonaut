@@ -1,3 +1,4 @@
+use crate::layout::flow::OriginRelativeProgression;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::{Direction, WritingMode};
@@ -87,6 +88,17 @@ impl ContainingBlock {
             | WritingMode::VerticalLr
             | WritingMode::SidewaysLr => self.rect.start_y,
         }
+    }
+
+    pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        OriginRelativeProgression::inline_start_origin_relative_direction(
+            self.writing_mode(),
+            self.direction(),
+        )
+    }
+
+    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        OriginRelativeProgression::block_start_origin_relative_direction(self.writing_mode())
     }
 
     pub fn rect(&self) -> &Rect {

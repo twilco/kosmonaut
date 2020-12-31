@@ -33,19 +33,16 @@ pub fn global_layout(
 ) {
     let writing_mode = layout_root_box.computed_values().writing_mode;
     let direction = layout_root_box.computed_values().direction;
-    layout_root_box.layout(LayoutContext::new(
-        ContainingBlock::new(
-            Rect {
-                start_x: 0.0,
-                start_y: 0.0,
-                width: CSSPixelLength::new(inner_window_width / scale_factor),
-                height: CSSPixelLength::new(inner_window_height / scale_factor),
-            },
-            direction,
-            writing_mode,
-        ),
-        scale_factor,
-    ));
+    layout_root_box.layout(LayoutContext::new(ContainingBlock::new(
+        Rect {
+            start_x: 0.0,
+            start_y: 0.0,
+            width: CSSPixelLength::new(inner_window_width / scale_factor),
+            height: CSSPixelLength::new(inner_window_height / scale_factor),
+        },
+        direction,
+        writing_mode,
+    )));
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -58,28 +55,21 @@ pub enum BoxComponent {
 #[derive(Copy, Clone, Debug)]
 pub struct LayoutContext {
     containing_block: ContainingBlock,
-    scale_factor: f32,
 }
 
 impl LayoutContext {
-    pub fn new(containing_block: ContainingBlock, scale_factor: f32) -> Self {
-        LayoutContext {
-            containing_block,
-            scale_factor,
-        }
+    pub fn new(containing_block: ContainingBlock) -> Self {
+        LayoutContext { containing_block }
     }
 
     pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
-        OriginRelativeProgression::inline_start_origin_relative_direction(
-            self.containing_block.writing_mode(),
-            self.containing_block.direction(),
-        )
+        self.containing_block
+            .inline_start_origin_relative_progression()
     }
 
     pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
-        OriginRelativeProgression::block_start_origin_relative_direction(
-            self.containing_block.writing_mode(),
-        )
+        self.containing_block
+            .block_start_origin_relative_progression()
     }
 }
 

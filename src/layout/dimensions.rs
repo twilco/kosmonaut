@@ -55,12 +55,6 @@ impl Dimensions {
         self.border_box().expanded_by_edges(self.margin)
     }
 
-    pub fn scale_edges_by(&mut self, scale_factor: f32) {
-        self.padding.scale_by(scale_factor);
-        self.border.scale_by(scale_factor);
-        self.margin.scale_by(scale_factor);
-    }
-
     pub fn set_height(&mut self, val: CSSPixelLength) {
         self.content.height = val;
     }

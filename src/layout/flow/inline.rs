@@ -108,48 +108,28 @@ impl InlineLevelBox {
         }
     }
 
-    pub fn apply_block_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
             InlineLevelBox::AnonymousInline(aib) => {
-                aib.apply_block_physical_properties(containing_block, scale_factor)
+                aib.apply_block_physical_properties(containing_block)
             }
-            InlineLevelBox::InlineBox(ib) => {
-                ib.apply_block_physical_properties(containing_block, scale_factor)
-            }
+            InlineLevelBox::InlineBox(ib) => ib.apply_block_physical_properties(containing_block),
         }
     }
 
-    pub fn apply_inline_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
             InlineLevelBox::AnonymousInline(aib) => {
-                aib.apply_inline_physical_properties(containing_block, scale_factor)
+                aib.apply_inline_physical_properties(containing_block)
             }
-            InlineLevelBox::InlineBox(ib) => {
-                ib.apply_inline_physical_properties(containing_block, scale_factor)
-            }
+            InlineLevelBox::InlineBox(ib) => ib.apply_inline_physical_properties(containing_block),
         }
     }
 
-    pub fn apply_physical_properties(
-        &mut self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) {
+    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            InlineLevelBox::AnonymousInline(aib) => {
-                aib.apply_physical_properties(containing_block, scale_factor)
-            }
-            InlineLevelBox::InlineBox(ib) => {
-                ib.apply_physical_properties(containing_block, scale_factor)
-            }
+            InlineLevelBox::AnonymousInline(aib) => aib.apply_physical_properties(containing_block),
+            InlineLevelBox::InlineBox(ib) => ib.apply_physical_properties(containing_block),
         }
     }
 

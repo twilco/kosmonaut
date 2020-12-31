@@ -26,7 +26,7 @@ pub fn build_box_tree(
     node: NodeRef,
     parent_context: Option<FormattingContextRef>,
 ) -> Option<LayoutBox> {
-    match node.data() {
+    if let NodeData::Document(_) = node.data() {
         // We don't want to create boxes for the document node nor the doctype nodes, so skip past
         // them to the root <html> element and start building the box tree there.
         //
@@ -37,17 +37,14 @@ pub fn build_box_tree(
         //   HTML Block LayoutBox at (0, 0) size 1920x184
         //     BODY Block LayoutBox at (8, 8) size 1904x168
         //       ...
-        NodeData::Document(_) => {
-            return node
-                .children()
-                .find(|child| match child.data() {
-                    NodeData::Element(data) => local_name!("html") == data.name.local,
-                    _ => false,
-                })
-                .map(|html_node| build_box_tree(html_node, None))
-                .flatten();
-        }
-        _ => {} // Not the document node — continue building the box tree normally.
+        return node
+            .children()
+            .find(|child| match child.data() {
+                NodeData::Element(data) => local_name!("html") == data.name.local,
+                _ => false,
+            })
+            .map(|html_node| build_box_tree(html_node, None))
+            .flatten();
     }
 
     let mut layout_box = if let NodeData::Text(text) = node.data() {

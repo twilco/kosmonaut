@@ -12,8 +12,8 @@ use pathfinder_geometry::vector::Vector2F;
 /// Builds list of display commands that should be used to paint the output.
 pub fn build_display_list(
     layout_box: &LayoutBox,
-    char_handle: &CharHandle,
-    scale_factor: f32,
+    _char_handle: &CharHandle,
+    _scale_factor: f32,
 ) -> DisplayList {
     let mut display_list = Vec::new();
     // TODO: Remove the three preceeding statements once text rendering is fixed.

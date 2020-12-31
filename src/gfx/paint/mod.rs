@@ -73,8 +73,8 @@ impl MasterPainter {
         for command in display_list {
             self.process_display_command(
                 command,
-                (viewport_width as CSSFloat),
-                (viewport_height as CSSFloat),
+                viewport_width as CSSFloat,
+                viewport_height as CSSFloat,
             );
         }
         self.rect_painter.paint(self.rect_vertices.as_slice());

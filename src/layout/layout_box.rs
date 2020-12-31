@@ -318,10 +318,7 @@ impl BaseBox {
     /// Determines if this layout box is associated with the root DOM node (<html>).
     pub fn is_root(&self) -> bool {
         let parent_node_is_document = if let Some(parent) = self.node.parent() {
-            match parent.data() {
-                NodeData::Document(_) => true,
-                _ => false,
-            }
+            matches!(parent.data(), NodeData::Document(_))
         } else {
             false
         };

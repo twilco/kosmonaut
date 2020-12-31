@@ -117,8 +117,9 @@ impl ToVertices for CharCommand {
         &self,
         scaled_viewport_width: f32,
         scaled_viewport_height: f32,
-        scale_factor: f32,
+        _scale_factor: f32,
     ) -> Vec<f32> {
+        // TODO: Use scale_factor
         let x_pos = self.start_coords().x() + self.bearing().x();
         let y_pos = self.start_coords().y() - (self.size().y() - self.bearing().y());
 

@@ -38,8 +38,8 @@ pub fn global_layout(
             Rect {
                 start_x: 0.0,
                 start_y: 0.0,
-                width: CSSPixelLength::new(inner_window_width),
-                height: CSSPixelLength::new(inner_window_height),
+                width: CSSPixelLength::new(inner_window_width / scale_factor),
+                height: CSSPixelLength::new(inner_window_height / scale_factor),
             },
             direction,
             writing_mode,

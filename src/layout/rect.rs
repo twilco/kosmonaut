@@ -32,6 +32,15 @@ impl Rect {
             height: self.height + rect.height,
         }
     }
+
+    pub fn scaled_by(&self, scale_factor: f32) -> Rect {
+        Rect {
+            start_x: self.start_x * scale_factor,
+            start_y: self.start_y * scale_factor,
+            width: self.width * scale_factor,
+            height: self.height * scale_factor
+        }
+    }
 }
 
 /// A collection of edges, e.g. borders, margins, padding.

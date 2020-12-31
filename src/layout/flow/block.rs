@@ -128,45 +128,6 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn compute_inline_start_coord(
-        &self,
-        containing_block: ContainingBlock,
-        scale_factor: f32,
-    ) -> CSSFloat {
-        match OriginRelativeProgression::inline_start_origin_relative_direction(
-            containing_block.writing_mode(),
-            containing_block.direction(),
-        ) {
-            OriginRelativeProgression::AwayFromOrigin => {
-                let mbp_inline_start = self.dimensions().get_mbp(
-                    FlowSide::InlineStart,
-                    containing_block.writing_mode(),
-                    containing_block.direction(),
-                );
-                (containing_block.self_relative_inline_start_coord() + mbp_inline_start).px()
-            }
-            OriginRelativeProgression::TowardsOrigin => {
-                // TODO: I think this computation is mostly correct, but should be verified after
-                // box-painting is hooked up again.
-                let containing_block_inline_end_coord = containing_block
-                    .self_relative_inline_start_coord()
-                    + containing_block.self_relative_inline_size();
-                let inline_border_box_size = self
-                    .dimensions()
-                    .border_box_inline_size(containing_block.writing_mode());
-                (containing_block_inline_end_coord
-                    - inline_border_box_size
-                    - self.dimensions().get(
-                        FlowSide::InlineStart,
-                        BoxComponent::Margin,
-                        containing_block.writing_mode(),
-                        containing_block.direction(),
-                    ))
-                .px()
-            }
-        }
-    }
-
     pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(abb) => {
@@ -293,7 +254,8 @@ impl BlockLevelBox {
         // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
         // `height` in the other `writing-modes`.
         self.apply_inline_physical_properties(containing_block, scale_factor);
-        let inline_start_coord = self.compute_inline_start_coord(containing_block, scale_factor);
+        let inline_start_coord =
+            compute_inline_start_coord(&self.dimensions(), containing_block, scale_factor);
         self.dimensions_mut()
             .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());
     }
@@ -389,10 +351,7 @@ impl BlockLevelBox {
         let block_start_coord = compute_block_start_coord(
             &self.dimensions(),
             preceeding_sibling_blockwise_space_consumed,
-            LayoutContext::new(
-                containing_block,
-                scale_factor
-            )
+            LayoutContext::new(containing_block, scale_factor),
         );
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord, containing_block.writing_mode());
@@ -606,4 +565,42 @@ fn compute_block_start_coord(
             unimplemented!("towards origin block_start_coord computation")
         }
     }.px()
+}
+
+fn compute_inline_start_coord(
+    box_dimensions: &Dimensions,
+    containing_block: ContainingBlock,
+    scale_factor: f32,
+) -> CSSFloat {
+    match OriginRelativeProgression::inline_start_origin_relative_direction(
+        containing_block.writing_mode(),
+        containing_block.direction(),
+    ) {
+        OriginRelativeProgression::AwayFromOrigin => {
+            let mbp_inline_start = box_dimensions.get_mbp(
+                FlowSide::InlineStart,
+                containing_block.writing_mode(),
+                containing_block.direction(),
+            );
+            (containing_block.self_relative_inline_start_coord() + mbp_inline_start).px()
+        }
+        OriginRelativeProgression::TowardsOrigin => {
+            // TODO: I think this computation is mostly correct, but should be verified after
+            // box-painting is hooked up again.
+            let containing_block_inline_end_coord = containing_block
+                .self_relative_inline_start_coord()
+                + containing_block.self_relative_inline_size();
+            let inline_border_box_size =
+                box_dimensions.border_box_inline_size(containing_block.writing_mode());
+            (containing_block_inline_end_coord
+                - inline_border_box_size
+                - box_dimensions.get(
+                    FlowSide::InlineStart,
+                    BoxComponent::Margin,
+                    containing_block.writing_mode(),
+                    containing_block.direction(),
+                ))
+            .px()
+        }
+    }
 }

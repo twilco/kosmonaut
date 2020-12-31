@@ -203,42 +203,31 @@ fn prepare_border(display_list: &mut DisplayList, layout_box: &LayoutBox, side: 
     }
 
     let border_box = d.border_box();
-    match side {
-        Side::Bottom => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: (border_box.start_y + border_box.height - border_size_px).px(),
-                width: border_box.width,
-                height: border_size_px,
-            },
-        )),
-        Side::Left => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: border_box.start_y,
-                width: border_size_px,
-                height: border_box.height,
-            },
-        )),
-        Side::Right => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: (border_box.start_x + border_box.width - border_size_px).px(),
-                start_y: border_box.start_y,
-                width: border_size_px,
-                height: border_box.height,
-            },
-        )),
-        Side::Top => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: border_box.start_y,
-                width: border_box.width,
-                height: border_size_px,
-            },
-        )),
-    }
+    let rect = match side {
+        Side::Bottom => Rect {
+            start_x: border_box.start_x,
+            start_y: (border_box.start_y + border_box.height - border_size_px).px(),
+            width: border_box.width,
+            height: border_size_px,
+        },
+        Side::Left => Rect {
+            start_x: border_box.start_x,
+            start_y: border_box.start_y,
+            width: border_size_px,
+            height: border_box.height,
+        },
+        Side::Right => Rect {
+            start_x: (border_box.start_x + border_box.width - border_size_px).px(),
+            start_y: border_box.start_y,
+            width: border_size_px,
+            height: border_box.height,
+        },
+        Side::Top => Rect {
+            start_x: border_box.start_x,
+            start_y: border_box.start_y,
+            width: border_box.width,
+            height: border_size_px,
+        },
+    };
+    display_list.push(DisplayCommand::RectSolidColor(border_color_rgba, rect));
 }

@@ -101,9 +101,9 @@ impl MasterPainter {
                     char_command.to_vertices(viewport_width, viewport_height, self.scale_factor),
                 ));
             }
-            DisplayCommand::RectSolidColor(rgba, rect) => self
-                .rect_vertices
-                .extend((rect, rgba).to_vertices(viewport_width, viewport_height, self.scale_factor)),
+            DisplayCommand::RectSolidColor(rgba, rect) => self.rect_vertices.extend(
+                (rect, rgba).to_vertices(viewport_width, viewport_height, self.scale_factor),
+            ),
             DisplayCommand::ViewportBackground(rgba) => unsafe {
                 self.gl.ClearColor(
                     rgba.red_f32(),
@@ -119,11 +119,21 @@ impl MasterPainter {
 
 /// Represents the conversion from some entity to OpenGL vertex data.
 pub trait ToVertices {
-    fn to_vertices(&self, scaled_viewport_width: CSSFloat, scaled_viewport_height: CSSFloat, scale_factor: f32) -> Vec<f32>;
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: CSSFloat,
+        scaled_viewport_height: CSSFloat,
+        scale_factor: f32,
+    ) -> Vec<f32>;
 }
 
 impl ToVertices for RGBA {
-    fn to_vertices(&self, _scaled_viewport_width: f32, _scaled_viewport_height: f32, _scale_factor: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        _scaled_viewport_width: f32,
+        _scaled_viewport_height: f32,
+        _scale_factor: f32,
+    ) -> Vec<f32> {
         let mut vertices = Vec::new();
         vertices.extend_from_slice(&[
             self.red_f32(),

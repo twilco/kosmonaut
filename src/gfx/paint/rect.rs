@@ -90,15 +90,27 @@ fn build_triangle_program(gl: &Gl) -> Result<Program, String> {
 }
 
 impl ToVertices for (&RGBA, &Rect) {
-    fn to_vertices(&self, scaled_viewport_width: f32, scaled_viewport_height: f32, scale_factor: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: f32,
+        scaled_viewport_height: f32,
+        scale_factor: f32,
+    ) -> Vec<f32> {
         (self.1, self.0).to_vertices(scaled_viewport_width, scaled_viewport_height, scale_factor)
     }
 }
 
 impl ToVertices for (&Rect, &RGBA) {
-    fn to_vertices(&self, scaled_viewport_width: f32, scaled_viewport_height: f32, scale_factor: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: f32,
+        scaled_viewport_height: f32,
+        scale_factor: f32,
+    ) -> Vec<f32> {
         let rect = self.0.scaled_by(scale_factor);
-        let rgba_vec = self.1.to_vertices(scaled_viewport_width, scaled_viewport_height, scale_factor);
+        let rgba_vec =
+            self.1
+                .to_vertices(scaled_viewport_width, scaled_viewport_height, scale_factor);
         let rect_colors = rgba_vec.as_slice();
 
         let mut vertex_data = Vec::new();

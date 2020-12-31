@@ -38,7 +38,7 @@ impl Rect {
             start_x: self.start_x * scale_factor,
             start_y: self.start_y * scale_factor,
             width: self.width * scale_factor,
-            height: self.height * scale_factor
+            height: self.height * scale_factor,
         }
     }
 }

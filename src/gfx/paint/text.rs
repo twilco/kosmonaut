@@ -113,7 +113,12 @@ fn build_text_program(gl: &Gl) -> Result<Program, String> {
 }
 
 impl ToVertices for CharCommand {
-    fn to_vertices(&self, scaled_viewport_width: f32, scaled_viewport_height: f32, scale_factor: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: f32,
+        scaled_viewport_height: f32,
+        scale_factor: f32,
+    ) -> Vec<f32> {
         let x_pos = self.start_coords().x() + self.bearing().x();
         let y_pos = self.start_coords().y() - (self.size().y() - self.bearing().y());
 

@@ -8,21 +8,14 @@ pub mod rect;
 pub mod values;
 
 use crate::cli::DumpLayoutVerbosity;
-use crate::dom::tree::{NodeData, NodeRef};
+use crate::dom::tree::NodeData;
 use crate::layout::containing_block::ContainingBlock;
-use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::OriginRelativeProgression;
-use crate::layout::formatting_context::{FormattingContext, QualifiedFormattingContext};
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
-use crate::style::values::computed::display::{
-    DisplayBox, FullDisplay, InnerDisplay, OuterDisplay,
-};
 use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::computed::Display;
 use crate::style::values::CSSFloat;
 use std::io::Write;
-use std::rc::Rc;
 
 /// Given a `window` and a `layout_root_box`, perform a layout with the dimensions of the `window`.
 pub fn global_layout(

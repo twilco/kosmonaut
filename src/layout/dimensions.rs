@@ -44,8 +44,6 @@ impl Dimensions {
 
     /// The area covered by the content area plus its padding.
     pub fn padding_box(self) -> Rect {
-        // TODO: This can result in a negative start_x and start_y...maybe expanded_by shouldn't
-        // alter those values?
         self.content.expanded_by_edges(self.padding)
     }
 

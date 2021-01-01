@@ -1,5 +1,4 @@
 use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::computed::{Direction, WritingMode};
 use crate::style::values::CSSFloat;
 
 #[derive(Clone, Copy, Debug, Default)]

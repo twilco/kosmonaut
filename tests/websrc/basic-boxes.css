@@ -1,3 +1,7 @@
+* {
+    writing-mode: horizontal-tb;
+}
+
 div {
     background-color: green;
     height: 200px;
@@ -23,8 +27,4 @@ div {
     border-right-style: solid;
     border-right-width: 10px;
     border-right-color: black;
-}
-
-* {
-    writing-mode: horizontal-tb;
 }

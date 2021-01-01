@@ -1,0 +1,10 @@
+* {
+    writing-mode: horizontal-tb;
+    direction: rtl;
+}
+
+div {
+    width: 400px;
+    height: 200px;
+    background-color: green;
+}

@@ -1,3 +1,7 @@
+/* TODO: The viewport background should come from system colors, not <html> CSS rules. */
+html {
+    background-color: white;
+}
 /*\
  W3 suggested default UA stylesheet:
     * https://stackoverflow.com/questions/32875/browsers-default-css-stylesheets

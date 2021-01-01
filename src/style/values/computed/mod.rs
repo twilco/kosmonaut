@@ -27,6 +27,7 @@ use crate::style::properties::id::LonghandId;
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified;
 
+use crate::layout::flow::FlowSide;
 pub use crate::style::values::computed::direction::WritingMode;
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -136,48 +137,52 @@ impl ComputedValues {
         }
     }
 
-    pub fn logical_width(&self) -> LengthPercentageOrAuto {
-        if self.writing_mode.is_horizontal() {
+    pub fn inline_size(&self, writing_mode: WritingMode) -> LengthPercentageOrAuto {
+        if writing_mode.is_horizontal() {
             self.width.size
         } else {
             self.height.size
         }
     }
 
-    pub fn logical_height(&self) -> LengthPercentageOrAuto {
-        if self.writing_mode.is_horizontal() {
+    pub fn block_size(&self, writing_mode: WritingMode) -> LengthPercentageOrAuto {
+        if writing_mode.is_horizontal() {
             self.height.size
         } else {
             self.width.size
         }
     }
 
-    pub fn logical_padding(&self, side: Side) -> LengthPercentage {
-        let horizontal_mode = self.writing_mode.is_horizontal();
+    pub fn padding_flow_relative(
+        &self,
+        side: FlowSide,
+        writing_mode: WritingMode,
+    ) -> LengthPercentage {
+        let is_horizontal_mode = writing_mode.is_horizontal();
         match side {
-            Side::Bottom => {
-                if horizontal_mode {
+            FlowSide::BlockEnd => {
+                if is_horizontal_mode {
                     self.padding_bottom.size
                 } else {
                     self.padding_right.size
                 }
             }
-            Side::Left => {
-                if horizontal_mode {
+            FlowSide::InlineStart => {
+                if is_horizontal_mode {
                     self.padding_left.size
                 } else {
                     self.padding_top.size
                 }
             }
-            Side::Right => {
-                if horizontal_mode {
+            FlowSide::InlineEnd => {
+                if is_horizontal_mode {
                     self.padding_right.size
                 } else {
                     self.padding_bottom.size
                 }
             }
-            Side::Top => {
-                if horizontal_mode {
+            FlowSide::BlockStart => {
+                if is_horizontal_mode {
                     self.padding_top.size
                 } else {
                     self.padding_left.size
@@ -186,32 +191,36 @@ impl ComputedValues {
         }
     }
 
-    pub fn logical_border_width(&self, side: Side) -> CSSPixelLength {
-        let horizontal_mode = self.writing_mode.is_horizontal();
+    pub fn border_flow_relative(
+        &self,
+        side: FlowSide,
+        writing_mode: WritingMode,
+    ) -> CSSPixelLength {
+        let is_horizontal_mode = writing_mode.is_horizontal();
         match side {
-            Side::Bottom => {
-                if horizontal_mode {
+            FlowSide::BlockEnd => {
+                if is_horizontal_mode {
                     self.border_bottom_width.size
                 } else {
                     self.border_right_width.size
                 }
             }
-            Side::Left => {
-                if horizontal_mode {
+            FlowSide::InlineStart => {
+                if is_horizontal_mode {
                     self.border_left_width.size
                 } else {
                     self.border_top_width.size
                 }
             }
-            Side::Right => {
-                if horizontal_mode {
+            FlowSide::InlineEnd => {
+                if is_horizontal_mode {
                     self.border_right_width.size
                 } else {
                     self.border_bottom_width.size
                 }
             }
-            Side::Top => {
-                if horizontal_mode {
+            FlowSide::BlockStart => {
+                if is_horizontal_mode {
                     self.border_top_width.size
                 } else {
                     self.border_left_width.size
@@ -220,32 +229,36 @@ impl ComputedValues {
         }
     }
 
-    pub fn logical_margin(&self, side: Side) -> LengthPercentageOrAuto {
-        let horizontal_mode = self.writing_mode.is_horizontal();
+    pub fn margin_flow_relative(
+        &self,
+        side: FlowSide,
+        writing_mode: WritingMode,
+    ) -> LengthPercentageOrAuto {
+        let is_horizontal_mode = writing_mode.is_horizontal();
         match side {
-            Side::Bottom => {
-                if horizontal_mode {
+            FlowSide::BlockEnd => {
+                if is_horizontal_mode {
                     self.margin_bottom.size
                 } else {
                     self.margin_right.size
                 }
             }
-            Side::Left => {
-                if horizontal_mode {
+            FlowSide::InlineStart => {
+                if is_horizontal_mode {
                     self.margin_left.size
                 } else {
                     self.margin_top.size
                 }
             }
-            Side::Right => {
-                if horizontal_mode {
+            FlowSide::InlineEnd => {
+                if is_horizontal_mode {
                     self.margin_right.size
                 } else {
                     self.margin_bottom.size
                 }
             }
-            Side::Top => {
-                if horizontal_mode {
+            FlowSide::BlockStart => {
+                if is_horizontal_mode {
                     self.margin_top.size
                 } else {
                     self.margin_left.size

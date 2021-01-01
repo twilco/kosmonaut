@@ -3,8 +3,8 @@
 //! This file is a direct copy-paste from [Kuchiki](https://github.com/kuchiki-rs/kuchiki/blob/master/src/iter.rs).
 //! Thanks to the authors of Kuchiki for their work.
 
+use accountable_refcell::RefCell;
 use std::borrow::Borrow;
-use std::cell::RefCell;
 use std::iter::Rev;
 
 use crate::dom::node_data_ref::NodeDataRef;

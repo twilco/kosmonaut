@@ -1,6 +1,6 @@
 use crate::gfx::char::CharHandle;
 use crate::gfx::font::FontHandle;
-use crate::layout::layout_box::{BoxType, LayoutBox};
+use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::LineStyle;
 use crate::Side;
@@ -12,8 +12,8 @@ use pathfinder_geometry::vector::Vector2F;
 /// Builds list of display commands that should be used to paint the output.
 pub fn build_display_list(
     layout_box: &LayoutBox,
-    char_handle: &CharHandle,
-    scale_factor: f32,
+    _char_handle: &CharHandle,
+    _scale_factor: f32,
 ) -> DisplayList {
     let mut display_list = Vec::new();
     // TODO: Remove the three preceeding statements once text rendering is fixed.
@@ -144,23 +144,22 @@ fn prepare_layout_box(display_list: &mut DisplayList, layout_box: &LayoutBox) {
         // TODO: Step 1.2, painting background images
     }
 
-    #[allow(clippy::single_match)]
-    match layout_box.box_type() {
-        BoxType::Block => {
-            // Step 2 of painting order
-            prepare_block_listitem_block_equiv(display_list, layout_box)
-        }
-        BoxType::Anonymous | BoxType::AnonymousInline | BoxType::Inline => {
+    match layout_box {
+        LayoutBox::BlockLevel(_) => prepare_block_listitem_block_equiv(display_list, layout_box),
+        LayoutBox::InlineLevel(_) => {
             // TODO: Implement other steps of painting order, 3 -> 10
             // println!("skipping render of non-block box")
         }
     }
 
-    for child in layout_box.children() {
-        prepare_layout_box(display_list, child);
+    if let Some(children) = layout_box.children() {
+        for child in children {
+            prepare_layout_box(display_list, child);
+        }
     }
 }
 
+/// Preparation for step 2 from: https://www.w3.org/TR/CSS22/zindex.html
 fn prepare_block_listitem_block_equiv(display_list: &mut DisplayList, layout_box: &LayoutBox) {
     prepare_background(display_list, layout_box);
     prepare_borders(display_list, layout_box);
@@ -173,7 +172,7 @@ fn prepare_background(display_list: &mut DisplayList, layout_box: &LayoutBox) {
     if bg_color != RGBA::transparent() {
         display_list.push(DisplayCommand::RectSolidColor(
             bg_color,
-            layout_box.physical_dimensions().border_box(),
+            layout_box.dimensions().border_box(),
         ))
     }
 }
@@ -189,7 +188,7 @@ fn prepare_borders(display_list: &mut DisplayList, layout_box: &LayoutBox) {
 /// Prepares the border `side` of `layout_box` for display by converting it to a display command.
 fn prepare_border(display_list: &mut DisplayList, layout_box: &LayoutBox, side: Side) {
     let cvs = layout_box.computed_values();
-    let d = layout_box.physical_dimensions();
+    let d = layout_box.dimensions();
     let border_style = cvs.border_style(side);
     let border_color_rgba = cvs.border_color_rgba(side);
     // The border size has already been calculated during layout, so we don't need to get it from
@@ -204,42 +203,31 @@ fn prepare_border(display_list: &mut DisplayList, layout_box: &LayoutBox, side: 
     }
 
     let border_box = d.border_box();
-    match side {
-        Side::Bottom => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: (border_box.start_y + border_box.height - border_size_px).px(),
-                width: border_box.width,
-                height: border_size_px,
-            },
-        )),
-        Side::Left => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: border_box.start_y,
-                width: border_size_px,
-                height: border_box.height,
-            },
-        )),
-        Side::Right => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: (border_box.start_x + border_box.width - border_size_px).px(),
-                start_y: border_box.start_y,
-                width: border_size_px,
-                height: border_box.height,
-            },
-        )),
-        Side::Top => display_list.push(DisplayCommand::RectSolidColor(
-            border_color_rgba,
-            Rect {
-                start_x: border_box.start_x,
-                start_y: border_box.start_y,
-                width: border_box.width,
-                height: border_size_px,
-            },
-        )),
-    }
+    let rect = match side {
+        Side::Bottom => Rect {
+            start_x: border_box.start_x,
+            start_y: (border_box.start_y + border_box.height - border_size_px).px(),
+            width: border_box.width,
+            height: border_size_px,
+        },
+        Side::Left => Rect {
+            start_x: border_box.start_x,
+            start_y: border_box.start_y,
+            width: border_size_px,
+            height: border_box.height,
+        },
+        Side::Right => Rect {
+            start_x: (border_box.start_x + border_box.width - border_size_px).px(),
+            start_y: border_box.start_y,
+            width: border_size_px,
+            height: border_box.height,
+        },
+        Side::Top => Rect {
+            start_x: border_box.start_x,
+            start_y: border_box.start_y,
+            width: border_box.width,
+            height: border_size_px,
+        },
+    };
+    display_list.push(DisplayCommand::RectSolidColor(border_color_rgba, rect));
 }

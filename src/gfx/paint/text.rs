@@ -113,7 +113,13 @@ fn build_text_program(gl: &Gl) -> Result<Program, String> {
 }
 
 impl ToVertices for CharCommand {
-    fn to_vertices(&self, viewport_width: f32, viewport_height: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: f32,
+        scaled_viewport_height: f32,
+        _scale_factor: f32,
+    ) -> Vec<f32> {
+        // TODO: Use scale_factor
         let x_pos = self.start_coords().x() + self.bearing().x();
         let y_pos = self.start_coords().y() - (self.size().y() - self.bearing().y());
 
@@ -122,39 +128,39 @@ impl ToVertices for CharCommand {
         // way we flip `ndc_y` values to render them at the top of the screen.
         let mut vertices = Vec::new();
         vertices.extend_from_slice(&[
-            ndc_x(x_pos, viewport_width),
-            ndc_y(y_pos + self.size().y(), viewport_height),
+            ndc_x(x_pos, scaled_viewport_width),
+            ndc_y(y_pos + self.size().y(), scaled_viewport_height),
             1.0,
             1.0,
         ]);
         vertices.extend_from_slice(&[
-            ndc_x(x_pos, viewport_width),
-            ndc_y(y_pos, viewport_height),
+            ndc_x(x_pos, scaled_viewport_width),
+            ndc_y(y_pos, scaled_viewport_height),
             1.0,
             0.0,
         ]);
         vertices.extend_from_slice(&[
-            ndc_x(x_pos + self.size().x(), viewport_width),
-            ndc_y(y_pos, viewport_height),
+            ndc_x(x_pos + self.size().x(), scaled_viewport_width),
+            ndc_y(y_pos, scaled_viewport_height),
             0.0,
             0.0,
         ]);
 
         vertices.extend_from_slice(&[
-            ndc_x(x_pos, viewport_width),
-            ndc_y(y_pos + self.size().y(), viewport_height),
+            ndc_x(x_pos, scaled_viewport_width),
+            ndc_y(y_pos + self.size().y(), scaled_viewport_height),
             1.0,
             1.0,
         ]);
         vertices.extend_from_slice(&[
-            ndc_x(x_pos + self.size().x(), viewport_width),
-            ndc_y(y_pos, viewport_height),
+            ndc_x(x_pos + self.size().x(), scaled_viewport_width),
+            ndc_y(y_pos, scaled_viewport_height),
             0.0,
             0.0,
         ]);
         vertices.extend_from_slice(&[
-            ndc_x(x_pos + self.size().x(), viewport_width),
-            ndc_y(y_pos + self.size().y(), viewport_height),
+            ndc_x(x_pos + self.size().x(), scaled_viewport_width),
+            ndc_y(y_pos + self.size().y(), scaled_viewport_height),
             0.0,
             1.0,
         ]);

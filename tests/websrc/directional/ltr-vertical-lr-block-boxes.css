@@ -1,9 +1,6 @@
-html {
-    background-color: white;
-}
-
-body {
+* {
     writing-mode: vertical-lr;
+    direction: ltr;
 }
 
 div {

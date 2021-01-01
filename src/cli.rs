@@ -1,5 +1,3 @@
-use crate::style;
-use crate::style::stylesheet::Stylesheet;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use std::str::FromStr;
 
@@ -9,7 +7,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     App::new("Kosmonaut")
         .version("0.1")
         .author("Tyler Wilcock (twilco)")
-        .about("A web browser for the space age🚀🚀")
+        .about("A web browser for the space age 🚀")
         .arg(
             Arg::with_name("files")
                 .short("f")
@@ -98,7 +96,7 @@ pub fn html_file_path_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<
         .flatten()
 }
 
-pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec<Stylesheet>> {
+pub fn css_file_paths_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec<&'a str>> {
     let files_opt = arg_matches.values_of("files");
     files_opt.map(|files| {
         files
@@ -109,13 +107,6 @@ pub fn stylesheets_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<Vec
                 }
                 false
             })
-            .map(|stylesheet_path| {
-                style::stylesheet::parse_css_to_stylesheet(
-                    Some(stylesheet_path.to_owned()),
-                    &mut std::fs::read_to_string(stylesheet_path).expect("file fail"),
-                )
-                .expect("error parsing stylesheet")
-            })
             .collect::<Vec<_>>()
     })
 }
@@ -124,10 +115,35 @@ pub fn dump_layout_tree(arg_matches: &ArgMatches) -> bool {
     arg_matches.subcommand_matches("dump-layout").is_some()
 }
 
-pub fn dump_layout_tree_verbose(arg_matches: &ArgMatches) -> Option<bool> {
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum DumpLayoutVerbosity {
+    /// Includes more information in layout-dump, such as margin, border, and padding values for
+    /// each box.
+    Verbose,
+    /// The most minimal layout-dump representation, including information such as box size, box
+    /// type, xy position coordinates, and more.
+    NonVerbose,
+}
+
+impl DumpLayoutVerbosity {
+    pub fn to_cli_string(&self) -> String {
+        // The CLI form of this flag is currently a boolean.
+        match self {
+            DumpLayoutVerbosity::Verbose => "1",
+            DumpLayoutVerbosity::NonVerbose => "0",
+        }
+        .to_owned()
+    }
+}
+
+pub fn dump_layout_tree_verbose(arg_matches: &ArgMatches) -> Option<DumpLayoutVerbosity> {
     arg_matches
         .subcommand_matches("dump-layout")
         .and_then(|dump_layout_arg_matches| try_get_bool(dump_layout_arg_matches, "verbose"))
+        .map(|bool_verbose| match bool_verbose {
+            true => DumpLayoutVerbosity::Verbose,
+            false => DumpLayoutVerbosity::NonVerbose,
+        })
 }
 
 pub fn inner_window_width(arg_matches: &ArgMatches) -> Option<f32> {

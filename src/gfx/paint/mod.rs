@@ -18,12 +18,13 @@ pub mod text;
 /// be painted differently (namely, different OpenGL drawing sequences) than vertex data for text,
 /// as an example.
 pub struct MasterPainter {
-    rect_painter: RectPainter,
-    rect_vertices: Vec<f32>,
-    text_painter: TextPainter,
-    text_vertices: Vec<CharPaintData>,
     /// The OpenGL instance to paint to.
     gl: Gl,
+    rect_painter: RectPainter,
+    rect_vertices: Vec<f32>,
+    scale_factor: f32,
+    text_painter: TextPainter,
+    text_vertices: Vec<CharPaintData>,
 }
 
 /// Data necessary to paint a character with OpenGL.
@@ -46,13 +47,14 @@ impl CharPaintData {
 }
 
 impl MasterPainter {
-    pub fn new(gl: &Gl) -> Result<MasterPainter, String> {
+    pub fn new(gl: &Gl, scale_factor: f32) -> Result<MasterPainter, String> {
         Ok(MasterPainter {
+            gl: gl.clone(),
             rect_painter: RectPainter::new(gl)?,
             rect_vertices: Vec::new(),
+            scale_factor,
             text_painter: TextPainter::new(gl)?,
             text_vertices: Vec::new(),
-            gl: gl.clone(),
         })
     }
 
@@ -96,12 +98,12 @@ impl MasterPainter {
                 self.text_vertices.push(CharPaintData::new(
                     char_command.color(),
                     char_command.texture_id(),
-                    char_command.to_vertices(viewport_width, viewport_height),
+                    char_command.to_vertices(viewport_width, viewport_height, self.scale_factor),
                 ));
             }
-            DisplayCommand::RectSolidColor(rgba, rect) => self
-                .rect_vertices
-                .extend((rect, rgba).to_vertices(viewport_width, viewport_height)),
+            DisplayCommand::RectSolidColor(rgba, rect) => self.rect_vertices.extend(
+                (rect, rgba).to_vertices(viewport_width, viewport_height, self.scale_factor),
+            ),
             DisplayCommand::ViewportBackground(rgba) => unsafe {
                 self.gl.ClearColor(
                     rgba.red_f32(),
@@ -117,11 +119,21 @@ impl MasterPainter {
 
 /// Represents the conversion from some entity to OpenGL vertex data.
 pub trait ToVertices {
-    fn to_vertices(&self, viewport_width: CSSFloat, viewport_height: CSSFloat) -> Vec<f32>;
+    fn to_vertices(
+        &self,
+        scaled_viewport_width: CSSFloat,
+        scaled_viewport_height: CSSFloat,
+        scale_factor: f32,
+    ) -> Vec<f32>;
 }
 
 impl ToVertices for RGBA {
-    fn to_vertices(&self, _viewport_width: f32, _viewport_height: f32) -> Vec<f32> {
+    fn to_vertices(
+        &self,
+        _scaled_viewport_width: f32,
+        _scaled_viewport_height: f32,
+        _scale_factor: f32,
+    ) -> Vec<f32> {
         let mut vertices = Vec::new();
         vertices.extend_from_slice(&[
             self.red_f32(),

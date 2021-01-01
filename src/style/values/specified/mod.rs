@@ -1,3 +1,14 @@
+/// The specified value of a CSS property is the value it receives from the document's style sheet.
+/// The specified value for a given property is determined according to the following rules:
+///
+///   1. If the document's style sheet explicitly specifies a value for the property, the given
+///      value will be used.
+///   2. If the document's style sheet doesn't specify a value but it is an inherited property, the
+///      value will be taken from the parent element.
+///   3. If none of the above pertain, the element's initial value will be used.
+///
+/// https://developer.mozilla.org/en-US/docs/Web/CSS/specified_value
+/// https://www.w3.org/TR/CSS22/cascade.html#specified-value
 pub mod background;
 pub mod border;
 pub mod color;

@@ -72,7 +72,6 @@ impl PropertyId {
 }
 
 /// An identifier for a given longhand property.
-///  TODO: Uncomment as properties are implemented.
 #[derive(Clone, Copy, Debug, EnumIter, Eq, Hash, PartialEq)]
 #[repr(u16)]
 pub enum LonghandId {
@@ -582,7 +581,6 @@ impl From<ContextualPropertyDeclaration> for LonghandId {
 }
 
 /// An identifier for a given shorthand property.
-///  TODO: Uncomment as properties are implemented.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u16)]
 pub enum ShorthandId {

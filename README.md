@@ -20,15 +20,14 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
 - [x] Layout and paint of normal flow, non-replaced block-level boxes.
-     - [x] Partial support for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
+    - [x] Partial support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] Layout-tree-dump based testing
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
-- [x] Text rendering (without actual integration into layout — see next item)
+- [x] Text rendering (without actual integration into layout — see next item)
 - [ ] Layout of basic non-replaced inline-level content (such as text)
 
-For those who are curious, here's what I'm working on right now (I'll try to keep this up-to-date).  Commits will be infrequent but generally substantial depending on the size of the thing I'm working on.
-
-* Rewriting block formatting context layout to be closer to-spec, and to fix some corner cases I broke recently.
+<b id="f1">1</b> Orthogonal flows ([see spec](https://drafts.csswg.org/css-writing-modes-4/#orthogonal-flows)) not supported. 
+Mixed `writing-mode` support in general (including parallel flows) is currently iffy — I recommend simply using `* { writing-mode: <val> }`.  `sideways-{lr, rl} and vertical-rl` currently don't work very well. [↩](#a1)
 
 ### Project goals
 
@@ -63,7 +62,7 @@ To run the tests, both unit and layout, run:
 
 `cargo test`
 
-For layout tests, Kosmonaut transforms the given HTML and CSS into the layout tree and dumps that as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
+For layout tests, Kosmonaut transforms the given HTML and CSS into a box tree, lays it out, and dumps it as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
 
 If you need to review / update snapshots, it is helpful to install the Cargo insta CLI tool like so:
 

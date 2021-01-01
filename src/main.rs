@@ -1,4 +1,8 @@
 #![feature(or_patterns)]
+#![feature(type_name_of_val)]
+// TODO: Remove after layout refactor.
+#![allow(dead_code)]
+#![allow(unused_imports)]
 
 #[macro_use]
 extern crate cssparser;
@@ -19,7 +23,7 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
 use crate::dom::tree::NodeRef;
-use crate::layout::{build_layout_tree, global_layout, DumpLayout};
+use crate::layout::{global_layout, DumpLayout};
 use crate::style::apply_styles;
 
 pub mod cli;
@@ -30,14 +34,18 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    dump_layout_tree, dump_layout_tree_verbose, html_file_path_from_files, inner_window_height,
-    inner_window_width, scale_factor, setup_and_get_cli_args, stylesheets_from_files,
+    css_file_paths_from_files, dump_layout_tree, dump_layout_tree_verbose,
+    html_file_path_from_files, inner_window_height, inner_window_width, scale_factor,
+    setup_and_get_cli_args, DumpLayoutVerbosity,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::build_display_list;
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
+use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
+use crate::style::stylesheet::Stylesheet;
+use clap::ArgMatches;
 pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
@@ -62,21 +70,20 @@ fn main() {
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
     )
     .expect("parse stylesheet fail");
-    let author_sheets = stylesheets_from_files(&arg_matches).unwrap_or_else(|| {
-        vec![style::stylesheet::parse_css_to_stylesheet(
-            Some("rainbow-divs.css".to_owned()),
-            &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
-        )
-        .expect("parse stylesheet fail")]
-    });
-    apply_styles(dom.clone(), &[ua_sheet], &[], &author_sheets);
+    apply_styles(
+        dom.clone(),
+        &[ua_sheet],
+        &[],
+        &get_author_sheets(&arg_matches),
+    );
     let (inner_width_opt, inner_height_opt) = (
         inner_window_width(&arg_matches),
         inner_window_height(&arg_matches),
     );
 
     let scale_factor_opt = scale_factor(&arg_matches);
-    let verbose_dump_layout = dump_layout_tree_verbose(&arg_matches).unwrap_or(false);
+    let verbose_dump_layout =
+        dump_layout_tree_verbose(&arg_matches).unwrap_or(DumpLayoutVerbosity::NonVerbose);
     if dump_layout_tree(&arg_matches) {
         let scale_factor = scale_factor_opt
             .expect("scale factor must be explicitly specified when running layout dump");
@@ -95,23 +102,47 @@ fn main() {
     run_event_loop(event_loop, gl, dom, windowed_context, scale_factor_opt);
 }
 
+fn get_author_sheets(arg_matches: &ArgMatches) -> Vec<Stylesheet> {
+    css_file_paths_from_files(&arg_matches)
+        .map(|css_file_paths| {
+            css_file_paths
+                .iter()
+                .map(|&css_file_path| {
+                    style::stylesheet::parse_css_to_stylesheet(
+                        Some(css_file_path.to_owned()),
+                        &mut std::fs::read_to_string(css_file_path)
+                            .expect("couldn't read css file to string"),
+                    )
+                    .expect("error parsing stylesheet")
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_else(|| {
+            vec![style::stylesheet::parse_css_to_stylesheet(
+                Some("rainbow-divs.css".to_owned()),
+                &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
+            )
+            .expect("parse stylesheet fail")]
+        })
+}
+
 fn run_layout_dump(
     styled_dom: NodeRef,
     inner_width_opt: Option<f32>,
     inner_height_opt: Option<f32>,
     scale_factor: f32,
-    verbose: bool,
+    verbosity: DumpLayoutVerbosity,
 ) {
-    let mut layout_tree = build_layout_tree(styled_dom).unwrap();
+    let mut box_tree = build_box_tree(styled_dom, None).unwrap();
     global_layout(
-        &mut layout_tree,
+        &mut box_tree,
         inner_width_opt
             .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
         inner_height_opt
             .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
         scale_factor,
     );
-    layout_tree.dump_layout(&mut std::io::stdout(), 0, verbose);
+    box_tree.dump_layout(&mut std::io::stdout(), 0, verbosity);
 }
 
 pub fn run_event_loop(
@@ -121,16 +152,17 @@ pub fn run_event_loop(
     windowed_context: WindowedContext<PossiblyCurrent>,
     cli_specified_scale_factor: Option<f32>,
 ) {
-    let mut master_painter = MasterPainter::new(&gl).unwrap();
-    let char_handle = CharHandle::new(&gl);
     // An un-laid-out tree of boxes, to be cloned from whenever a global layout is required.
-    // This saves us from having to rebuild the entire layout tree from the DOM when necessary,
+    // This saves us from having to rebuild the entire box tree from the DOM when necessary,
     // instead only needing a clone.
-    let clean_layout_tree = build_layout_tree(styled_dom).unwrap();
-    let mut scale =
-        cli_specified_scale_factor.unwrap_or(windowed_context.window().scale_factor() as f32);
+    let clean_box_tree = build_box_tree(styled_dom, None).unwrap();
+    let char_handle = CharHandle::new(&gl);
+    let mut scale = cli_specified_scale_factor.unwrap_or_else(|| {
+        sanitize_windowed_context_scale_factor(windowed_context.window().scale_factor() as f32)
+    });
+    let mut master_painter = MasterPainter::new(&gl, scale).unwrap();
     paint(
-        clean_layout_tree.clone(),
+        clean_box_tree.clone(),
         &windowed_context,
         &char_handle,
         &mut master_painter,
@@ -145,7 +177,7 @@ pub fn run_event_loop(
                 WindowEvent::Resized(physical_size) => {
                     resize_window(&gl, &windowed_context, physical_size);
                     paint(
-                        clean_layout_tree.clone(),
+                        clean_box_tree.clone(),
                         &windowed_context,
                         &char_handle,
                         &mut master_painter,
@@ -159,7 +191,7 @@ pub fn run_event_loop(
                     scale = *scale_factor as f32;
                     resize_window(&gl, &windowed_context, new_inner_size);
                     paint(
-                        clean_layout_tree.clone(),
+                        clean_box_tree.clone(),
                         &windowed_context,
                         &char_handle,
                         &mut master_painter,
@@ -174,7 +206,7 @@ pub fn run_event_loop(
     });
 
     fn paint(
-        mut layout_tree: LayoutBox,
+        mut box_tree: LayoutBox,
         windowed_context: &WindowedContext<PossiblyCurrent>,
         char_handle: &CharHandle,
         painter: &mut MasterPainter,
@@ -182,12 +214,22 @@ pub fn run_event_loop(
     ) {
         let inner_window_size = windowed_context.window().inner_size();
         global_layout(
-            &mut layout_tree,
+            &mut box_tree,
             inner_window_size.width as f32,
             inner_window_size.width as f32,
             scale_factor,
         );
-        let display_list = build_display_list(&layout_tree, &char_handle, scale_factor);
+        let display_list = build_display_list(&box_tree, &char_handle, scale_factor);
         painter.paint(&windowed_context, &display_list);
     }
+}
+
+fn sanitize_windowed_context_scale_factor(scale_factor: f32) -> f32 {
+    // Round the scale factor Glutin / Winit reports to the nearest integer.
+    // This is a hack, and should go away eventually.  I've done it to make Kosmonaut match Firefox's
+    // scale factor on X11, as before we were getting a scale factor of 1.16 while Firefox and others
+    // use a scale factor of 1.  This behavior is definitely wrong, as sometimes fractional scaling
+    // _is_ correct (e.g. Windows allows 1.25, 1.5, etc).  Read more here:
+    // https://docs.rs/winit/0.24.0/winit/dpi/index.html#how-is-the-scale-factor-calculated
+    scale_factor.round()
 }

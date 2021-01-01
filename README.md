@@ -19,10 +19,8 @@ So far, not much.  Only a very limited subset of CSS is currently supported, so 
 Here is a summary of things Kosmonaut can do, things I'm currently working on, and things that are towards the front of the todo list.
 
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
-- [x] Layout and paint of normal flow, block formatting context block-level boxes.
-     - [x] Partial support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] Layout and paint of normal flow, non-replaced block-level boxes.
-     - [x] Partial support for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
+    - [x] Partial support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] Layout-tree-dump based testing
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
 - [x] Text rendering (without actual integration into layout — see next item)

@@ -26,10 +26,6 @@ impl ContainingBlock {
         }
     }
 
-    pub fn direction(&self) -> Direction {
-        self.direction
-    }
-
     pub fn self_relative_block_size(&self) -> CSSPixelLength {
         self.block_size(self.writing_mode)
     }
@@ -58,6 +54,14 @@ impl ContainingBlock {
             | WritingMode::VerticalLr
             | WritingMode::SidewaysLr => self.rect.start_x,
         }
+    }
+
+    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        OriginRelativeProgression::block_start_origin_relative_direction(self.writing_mode())
+    }
+
+    pub fn direction(&self) -> Direction {
+        self.direction
     }
 
     pub fn self_relative_inline_size(&self) -> CSSPixelLength {
@@ -95,10 +99,6 @@ impl ContainingBlock {
             self.writing_mode(),
             self.direction(),
         )
-    }
-
-    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
-        OriginRelativeProgression::block_start_origin_relative_direction(self.writing_mode())
     }
 
     pub fn rect(&self) -> &Rect {

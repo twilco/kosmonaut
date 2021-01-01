@@ -1,10 +1,8 @@
 use crate::gfx::char::CharHandle;
-use crate::gfx::font::FontHandle;
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::LineStyle;
 use crate::Side;
-use app_units::Au;
 use cssparser::RGBA;
 use gl::texture::TextureId;
 use pathfinder_geometry::vector::Vector2F;

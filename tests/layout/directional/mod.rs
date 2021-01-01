@@ -1,5 +1,5 @@
-use insta::assert_snapshot;
 use crate::layout::{dump_layout_cmd, DumpLayoutVerbosity};
+use insta::assert_snapshot;
 
 #[test]
 fn ltr_vertical_lr_block_boxes() {

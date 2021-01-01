@@ -1,8 +1,5 @@
 #![feature(or_patterns)]
 #![feature(type_name_of_val)]
-// TODO: Remove after layout refactor.
-#![allow(dead_code)]
-#![allow(unused_imports)]
 
 #[macro_use]
 extern crate cssparser;

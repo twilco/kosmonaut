@@ -126,13 +126,6 @@ impl InlineLevelBox {
         }
     }
 
-    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.apply_physical_properties(containing_block),
-            InlineLevelBox::InlineBox(ib) => ib.apply_physical_properties(containing_block),
-        }
-    }
-
     pub fn children(&self) -> &Vec<LayoutBox> {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children(),

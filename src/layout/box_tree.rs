@@ -1,14 +1,12 @@
 use crate::dom::tree::{NodeData, NodeRef};
 use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
 use crate::layout::flow::inline::{InlineBox, TextRun};
-use crate::layout::flow::BlockContainer;
 use crate::layout::formatting_context::{
     FormattingContext, FormattingContextRef, QualifiedFormattingContext,
 };
 use crate::layout::layout_box::LayoutBox;
 use crate::style::values::computed::display::{DisplayBox, InnerDisplay, OuterDisplay};
 use crate::style::values::computed::Display;
-use std::rc::Rc;
 
 /// Takes a DOM node and builds the corresponding box tree of it and its children.  Returns
 /// `None` if `node` is a `Display::None`.

@@ -2,18 +2,15 @@ use crate::base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
-use crate::layout::flow::{
-    BlockContainer, BlockFlowDirection, FlowSide, OriginRelativeProgression,
-};
+use crate::layout::flow::{BlockContainer, FlowSide, OriginRelativeProgression};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
-use crate::layout::rect::Rect;
 use crate::layout::{BoxComponent, DumpLayoutFormat, Layout, LayoutContext};
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::{ComputedValues, Direction, Display, WritingMode};
+use crate::style::values::computed::{ComputedValues, Display};
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
 use accountable_refcell::Ref;
@@ -55,13 +52,6 @@ impl BlockLevelBox {
             BlockLevelBox::BlockContainer(bc) => {
                 bc.apply_inline_physical_properties(containing_block)
             }
-        }
-    }
-
-    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => abb.apply_physical_properties(containing_block),
-            BlockLevelBox::BlockContainer(bc) => bc.apply_physical_properties(containing_block),
         }
     }
 

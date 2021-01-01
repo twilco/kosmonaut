@@ -6,24 +6,13 @@ use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
 use crate::layout::flow::inline::{
     AnonymousInlineBox, InlineBox, InlineLevelBox, InlineLevelContent, TextRun,
 };
-use crate::layout::formatting_context::{
-    FormattingContext, FormattingContextRef, QualifiedFormattingContext,
-};
-use crate::layout::rect::Rect;
-use crate::layout::{BoxComponent, DumpLayout, DumpLayoutFormat, Layout, LayoutContext};
-use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
-use crate::style::values::computed::length::{
-    CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
-};
-use crate::style::values::computed::{ComputedValues, Direction, Display, WritingMode};
+use crate::layout::formatting_context::FormattingContextRef;
+use crate::layout::{DumpLayout, DumpLayoutFormat, Layout, LayoutContext};
+use crate::style::values::computed::length::LengthPercentageOrAuto;
+use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
-use crate::Side;
 use accountable_refcell::Ref;
-use image::error::UnsupportedErrorKind::Format;
-use std::any::type_name_of_val;
 use std::io::Write;
-use std::mem::discriminant;
-use std::rc::Rc;
 use strum_macros::IntoStaticStr;
 
 /// The `LayoutBox` is Kosmonaut's representation of the box tree.  Note that, per-spec, the box
@@ -78,17 +67,6 @@ impl LayoutBox {
             LayoutBox::BlockLevel(blb) => blb.apply_inline_physical_properties(containing_block),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
                 ilb.apply_inline_physical_properties(containing_block)
-            }
-            // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
-            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
-        }
-    }
-
-    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.apply_physical_properties(containing_block),
-            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_physical_properties(containing_block)
             }
             // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
             LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
@@ -271,29 +249,6 @@ impl BaseBox {
         }
     }
 
-    /// If this block has any explicitly set values (e.g. length or percentage values, NOT auto) for
-    /// physical properties (e.g. `width`, `height`, left/bottom/right/top properties), this
-    /// function will set them.  Otherwise, the used values will be those given by other layout
-    /// equations.
-    pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
-        let width = self.computed_values().width.size;
-        if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
-            self.dimensions_mut()
-                .set_width(lp.to_px(containing_block.rect().width));
-        }
-
-        let height = self.computed_values().height.size;
-        if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
-            self.dimensions_mut()
-                .set_height(lp.to_px(containing_block.rect().height));
-        }
-        // FIXME: The physical bottom/left/right/top properties for margin, border, and padding
-        // are broken in non-horizontal writing modes because they are applied logically, when
-        // these properties should instead be applied physically.  E.g., margin-left should always affect
-        // the page-relative left margin of the box, but instead reflects the flow relative margin
-        // left, which physically ends up being the top margin.
-    }
-
     /// Retrieve the computed values of the node associated with this layout box.
     pub fn computed_values(&self) -> Ref<ComputedValues> {
         self.node.computed_values()
@@ -338,7 +293,6 @@ impl BaseBox {
 #[macro_export]
 macro_rules! base_box_passthrough_impls {
     () => {
-        // TODO: Do we need `apply_{block, inline}_physical_properties _and_ `apply_physical_properties`?
         #[inline(always)]
         pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
             self.base.apply_block_physical_properties(containing_block);
@@ -347,11 +301,6 @@ macro_rules! base_box_passthrough_impls {
         #[inline(always)]
         pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
             self.base.apply_inline_physical_properties(containing_block);
-        }
-
-        #[inline(always)]
-        pub fn apply_physical_properties(&mut self, containing_block: ContainingBlock) {
-            self.base.apply_physical_properties(containing_block);
         }
 
         #[inline(always)]

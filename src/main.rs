@@ -158,9 +158,7 @@ pub fn run_event_loop(
     let clean_box_tree = build_box_tree(styled_dom, None).unwrap();
     let char_handle = CharHandle::new(&gl);
     let mut scale = cli_specified_scale_factor.unwrap_or_else(|| {
-        sanitize_windowed_context_scale_factor(
-            windowed_context.window().scale_factor() as f32,
-        )
+        sanitize_windowed_context_scale_factor(windowed_context.window().scale_factor() as f32)
     });
     let mut master_painter = MasterPainter::new(&gl, scale).unwrap();
     paint(

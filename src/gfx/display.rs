@@ -1,4 +1,5 @@
 use crate::gfx::char::CharHandle;
+use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::LineStyle;

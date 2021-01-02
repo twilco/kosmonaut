@@ -1,4 +1,5 @@
 use crate::dom::tree::{NodeData, NodeRef};
+use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
 use crate::layout::flow::inline::{InlineBox, TextRun};
 use crate::layout::formatting_context::{

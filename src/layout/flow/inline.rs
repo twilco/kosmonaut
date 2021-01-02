@@ -1,16 +1,20 @@
-use crate::base_box_passthrough_impls;
+use crate::apply_page_relative_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
+use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
 use crate::layout::{DumpLayoutFormat, Layout, LayoutContext};
+use crate::layout_box_behavior_base_box_passthrough_impls;
 use crate::style::values::computed::ComputedValues;
 use accountable_refcell::Ref;
+use enum_dispatch::enum_dispatch;
 
 /// Content that participates in inline layout. Specifically, inline-level boxes and text runs.
 ///
 /// https://drafts.csswg.org/css-display/#inline-level
+#[enum_dispatch]
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelContent {
     InlineLevelBox(InlineLevelBox),
@@ -21,34 +25,6 @@ pub enum InlineLevelContent {
 }
 
 impl InlineLevelContent {
-    pub fn computed_values(&self) -> Ref<ComputedValues> {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => ilb.computed_values(),
-            InlineLevelContent::TextRun(tr) => tr.computed_values(),
-        }
-    }
-
-    pub fn dimensions(&self) -> Dimensions {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions(),
-            InlineLevelContent::TextRun(tr) => tr.dimensions(),
-        }
-    }
-
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => ilb.dimensions_mut(),
-            InlineLevelContent::TextRun(tr) => tr.dimensions_mut(),
-        }
-    }
-
-    pub fn formatting_context(&self) -> FormattingContextRef {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => ilb.formatting_context(),
-            InlineLevelContent::TextRun(tr) => tr.formatting_context(),
-        }
-    }
-
     pub fn is_anonymous_inline(&self) -> bool {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.is_anonymous_inline(),
@@ -57,11 +33,24 @@ impl InlineLevelContent {
     }
 }
 
-impl DumpLayoutFormat for InlineLevelContent {
-    fn dump_layout_format(&self) -> String {
+impl ApplyPageRelativeProperties for InlineLevelContent {
+    fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock) {
         match self {
-            InlineLevelContent::InlineLevelBox(ilb) => ilb.dump_layout_format(),
-            InlineLevelContent::TextRun(tr) => tr.dump_layout_format(),
+            InlineLevelContent::InlineLevelBox(ilb) => {
+                ilb.apply_block_page_relative_properties(containing_block)
+            }
+            // The underlying implementation of this method applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
+            InlineLevelContent::TextRun(_) => {}
+        }
+    }
+
+    fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock) {
+        match self {
+            InlineLevelContent::InlineLevelBox(ilb) => {
+                ilb.apply_inline_page_relative_properties(containing_block)
+            }
+            // The underlying implementation of this method applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
+            InlineLevelContent::TextRun(_) => {}
         }
     }
 }
@@ -78,6 +67,7 @@ impl Layout for InlineLevelContent {
     }
 }
 
+#[enum_dispatch]
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum InlineLevelBox {
     /// An inline-level box not associated with any element.
@@ -108,24 +98,6 @@ impl InlineLevelBox {
         }
     }
 
-    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => {
-                aib.apply_block_physical_properties(containing_block)
-            }
-            InlineLevelBox::InlineBox(ib) => ib.apply_block_physical_properties(containing_block),
-        }
-    }
-
-    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => {
-                aib.apply_inline_physical_properties(containing_block)
-            }
-            InlineLevelBox::InlineBox(ib) => ib.apply_inline_physical_properties(containing_block),
-        }
-    }
-
     pub fn children(&self) -> &Vec<LayoutBox> {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children(),
@@ -133,54 +105,10 @@ impl InlineLevelBox {
         }
     }
 
-    pub fn computed_values(&self) -> Ref<ComputedValues> {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.computed_values(),
-            InlineLevelBox::InlineBox(ib) => ib.computed_values(),
-        }
-    }
-
-    pub fn dimensions(&self) -> Dimensions {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.dimensions(),
-            InlineLevelBox::InlineBox(ib) => ib.dimensions(),
-        }
-    }
-
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.dimensions_mut(),
-            InlineLevelBox::InlineBox(ib) => ib.dimensions_mut(),
-        }
-    }
-
-    pub fn formatting_context(&self) -> FormattingContextRef {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.formatting_context(),
-            InlineLevelBox::InlineBox(ib) => ib.formatting_context(),
-        }
-    }
-
     pub fn is_anonymous_inline(&self) -> bool {
         match self {
             InlineLevelBox::AnonymousInline(_) => true,
             InlineLevelBox::InlineBox(_) => false,
-        }
-    }
-
-    pub fn is_root(&self) -> bool {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.is_root(),
-            InlineLevelBox::InlineBox(ib) => ib.is_root(),
-        }
-    }
-}
-
-impl DumpLayoutFormat for InlineLevelBox {
-    fn dump_layout_format(&self) -> String {
-        match self {
-            InlineLevelBox::AnonymousInline(aib) => aib.dump_layout_format(),
-            InlineLevelBox::InlineBox(ib) => ib.dump_layout_format(),
         }
     }
 }
@@ -198,8 +126,6 @@ pub struct AnonymousInlineBox {
 }
 
 impl AnonymousInlineBox {
-    base_box_passthrough_impls!();
-
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
@@ -207,13 +133,17 @@ impl AnonymousInlineBox {
         }
     }
 
-    pub fn add_child(&mut self, child: LayoutBox) {
-        self.children.push(child)
-    }
-
     pub fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }
+}
+
+impl BaseLayoutBoxBehavior for AnonymousInlineBox {
+    layout_box_behavior_base_box_passthrough_impls!();
+}
+
+impl ApplyPageRelativeProperties for AnonymousInlineBox {
+    apply_page_relative_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for AnonymousInlineBox {
@@ -231,8 +161,6 @@ pub struct InlineBox {
 }
 
 impl InlineBox {
-    base_box_passthrough_impls!();
-
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
@@ -240,13 +168,17 @@ impl InlineBox {
         }
     }
 
-    pub fn add_child(&mut self, child: LayoutBox) {
-        self.children.push(child)
-    }
-
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }
+}
+
+impl BaseLayoutBoxBehavior for InlineBox {
+    layout_box_behavior_base_box_passthrough_impls!();
+}
+
+impl ApplyPageRelativeProperties for InlineBox {
+    apply_page_relative_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for InlineBox {
@@ -274,8 +206,6 @@ pub struct TextRun {
 }
 
 impl TextRun {
-    base_box_passthrough_impls!();
-
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef, contents: String) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
@@ -286,6 +216,10 @@ impl TextRun {
     pub fn contents(&self) -> String {
         self.contents.clone()
     }
+}
+
+impl BaseLayoutBoxBehavior for TextRun {
+    layout_box_behavior_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for TextRun {

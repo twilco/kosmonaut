@@ -1,5 +1,7 @@
 use crate::cli::DumpLayoutVerbosity;
 use crate::dom::tree::{NodeData, NodeRef};
+use crate::layout::behavior::ApplyPageRelativeProperties;
+use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::block::{AnonymousBlockBox, BlockLevelBox};
@@ -12,6 +14,7 @@ use crate::style::values::computed::length::LengthPercentageOrAuto;
 use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
 use accountable_refcell::Ref;
+use enum_dispatch::enum_dispatch;
 use std::io::Write;
 use strum_macros::IntoStaticStr;
 
@@ -21,6 +24,7 @@ use strum_macros::IntoStaticStr;
 /// Loosely maps to the "Generated box" column from the table in this section,
 /// https://drafts.csswg.org/css-display/#the-display-properties, with the addition of other
 /// scattered box types (like anonymous box types).
+#[enum_dispatch]
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum LayoutBox {
     BlockLevel(BlockLevelBox),
@@ -51,62 +55,12 @@ impl LayoutBox {
         }
     }
 
-    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.apply_block_physical_properties(containing_block),
-            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_block_physical_properties(containing_block)
-            }
-            // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
-            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
-        }
-    }
-
-    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.apply_inline_physical_properties(containing_block),
-            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
-                ilb.apply_inline_physical_properties(containing_block)
-            }
-            // This function applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
-            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => {}
-        }
-    }
-
     /// Returns the children of this layout box, if there are any.
     pub fn children(&self) -> Option<&Vec<LayoutBox>> {
         match self {
             LayoutBox::BlockLevel(blb) => Some(blb.children()),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => Some(ilb.children()),
             LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => None,
-        }
-    }
-
-    pub fn computed_values(&self) -> Ref<ComputedValues> {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.computed_values(),
-            LayoutBox::InlineLevel(ilc) => ilc.computed_values(),
-        }
-    }
-
-    pub fn dimensions(&self) -> Dimensions {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.dimensions(),
-            LayoutBox::InlineLevel(ilc) => ilc.dimensions(),
-        }
-    }
-
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.dimensions_mut(),
-            LayoutBox::InlineLevel(ilc) => ilc.dimensions_mut(),
-        }
-    }
-
-    pub fn formatting_context(&self) -> FormattingContextRef {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.formatting_context(),
-            LayoutBox::InlineLevel(ilc) => ilc.formatting_context(),
         }
     }
 
@@ -124,25 +78,10 @@ impl LayoutBox {
         }
     }
 
-    pub fn inner_box_type_name(&self) -> &'static str {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.into(),
-            LayoutBox::InlineLevel(ilc) => ilc.into(),
-        }
-    }
-
     pub fn is_anonymous_inline(&self) -> bool {
         match self {
             LayoutBox::BlockLevel(_) => false,
             LayoutBox::InlineLevel(ilc) => ilc.is_anonymous_inline(),
-        }
-    }
-
-    pub fn is_root(&self) -> bool {
-        match self {
-            LayoutBox::BlockLevel(blb) => blb.is_root(),
-            LayoutBox::InlineLevel(InlineLevelContent::TextRun(_)) => false,
-            LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => ilb.is_root(),
         }
     }
 }
@@ -158,12 +97,6 @@ impl From<AnonymousInlineBox> for LayoutBox {
         LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(
             InlineLevelBox::AnonymousInline(aib),
         ))
-    }
-}
-
-impl From<BlockLevelBox> for LayoutBox {
-    fn from(blb: BlockLevelBox) -> Self {
-        LayoutBox::BlockLevel(blb)
     }
 }
 
@@ -217,7 +150,7 @@ impl BaseBox {
         }
     }
 
-    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
+    pub fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock) {
         if containing_block.writing_mode().is_horizontal() {
             let height = self.computed_values().height.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
@@ -233,7 +166,7 @@ impl BaseBox {
         }
     }
 
-    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
+    pub fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock) {
         if containing_block.writing_mode().is_horizontal() {
             let width = self.computed_values().width.size;
             if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
@@ -266,10 +199,6 @@ impl BaseBox {
         self.formatting_context.clone()
     }
 
-    pub fn has_inline_formatting_context(&self) -> bool {
-        self.formatting_context.is_inline_formatting_context()
-    }
-
     /// Determines if this layout box is associated with the root DOM node (<html>).
     pub fn is_root(&self) -> bool {
         let parent_node_is_document = if let Some(parent) = self.node.parent() {
@@ -288,56 +217,6 @@ impl BaseBox {
     pub fn node(&self) -> NodeRef {
         self.node.clone()
     }
-}
-
-#[macro_export]
-macro_rules! base_box_passthrough_impls {
-    () => {
-        #[inline(always)]
-        pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
-            self.base.apply_block_physical_properties(containing_block);
-        }
-
-        #[inline(always)]
-        pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
-            self.base.apply_inline_physical_properties(containing_block);
-        }
-
-        #[inline(always)]
-        pub fn computed_values(&self) -> Ref<ComputedValues> {
-            self.base.computed_values()
-        }
-
-        #[inline(always)]
-        pub fn dimensions(&self) -> Dimensions {
-            self.base.dimensions()
-        }
-
-        #[inline(always)]
-        pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-            self.base.dimensions_mut()
-        }
-
-        #[inline(always)]
-        pub fn formatting_context(&self) -> FormattingContextRef {
-            self.base.formatting_context()
-        }
-
-        #[inline(always)]
-        pub fn has_inline_formatting_context(&self) -> bool {
-            self.base.has_inline_formatting_context()
-        }
-
-        #[inline(always)]
-        pub fn is_root(&self) -> bool {
-            self.base.is_root()
-        }
-
-        #[inline(always)]
-        pub fn node(&self) -> NodeRef {
-            self.base.node()
-        }
-    };
 }
 
 /// Writes a textual representation of the layout tree starting with the `self` LayoutBox.  Built

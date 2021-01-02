@@ -1,3 +1,4 @@
+pub mod behavior;
 pub mod box_tree;
 pub mod containing_block;
 pub mod dimensions;
@@ -9,12 +10,17 @@ pub mod values;
 
 use crate::cli::DumpLayoutVerbosity;
 use crate::dom::tree::NodeData;
+use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::containing_block::ContainingBlock;
+use crate::layout::flow::block::BlockLevelBox;
+use crate::layout::flow::inline::InlineLevelBox;
+use crate::layout::flow::inline::InlineLevelContent;
 use crate::layout::flow::OriginRelativeProgression;
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::CSSFloat;
+use enum_dispatch::enum_dispatch;
 use std::io::Write;
 
 /// Given a `window` and a `layout_root_box`, perform a layout with the dimensions of the `window`.
@@ -84,10 +90,7 @@ pub trait DumpLayout {
 
 /// Trait describing behavior necessary for formatting ones data in preparation for a layout tree
 /// dump.
-/// TODO: Write a custom derive for this.  A bunch of impls of this are just enums calling
-/// `dump_layout_format` on their variants.  This trait will still need to be implemented by hand
-/// at the leaves, though (sort of like the Debug trait)
-/// https://doc.rust-lang.org/book/ch19-06-macros.html#how-to-write-a-custom-derive-macrok
+#[enum_dispatch(BlockLevelBox, InlineLevelBox, InlineLevelContent)]
 pub trait DumpLayoutFormat {
     fn dump_layout_format(&self) -> String;
 }

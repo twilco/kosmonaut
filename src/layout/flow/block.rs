@@ -1,11 +1,13 @@
-use crate::base_box_passthrough_impls;
+use crate::apply_page_relative_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
+use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::flow::{BlockContainer, FlowSide, OriginRelativeProgression};
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
 use crate::layout::{BoxComponent, DumpLayoutFormat, Layout, LayoutContext};
+use crate::layout_box_behavior_base_box_passthrough_impls;
 use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
@@ -14,7 +16,9 @@ use crate::style::values::computed::{ComputedValues, Display};
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
 use accountable_refcell::Ref;
+use enum_dispatch::enum_dispatch;
 
+#[enum_dispatch]
 #[derive(Clone, Debug, IntoStaticStr)]
 pub enum BlockLevelBox {
     /// A block-level box not associated with any element.
@@ -26,6 +30,11 @@ pub enum BlockLevelBox {
 }
 
 impl BlockLevelBox {
+    /// Creates a new block-level block container.
+    pub fn new_block_container(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+        BlockLevelBox::BlockContainer(BlockContainer::new(node, formatting_context))
+    }
+
     pub fn add_child(&mut self, new_child: LayoutBox) {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
@@ -33,72 +42,10 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn apply_block_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => {
-                abb.apply_block_physical_properties(containing_block)
-            }
-            BlockLevelBox::BlockContainer(bc) => {
-                bc.apply_block_physical_properties(containing_block)
-            }
-        }
-    }
-
-    pub fn apply_inline_physical_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => {
-                abb.apply_inline_physical_properties(containing_block)
-            }
-            BlockLevelBox::BlockContainer(bc) => {
-                bc.apply_inline_physical_properties(containing_block)
-            }
-        }
-    }
-
-    /// Creates a new block-level block container.
-    pub fn new_block_container(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
-        BlockLevelBox::BlockContainer(BlockContainer::new(node, formatting_context))
-    }
-
     pub fn children(&self) -> &Vec<LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.children(),
             BlockLevelBox::BlockContainer(bc) => bc.children(),
-        }
-    }
-
-    pub fn computed_values(&self) -> Ref<ComputedValues> {
-        match self {
-            BlockLevelBox::AnonymousBlock(ab) => ab.computed_values(),
-            BlockLevelBox::BlockContainer(bc) => bc.computed_values(),
-        }
-    }
-
-    pub fn dimensions(&self) -> Dimensions {
-        match self {
-            BlockLevelBox::AnonymousBlock(ab) => ab.dimensions(),
-            BlockLevelBox::BlockContainer(bc) => bc.dimensions(),
-        }
-    }
-
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
-        match self {
-            BlockLevelBox::AnonymousBlock(ab) => ab.dimensions_mut(),
-            BlockLevelBox::BlockContainer(bc) => bc.dimensions_mut(),
-        }
-    }
-
-    pub fn formatting_context(&self) -> FormattingContextRef {
-        match self {
-            BlockLevelBox::AnonymousBlock(ab) => ab.formatting_context(),
-            BlockLevelBox::BlockContainer(bc) => bc.formatting_context(),
-        }
-    }
-
-    pub fn is_root(&self) -> bool {
-        match self {
-            BlockLevelBox::AnonymousBlock(abb) => abb.is_root(),
-            BlockLevelBox::BlockContainer(bc) => bc.is_root(),
         }
     }
 
@@ -224,7 +171,7 @@ impl BlockLevelBox {
         // Before computing the `inline_start_coord` of this box, we need to apply values the author
         // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
         // `height` in the other `writing-modes`.
-        self.apply_inline_physical_properties(containing_block);
+        self.apply_inline_page_relative_properties(containing_block);
         let inline_start_coord = compute_inline_start_coord(&self.dimensions(), containing_block);
         self.dimensions_mut()
             .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());
@@ -313,7 +260,7 @@ impl BlockLevelBox {
         };
         // Before calculating this boxes block start coordinate, ensure we've applied the authors
         // specified styles.
-        self.apply_block_physical_properties(containing_block);
+        self.apply_block_page_relative_properties(containing_block);
         let block_start_coord = compute_block_start_coord(
             &self.dimensions(),
             preceeding_sibling_blockwise_space_consumed,
@@ -321,15 +268,6 @@ impl BlockLevelBox {
         );
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord, containing_block.writing_mode());
-    }
-}
-
-impl DumpLayoutFormat for BlockLevelBox {
-    fn dump_layout_format(&self) -> String {
-        match self {
-            BlockLevelBox::AnonymousBlock(ab) => ab.dump_layout_format(),
-            BlockLevelBox::BlockContainer(bc) => bc.dump_layout_format(),
-        }
     }
 }
 
@@ -369,8 +307,6 @@ pub struct AnonymousBlockBox {
 }
 
 impl AnonymousBlockBox {
-    base_box_passthrough_impls!();
-
     pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
@@ -389,6 +325,14 @@ impl AnonymousBlockBox {
     pub fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
         &mut self.children
     }
+}
+
+impl BaseLayoutBoxBehavior for AnonymousBlockBox {
+    layout_box_behavior_base_box_passthrough_impls!();
+}
+
+impl ApplyPageRelativeProperties for AnonymousBlockBox {
+    apply_page_relative_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for AnonymousBlockBox {

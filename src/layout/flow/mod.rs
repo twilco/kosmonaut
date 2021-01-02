@@ -1,13 +1,15 @@
 pub mod block;
 pub mod inline;
 
-use crate::base_box_passthrough_impls;
+use crate::apply_page_relative_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
+use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{BaseBox, LayoutBox};
 use crate::layout::DumpLayoutFormat;
+use crate::layout_box_behavior_base_box_passthrough_impls;
 use crate::style::values::computed::Direction;
 use crate::style::values::computed::{ComputedValues, WritingMode};
 use accountable_refcell::Ref;
@@ -25,8 +27,6 @@ pub struct BlockContainer {
 }
 
 impl BlockContainer {
-    base_box_passthrough_impls!();
-
     pub fn new(node: NodeRef, fc: FormattingContextRef) -> Self {
         BlockContainer {
             base: BaseBox::new(node, fc),
@@ -45,6 +45,14 @@ impl BlockContainer {
     pub fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
         &mut self.children
     }
+}
+
+impl BaseLayoutBoxBehavior for BlockContainer {
+    layout_box_behavior_base_box_passthrough_impls!();
+}
+
+impl ApplyPageRelativeProperties for BlockContainer {
+    apply_page_relative_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for BlockContainer {

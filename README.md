@@ -26,7 +26,7 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 - [x] Text rendering (without actual integration into layout — see next item)
 - [ ] Layout of basic non-replaced inline-level content (such as text)
 
-<b id="f1">1</b> Orthogonal flows ([see spec](https://drafts.csswg.org/css-writing-modes-4/#orthogonal-flows)) not supported. 
+<b id="f1">1:</b> Orthogonal flows ([see spec](https://drafts.csswg.org/css-writing-modes-4/#orthogonal-flows)) not supported. 
 Mixed `writing-mode` support in general (including parallel flows) is currently iffy — I recommend simply using `* { writing-mode: <val> }`.  `sideways-{lr, rl} and vertical-rl` currently don't work very well. [↩](#a1)
 
 ### Project goals

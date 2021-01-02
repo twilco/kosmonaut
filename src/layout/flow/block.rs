@@ -68,7 +68,6 @@ impl BlockLevelBox {
         }
     }
 
-    /// Lays out children and returns the extent of their summed dimensions.
     fn layout_children(&mut self, containing_block: ContainingBlock) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;

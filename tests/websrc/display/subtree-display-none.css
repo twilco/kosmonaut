@@ -1,9 +1,9 @@
-* {
-    writing-mode: horizontal-tb;
-}
-
-body {
+.subtree {
     display: none;
+    background-color: red;
+}
+.subtree div {
+    background-color: red;
 }
 
 div {
@@ -23,11 +23,11 @@ div {
     border-left-style: solid;
     border-left-width: 10px;
     border-left-color: black;
-    
+
     border-top-style: solid;
     border-top-width: 10px;
     border-top-color: black;
-    
+
     border-right-style: solid;
     border-right-width: 10px;
     border-right-color: black;

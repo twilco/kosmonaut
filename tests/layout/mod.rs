@@ -3,6 +3,7 @@ use crate::util::CommandUnderTest;
 pub use kosmonaut::cli::DumpLayoutVerbosity;
 
 pub mod directional;
+pub mod display;
 
 #[cfg(test)]
 mod tests {

@@ -1,0 +1,6 @@
+---
+source: tests/layout/display/mod.rs
+expression: dump_layout_cmd.stdout()
+---
+HTML BlockContainer at (0, 0) size 1920x0
+

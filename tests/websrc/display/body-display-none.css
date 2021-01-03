@@ -1,13 +1,9 @@
-* {
-    writing-mode: horizontal-tb;
-}
-
 body {
     display: none;
 }
 
 div {
-    background-color: green;
+    background-color: red;
     height: 200px;
     width: 300px;
 
@@ -23,11 +19,11 @@ div {
     border-left-style: solid;
     border-left-width: 10px;
     border-left-color: black;
-    
+
     border-top-style: solid;
     border-top-width: 10px;
     border-top-color: black;
-    
+
     border-right-style: solid;
     border-right-width: 10px;
     border-right-color: black;

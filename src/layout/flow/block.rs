@@ -8,11 +8,10 @@ use crate::layout::formatting_context::FormattingContextRef;
 use crate::layout::layout_box::{get_anonymous_inline_layout_box, BaseBox, LayoutBox};
 use crate::layout::{BoxComponent, DumpLayoutFormat, Layout, LayoutContext};
 use crate::layout_box_behavior_base_box_passthrough_impls;
-use crate::style::values::computed::display::{DisplayBox, OuterDisplay};
 use crate::style::values::computed::length::{
     CSSPixelLength, LengthPercentage, LengthPercentageOrAuto,
 };
-use crate::style::values::computed::{ComputedValues, Display};
+use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
 use accountable_refcell::Ref;
@@ -278,23 +277,9 @@ impl Layout for BlockLevelBox {
     // own writing-mode, rather than that of it's own containing block.
     fn layout(&mut self, context: LayoutContext) {
         let LayoutContext { containing_block } = context;
-        let display = self.computed_values().display;
-        match display {
-            // The outer display determines how this box participates in layout.
-            // https://drafts.csswg.org/css-display/#outer-display-type
-            Display::Full(full_display) => match full_display.outer() {
-                OuterDisplay::Block => {
-                    self.solve_and_set_inline_level_properties(containing_block);
-                    self.solve_and_set_block_level_properties(containing_block);
-                    self.layout_children(containing_block);
-                }
-                // OuterDisplay::Inline => unimplemented!("OuterDisplay::Inline in BlockLevelBox Layout impl"),
-                OuterDisplay::Inline => {}
-            },
-            Display::Box(DisplayBox::None) => {
-                unimplemented!("display none in BlockLevelBox Layout impl")
-            }
-        }
+        self.solve_and_set_inline_level_properties(containing_block);
+        self.solve_and_set_block_level_properties(containing_block);
+        self.layout_children(containing_block);
     }
 }
 

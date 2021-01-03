@@ -36,7 +36,7 @@ use crate::cli::{
     setup_and_get_cli_args, DumpLayoutVerbosity,
 };
 use crate::gfx::char::CharHandle;
-use crate::gfx::display::build_display_list;
+use crate::gfx::display::{build_display_list, DisplayCommand};
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
 use crate::layout::box_tree::build_box_tree;
@@ -48,6 +48,7 @@ use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
 use std::io::Write;
+use cssparser::RGBA;
 
 /// Welcome to Kosmonaut.
 ///
@@ -164,7 +165,7 @@ pub fn run_event_loop(
     // An un-laid-out tree of boxes, to be cloned from whenever a global layout is required.
     // This saves us from having to rebuild the entire box tree from the DOM when necessary,
     // instead only needing a clone.
-    let clean_box_tree = build_box_tree(styled_dom, None).unwrap();
+    let clean_box_tree = build_box_tree(styled_dom, None);
     let char_handle = CharHandle::new(&gl);
     let mut scale = cli_specified_scale_factor.unwrap_or_else(|| {
         sanitize_windowed_context_scale_factor(windowed_context.window().scale_factor() as f32)
@@ -215,20 +216,28 @@ pub fn run_event_loop(
     });
 
     fn paint(
-        mut box_tree: LayoutBox,
+        box_tree_opt: Option<LayoutBox>,
         windowed_context: &WindowedContext<PossiblyCurrent>,
         char_handle: &CharHandle,
         painter: &mut MasterPainter,
         scale_factor: f32,
     ) {
-        let inner_window_size = windowed_context.window().inner_size();
-        global_layout(
-            &mut box_tree,
-            inner_window_size.width as f32,
-            inner_window_size.width as f32,
-            scale_factor,
-        );
-        let display_list = build_display_list(&box_tree, &char_handle, scale_factor);
+        let display_list = if let Some(mut box_tree) = box_tree_opt {
+            let inner_window_size = windowed_context.window().inner_size();
+            global_layout(
+                &mut box_tree,
+                inner_window_size.width as f32,
+                inner_window_size.width as f32,
+                scale_factor,
+            );
+            build_display_list(&box_tree, &char_handle, scale_factor)
+        } else {
+            // There is no box tree to paint (e.g. in the case of `html { display: none }`, so paint
+            // only the viewport background.
+            // TODO: The viewport background color should come from system colors, not be hardcoded
+            // to white.
+            vec![DisplayCommand::ViewportBackground(RGBA::new(255, 255, 255, 0))]
+        };
         painter.paint(&windowed_context, &display_list);
     }
 }

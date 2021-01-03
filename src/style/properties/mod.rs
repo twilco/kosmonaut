@@ -22,7 +22,6 @@ use crate::style::values::specified::{
 };
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
-use std::mem::discriminant;
 
 pub mod id;
 
@@ -330,9 +329,8 @@ impl ContextualPropertyDeclarations {
         ContextualPropertyDeclarations::default()
     }
 
-    /// Sort according to the cascade algorithm.
-    ///
-    /// This is a fairly expensive operation, so try not to do it often.
+    /// Sort according to the cascade algorithm.  Declarations are sorted from least applicable to
+    /// most applicable, meaning the last instance of a given property is the winner of the cascade.
     ///
     /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascading
     #[inline]
@@ -340,54 +338,10 @@ impl ContextualPropertyDeclarations {
         // ContextualPropertyDeclarations override `Ord`, so this will sort by origin, importance,
         // specificity.
         self.decls.as_mut_slice().sort();
-        // Now sort by order of appearance.
-        let mut swaps: Vec<(usize, usize)> = Vec::new();
-        for (outer_idx, outer_decl) in self.decls.iter().enumerate() {
-            for (inner_idx, inner_decl) in self.decls.iter().enumerate().rev() {
-                // Since inner_idx starts from .rev(), stop looking for possible swaps when outer
-                // and inner indexes meet. If there was a swap to be found, we already would've
-                // found it, and won't find any more swaps by continuing.  Also, there's no point in swapping an element with itself.
-                if inner_idx == outer_idx {
-                    break;
-                }
-
-                if eq_discrim_and_ord(outer_decl, inner_decl)
-                    && !either_index_already_in_swap(outer_idx, inner_idx, &swaps)
-                {
-                    swaps.push((outer_idx, inner_idx));
-                    break;
-                }
-            }
-        }
-
-        for swap in swaps.iter() {
-            self.decls.as_mut_slice().swap(swap.0, swap.1);
-        }
+        // After sorting by origin, importance, and specificity, rules must also be sorted by order
+        // of appearance.  However, we don't need to do anything to uphold that variant, since later
+        // rules are naturally pushed to the end of the Vec.
         self.is_sorted = true;
-
-        // We only want to swap properties of the same type/discriminant (e.g. only swapping `font-size`s with `font-size`s),
-        // and from there only swapping properties that are otherwise `Ordering::Equal`, leaving only order of appearance.
-        fn eq_discrim_and_ord(
-            a: &ContextualPropertyDeclaration,
-            b: &ContextualPropertyDeclaration,
-        ) -> bool {
-            discriminant(&a.inner_decl) == discriminant(&b.inner_decl)
-                && a.cmp(b) == Ordering::Equal
-        }
-
-        // We don't want to swap indices that already set to be swapped.
-        fn either_index_already_in_swap(
-            new_a: usize,
-            new_b: usize,
-            swaps: &[(usize, usize)],
-        ) -> bool {
-            for (existing_a, existing_b) in swaps.iter() {
-                if new_a == *existing_a || new_b == *existing_b {
-                    return true;
-                };
-            }
-            false
-        }
     }
 
     #[inline]
@@ -403,6 +357,7 @@ impl ContextualPropertyDeclarations {
         } else {
             self.decls
                 .iter()
+                .rev()
                 .find(|decl| LonghandId::from(*decl).eq(&longhand))
         }
     }
@@ -464,6 +419,8 @@ impl Ord for ContextualPropertyDeclaration {
                     Ordering::Equal => return self.specificity.cmp(&other.specificity),
                 }
             } else if !self.important && !other.important {
+                // When both declarations are not important, run the same routine as the one to
+                // compare important declarations but flip the result.
                 return match cmp_important_origins(&self.origin, &other.origin) {
                     Ordering::Less => Ordering::Greater,
                     Ordering::Greater => Ordering::Less,
@@ -684,6 +641,40 @@ mod tests {
     }
 
     #[test]
+    fn author_sheet_rule_preferred_over_user_agent_sheet_rule_both_unimportant() {
+        let ua_decl = ContextualPropertyDeclaration {
+            inner_decl: PropertyDeclaration::Display(Display::new_block()),
+            important: false,
+            origin: CssOrigin::Sheet(StylesheetOrigin {
+                sheet_name: "useragent.css".to_owned(),
+                cascade_origin: CascadeOrigin::UserAgent,
+            }),
+            source_location: None,
+            specificity: Specificity::new(0),
+        };
+        let mut author_decl = ua_decl.clone();
+        author_decl.inner_decl = PropertyDeclaration::Display(Display::new_none());
+        author_decl.origin = CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: "author_sheet.css".to_owned(),
+            cascade_origin: CascadeOrigin::Author,
+        });
+        let mut decls = ContextualPropertyDeclarations::new();
+        decls.add(ua_decl);
+        decls.add(author_decl);
+        decls.cascade_sort();
+        assert!(decls.is_sorted);
+        let last_display = decls
+            .get_by_longhand(LonghandId::Display)
+            .expect("decl_sort_order_of_appearance should get display");
+        match last_display.inner_decl {
+            PropertyDeclaration::Display(display) => {
+                assert_eq!(display, Display::new_none())
+            }
+            _ => panic!("this should've been a display property"),
+        }
+    }
+
+    #[test]
     fn decl_sort_order_of_appearance() {
         let mut decls = ContextualPropertyDeclarations::new();
         decls.add(font_size_px(12.0));
@@ -696,20 +687,20 @@ mod tests {
 
         decls.cascade_sort();
         assert!(decls.is_sorted);
-        let first_font_size = decls
+        let last_font_size = decls
             .get_by_longhand(LonghandId::FontSize)
             .expect("decl_sort_order_of_appearance should get font_size");
         // This should've been sorted to the top, since most recent / latest added declarations that are otherwise equal
         // take precedence over later ones.
-        assert_eq!(font_size_px_or_panic(&first_font_size.inner_decl), &20.0);
-        let first_display = decls
+        assert_eq!(font_size_px_or_panic(&last_font_size.inner_decl), &20.0);
+        let last_display = decls
             .get_by_longhand(LonghandId::Display)
             .expect("decl_sort_order_of_appearance should get display");
-        match first_display.inner_decl {
+        match last_display.inner_decl {
             PropertyDeclaration::Display(display_type) => {
                 assert_eq!(display_type, Display::new_inline());
             }
-            _ => panic!("`first_display` should have property decl type of display"),
+            _ => panic!("`last_display` should have property decl type of display"),
         }
     }
 

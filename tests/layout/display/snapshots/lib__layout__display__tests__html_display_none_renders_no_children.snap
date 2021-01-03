@@ -1,0 +1,5 @@
+---
+source: tests/layout/display/mod.rs
+expression: dump_layout_cmd.stdout()
+---
+empty box tree

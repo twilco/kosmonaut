@@ -47,6 +47,7 @@ pub use common::Side;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
+use std::io::Write;
 
 /// Welcome to Kosmonaut.
 ///
@@ -130,16 +131,27 @@ fn run_layout_dump(
     scale_factor: f32,
     verbosity: DumpLayoutVerbosity,
 ) {
-    let mut box_tree = build_box_tree(styled_dom, None).unwrap();
-    global_layout(
-        &mut box_tree,
-        inner_width_opt
-            .expect("Inner window width CLI arg 'width' must be specified for dump-layout."),
-        inner_height_opt
-            .expect("Inner window height CLI arg 'height' must be specified for dump-layout."),
-        scale_factor,
-    );
-    box_tree.dump_layout(&mut std::io::stdout(), 0, verbosity);
+    let write_to = &mut std::io::stdout();
+    match build_box_tree(styled_dom, None) {
+        Some(mut box_tree) => {
+            global_layout(
+                &mut box_tree,
+                inner_width_opt.expect(
+                    "Inner window width CLI arg 'width' must be specified for dump-layout.",
+                ),
+                inner_height_opt.expect(
+                    "Inner window height CLI arg 'height' must be specified for dump-layout.",
+                ),
+                scale_factor,
+            );
+            box_tree.dump_layout(write_to, 0, verbosity);
+        }
+        None => {
+            write_to
+                .write("empty box tree".as_bytes())
+                .expect("could not write to stdout during layout dump");
+        }
+    };
 }
 
 pub fn run_event_loop(

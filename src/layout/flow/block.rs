@@ -71,6 +71,11 @@ impl BlockLevelBox {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
 
+        let has_specified_block_size = matches!(
+            self.computed_values()
+                .block_size(containing_block.writing_mode()),
+            LengthPercentageOrAuto::LengthPercentage(_)
+        );
         let (children, self_dimensions) = match self {
             BlockLevelBox::AnonymousBlock(abb) => (&mut abb.children, abb.base.dimensions_mut()),
             BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut()),
@@ -88,12 +93,17 @@ impl BlockLevelBox {
                 direction,
                 writing_mode,
             )));
-            // Add this child's margin-box to our content box so the next child is laid out after
-            // this one.
-            self_dimensions.add_to_block_size(
-                child.dimensions().margin_box_block_size(writing_mode),
-                containing_block.writing_mode(),
-            );
+            
+            // If this box has an explicitly specified block size (which should've been applied to
+            // this box's dimensions by now), don't alter it.
+            if !has_specified_block_size {
+                // Add this child's margin-box to our content box so the next child is laid out after
+                // this one.
+                self_dimensions.add_to_block_size(
+                    child.dimensions().margin_box_block_size(writing_mode),
+                    containing_block.writing_mode(),
+                );
+            }
         }
     }
 

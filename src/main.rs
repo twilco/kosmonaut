@@ -44,11 +44,11 @@ use crate::layout::layout_box::LayoutBox;
 use crate::style::stylesheet::Stylesheet;
 use clap::ArgMatches;
 pub use common::Side;
+use cssparser::RGBA;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
 use std::io::Write;
-use cssparser::RGBA;
 
 /// Welcome to Kosmonaut.
 ///
@@ -236,7 +236,9 @@ pub fn run_event_loop(
             // only the viewport background.
             // TODO: The viewport background color should come from system colors, not be hardcoded
             // to white.
-            vec![DisplayCommand::ViewportBackground(RGBA::new(255, 255, 255, 0))]
+            vec![DisplayCommand::ViewportBackground(RGBA::new(
+                255, 255, 255, 0,
+            ))]
         };
         painter.paint(&windowed_context, &display_list);
     }

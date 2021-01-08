@@ -1,11 +1,11 @@
 use std::mem::discriminant;
 
-use cssparser::{ParseError, Parser, ParserInput, RuleListParser};
+use cssparser::ParseError;
 
 use crate::dom::tree::NodeRef;
 use crate::style::properties::ContextualPropertyDeclaration;
 use crate::style::{
-    CascadeOrigin, CssOrigin, CssRule, StyleParseErrorKind, StylesheetOrigin, TopLevelRuleParser,
+    parse_css_to_rules, CascadeOrigin, CssOrigin, CssRule, StyleParseErrorKind, StylesheetOrigin,
 };
 
 /// Parses string containing CSS into StyleRules.
@@ -13,22 +13,19 @@ pub fn parse_css_to_stylesheet(
     sheet_name: Option<String>,
     css_str: &mut str,
 ) -> Result<Stylesheet, (ParseError<StyleParseErrorKind>, &str)> {
-    let input = &mut ParserInput::new(css_str);
-    let parser = &mut Parser::new(input);
-    let rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
     let mut sheet = if let Some(name) = sheet_name {
         Stylesheet::new_with_name(name)
     } else {
         Stylesheet::new()
     };
-    for rule in rule_parser {
-        sheet.add_rule(rule?);
+    for rule in parse_css_to_rules(css_str)? {
+        sheet.add_rule(rule);
     }
     Ok(sheet)
 }
 
-pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: CascadeOrigin) {
-    sheet.rules().iter().for_each(|rule| {
+pub fn apply_css_rules_to_node(node: &NodeRef, rules: &[CssRule], origin: CssOrigin) {
+    rules.iter().for_each(|rule| {
         if let CssRule::Style(style_rule) = rule {
             node.select(&style_rule.selectors)
                 .for_each(|matching_node| {
@@ -45,10 +42,7 @@ pub fn apply_stylesheet_to_node(node: &NodeRef, sheet: &Stylesheet, origin: Casc
                                     .declarations_importance()
                                     .get(index)
                                     .expect("important bit not set for declaration"),
-                                origin: CssOrigin::Sheet(StylesheetOrigin {
-                                    sheet_name: sheet.name.clone(),
-                                    cascade_origin: origin.clone(),
-                                }),
+                                origin: origin.clone(),
                                 source_location: Some(style_rule.source_location),
                                 specificity: style_rule
                                     .selectors
@@ -98,6 +92,13 @@ impl Stylesheet {
             name,
             ..Default::default()
         }
+    }
+
+    pub fn css_origin(&self, cascade_origin: CascadeOrigin) -> CssOrigin {
+        CssOrigin::Sheet(StylesheetOrigin {
+            sheet_name: self.name.clone(),
+            cascade_origin,
+        })
     }
 
     pub fn rules(&self) -> &Vec<CssRule> {

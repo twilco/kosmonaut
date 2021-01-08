@@ -9,7 +9,6 @@ mod tests {
         dump_layout_cmd
             .arg("--files")
             .arg("tests/websrc/display/html-display-none.html")
-            .arg("tests/websrc/display/html-display-none.css")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
     }
@@ -20,7 +19,6 @@ mod tests {
         dump_layout_cmd
             .arg("--files")
             .arg("tests/websrc/display/body-display-none.html")
-            .arg("tests/websrc/display/body-display-none.css")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
     }
@@ -31,7 +29,6 @@ mod tests {
         dump_layout_cmd
             .arg("--files")
             .arg("tests/websrc/display/subtree-display-none.html")
-            .arg("tests/websrc/display/subtree-display-none.css")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
     }

@@ -21,7 +21,6 @@ use glutin::event_loop::EventLoop;
 
 use crate::dom::tree::NodeRef;
 use crate::layout::{global_layout, DumpLayout};
-use crate::style::apply_styles;
 
 pub mod cli;
 pub mod common;
@@ -41,6 +40,8 @@ use crate::gfx::paint::MasterPainter;
 use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
 use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
+use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
+use crate::style::parse_css_to_rules;
 use crate::style::stylesheet::Stylesheet;
 use clap::ArgMatches;
 pub use common::Side;
@@ -64,6 +65,14 @@ fn main() {
         .from_utf8()
         .read_from(&mut File::open(html_file).unwrap())
         .unwrap();
+    let mut embedded_styles_str = extract_embedded_styles(dom.clone());
+    let embedded_styles = match parse_css_to_rules(&mut embedded_styles_str) {
+        Ok(rules) => rules,
+        Err(parse_error) => {
+            println!("error parsing embedded styles: {:?}", parse_error);
+            Vec::new()
+        }
+    };
     let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
         Some("browser.css".to_owned()),
         &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
@@ -71,6 +80,7 @@ fn main() {
     .expect("parse stylesheet fail");
     apply_styles(
         dom.clone(),
+        &embedded_styles,
         &[ua_sheet],
         &[],
         &get_author_sheets(&arg_matches),
@@ -102,27 +112,19 @@ fn main() {
 }
 
 fn get_author_sheets(arg_matches: &ArgMatches) -> Vec<Stylesheet> {
-    css_file_paths_from_files(&arg_matches)
-        .map(|css_file_paths| {
-            css_file_paths
-                .iter()
-                .map(|&css_file_path| {
-                    style::stylesheet::parse_css_to_stylesheet(
-                        Some(css_file_path.to_owned()),
-                        &mut std::fs::read_to_string(css_file_path)
-                            .expect("couldn't read css file to string"),
-                    )
-                    .expect("error parsing stylesheet")
-                })
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_else(|| {
-            vec![style::stylesheet::parse_css_to_stylesheet(
-                Some("rainbow-divs.css".to_owned()),
-                &mut std::fs::read_to_string("tests/websrc/rainbow-divs.css").expect("file fail"),
-            )
-            .expect("parse stylesheet fail")]
-        })
+    css_file_paths_from_files(&arg_matches).map_or(Vec::new(), |css_file_paths| {
+        css_file_paths
+            .iter()
+            .map(|&css_file_path| {
+                style::stylesheet::parse_css_to_stylesheet(
+                    Some(css_file_path.to_owned()),
+                    &mut std::fs::read_to_string(css_file_path)
+                        .expect("couldn't read css file to string"),
+                )
+                .expect("error parsing stylesheet")
+            })
+            .collect::<Vec<_>>()
+    })
 }
 
 fn run_layout_dump(

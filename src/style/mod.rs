@@ -1,83 +1,23 @@
 use std::convert::From;
 
 use cssparser::{
-    AtRuleParser, CowRcStr, ParseError, Parser, QualifiedRuleParser, SourceLocation, Token,
+    AtRuleParser, CowRcStr, ParseError, Parser, ParserInput, QualifiedRuleParser, RuleListParser,
+    SourceLocation, Token,
 };
 use selectors::parser::SelectorParseErrorKind;
 
-use crate::dom::tree::{NodeData, NodeRef};
 use crate::style::properties::{parse_property_declaration_list, PropertyDeclarationBlock};
 use crate::style::select::Selectors;
-use crate::style::stylesheet::{apply_stylesheet_to_node, Stylesheet};
-use crate::style::values::computed::compute_values;
 
 #[macro_use]
 mod macros;
 
+pub mod dom_integration;
 pub mod properties;
 pub mod select;
 pub mod stylesheet;
 pub mod test_utils;
 pub mod values;
-
-pub fn apply_styles(
-    dom: NodeRef,
-    ua_sheets: &[Stylesheet],
-    user_sheets: &[Stylesheet],
-    author_sheets: &[Stylesheet],
-) {
-    // https://www.w3.org/TR/css-cascade-3/#value-stages
-    // The final value of a CSS property for a given element or box is the result of a multi-step calculation:
-
-    // 1. First, all the declared values applied to an element are collected, for each property on each element. There may be zero or many declared values applied to the element.
-    // TODO: Need to collect embedded styles (<style></style>)
-    ua_sheets.iter().for_each(|stylesheet| {
-        apply_stylesheet_to_node(&dom, stylesheet, CascadeOrigin::UserAgent);
-    });
-
-    user_sheets.iter().for_each(|stylesheet| {
-        apply_stylesheet_to_node(&dom, stylesheet, CascadeOrigin::User);
-    });
-
-    author_sheets.iter().for_each(|stylesheet| {
-        apply_stylesheet_to_node(&dom, stylesheet, CascadeOrigin::Author);
-    });
-
-    // collect all inline styles
-    dom.inclusive_descendants().for_each(|node| {
-        if let NodeData::Element(element_data) = node.data() {
-            match element_data.attributes.try_borrow() {
-                Ok(attrs) => {
-                    if let Some(style_str) = attrs.get("style") {
-                        // TODO: Parse inline style and apply it to node.  Make sure these styles have a greater specificity than anything else
-                        // cssparser::ParserInput::new(style_str)
-                        dbg!("found inline style but did not collect it: {:?}", style_str);
-                    }
-                }
-                Err(_e) => {
-                    dbg!("couldn't borrow node attributes");
-                }
-            }
-        }
-    });
-    cascade_and_compute(&dom);
-}
-
-/// Performs steps 2-4 of https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#value-stages.
-///
-/// Specifically, this is:
-///
-/// 2) Cascading — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
-/// 3) Defaulting to specified values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#specified-value
-/// 4) Resolving specified values to computed values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#computed
-pub fn cascade_and_compute(start_node: &NodeRef) {
-    start_node.inclusive_descendants().for_each(|node| {
-        // Step 2
-        node.contextual_decls_mut().cascade_sort();
-        // Step 3 and 4
-        compute_values(node);
-    });
-}
 
 // TODO: Servo supports many different types of rules, but we won't support those yet.  https://github.com/servo/servo/blob/d2856ce8aeca11e543bc4d9f869400d73451374e/components/style/stylesheets/mod.rs#L236
 #[derive(Clone, Debug)]
@@ -111,7 +51,7 @@ pub enum CssOrigin {
 }
 
 /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascading-origins
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum CascadeOrigin {
     Author,
     User,
@@ -136,6 +76,19 @@ pub struct Color {
     g: u8,
     b: u8,
     a: u8,
+}
+
+pub fn parse_css_to_rules(
+    css_str: &mut str,
+) -> Result<Vec<CssRule>, (ParseError<StyleParseErrorKind>, &str)> {
+    let input = &mut ParserInput::new(css_str);
+    let parser = &mut Parser::new(input);
+    let rule_parser = RuleListParser::new_for_stylesheet(parser, TopLevelRuleParser {});
+    let mut rules = Vec::new();
+    for rule in rule_parser {
+        rules.push(rule?)
+    }
+    Ok(rules)
 }
 
 /// Parser for top-level CSS rules.

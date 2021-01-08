@@ -7,7 +7,6 @@ fn block_layout_subtree_simple() {
     dump_layout_cmd
         .arg("--files")
         .arg("tests/websrc/block/block-layout-subtree-simple.html")
-        .arg("tests/websrc/block/block-layout-subtree-simple.css")
         .succeeds();
     assert_snapshot!(dump_layout_cmd.stdout());
 }
@@ -17,7 +16,6 @@ fn block_layout_subtrees() {
     dump_layout_cmd
         .arg("--files")
         .arg("tests/websrc/block/block-layout-subtrees.html")
-        .arg("tests/websrc/block/block-layout-subtrees.css")
         .succeeds();
     assert_snapshot!(dump_layout_cmd.stdout());
 }

@@ -17,7 +17,6 @@ mod tests {
         dump_layout_cmd
             .arg("--files")
             .arg("tests/websrc/rainbow-divs.html")
-            .arg("tests/websrc/rainbow-divs.css")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
     }
@@ -29,7 +28,6 @@ mod tests {
         dump_layout_cmd
             .arg("--files")
             .arg("tests/websrc/rainbow-divs.html")
-            .arg("tests/websrc/rainbow-divs.css")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
     }

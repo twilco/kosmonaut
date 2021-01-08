@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="rtl-horizontal-tb-block-boxes.css" type="text/css" />
+    <style>
+        * {
+            writing-mode: horizontal-tb;
+            direction: rtl;
+        }
+
+        div {
+            width: 400px;
+            height: 200px;
+            background-color: green;
+        }
+    </style>
 </head>
 <body>
 <div></div>

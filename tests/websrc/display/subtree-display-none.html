@@ -1,7 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="subtree-display-none.css" type="text/css" />
+    <style>
+        .subtree {
+            display: none;
+            background-color: red;
+        }
+        .subtree div {
+            background-color: red;
+        }
+
+        div {
+            background-color: green;
+            height: 200px;
+            width: 300px;
+
+            margin-bottom: 15px;
+            margin-left: 15px;
+            margin-top: 15px;
+            margin-right: 15px;
+
+            border-bottom-style: solid;
+            border-bottom-width: 10px;
+            border-bottom-color: black;
+
+            border-left-style: solid;
+            border-left-width: 10px;
+            border-left-color: black;
+
+            border-top-style: solid;
+            border-top-width: 10px;
+            border-top-color: black;
+
+            border-right-style: solid;
+            border-right-width: 10px;
+            border-right-color: black;
+        }
+    </style>
 </head>
 <body>
     <div class="subtree">

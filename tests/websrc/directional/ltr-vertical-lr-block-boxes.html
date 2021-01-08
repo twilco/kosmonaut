@@ -2,7 +2,18 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <link href="ltr-vertical-lr-block-boxes.css" rel="stylesheet" type="text/css">
+    <style>
+        * {
+            writing-mode: vertical-lr;
+            direction: ltr;
+        }
+
+        div {
+            width: 400px;
+            height: 200px;
+            background-color: green;
+        }
+    </style>
 </head>
 <body>
     <div></div>

@@ -3,7 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>🌈 Rainbow divs 🌈</title>
-    <link rel="stylesheet" href="rainbow-divs.css" type="text/css" />
+    <style>
+        /* TODO: The viewport background should come from system colors, not <html> CSS rules. */
+        html {
+            background-color: white;
+        }
+        div {
+            display: block;
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+        .a { background-color: #ff0000; }
+        .b { background-color: #ffa500; }
+        .c { background-color: #ffff00; }
+        .d { background-color: #008000; }
+        .e { background-color: #0000ff; }
+        .f { background-color: #4b0082; }
+        .g { background-color: #800080; }
+    </style>
 </head>
 <body>
 <div class="a">

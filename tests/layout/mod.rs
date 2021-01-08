@@ -2,6 +2,7 @@ use crate::util::CommandUnderTest;
 
 pub use kosmonaut::cli::DumpLayoutVerbosity;
 
+pub mod block;
 pub mod directional;
 pub mod display;
 

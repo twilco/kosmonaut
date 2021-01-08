@@ -1,4 +1,3 @@
-use crate::apply_page_relative_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
 use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
@@ -14,6 +13,7 @@ use crate::style::values::computed::length::{
 use crate::style::values::computed::ComputedValues;
 use crate::style::values::used::ToPx;
 use crate::style::values::CSSFloat;
+use crate::{apply_page_relative_properties_base_box_passthrough_impls, Side};
 use accountable_refcell::Ref;
 use enum_dispatch::enum_dispatch;
 
@@ -71,11 +71,6 @@ impl BlockLevelBox {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
 
-        let has_specified_block_size = matches!(
-            self.computed_values()
-                .block_size(containing_block.writing_mode()),
-            LengthPercentageOrAuto::LengthPercentage(_)
-        );
         let (children, self_dimensions) = match self {
             BlockLevelBox::AnonymousBlock(abb) => (&mut abb.children, abb.base.dimensions_mut()),
             BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut()),
@@ -93,17 +88,13 @@ impl BlockLevelBox {
                 direction,
                 writing_mode,
             )));
-            
-            // If this box has an explicitly specified block size (which should've been applied to
-            // this box's dimensions by now), don't alter it.
-            if !has_specified_block_size {
-                // Add this child's margin-box to our content box so the next child is laid out after
-                // this one.
-                self_dimensions.add_to_block_size(
-                    child.dimensions().margin_box_block_size(writing_mode),
-                    containing_block.writing_mode(),
-                );
-            }
+
+            // Add this child's margin-box to our content box so the next child is laid out after
+            // this one.
+            self_dimensions.add_to_block_size(
+                child.dimensions().margin_box_block_size(writing_mode),
+                containing_block.writing_mode(),
+            );
         }
     }
 
@@ -176,10 +167,32 @@ impl BlockLevelBox {
         );
         self.dimensions_mut()
             .set_inline_size(solved_inline_sizes.inline_size, writing_mode);
-        // Before computing the `inline_start_coord` of this box, we need to apply values the author
-        // has specified in the inline-direction (e.g. `width` in `writing:mode: horizontal-tb`, or
-        // `height` in the other `writing-modes`.
-        self.apply_inline_page_relative_properties(containing_block);
+
+        let cvs = self.computed_values();
+        let (ml, mr, mb, mt) = (
+            cvs.margin_left,
+            cvs.margin_right,
+            cvs.margin_bottom,
+            cvs.margin_top,
+        );
+        drop(cvs);
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = ml.size {
+            self.dimensions_mut()
+                .set_margin_phys(Side::Left, lp.to_px(containing_block.rect().width))
+        }
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = mr.size {
+            self.dimensions_mut()
+                .set_margin_phys(Side::Right, lp.to_px(containing_block.rect().width))
+        }
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = mb.size {
+            self.dimensions_mut()
+                .set_margin_phys(Side::Bottom, lp.to_px(containing_block.rect().height))
+        }
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = mt.size {
+            self.dimensions_mut()
+                .set_margin_phys(Side::Top, lp.to_px(containing_block.rect().height))
+        }
+
         let inline_start_coord = compute_inline_start_coord(&self.dimensions(), containing_block);
         self.dimensions_mut()
             .set_inline_start_coord(inline_start_coord, containing_block.writing_mode());
@@ -266,9 +279,6 @@ impl BlockLevelBox {
         } else {
             containing_block.self_relative_block_size()
         };
-        // Before calculating this boxes block start coordinate, ensure we've applied the authors
-        // specified styles.
-        self.apply_block_page_relative_properties(containing_block);
         let block_start_coord = compute_block_start_coord(
             &self.dimensions(),
             preceeding_sibling_blockwise_space_consumed,
@@ -290,6 +300,11 @@ impl Layout for BlockLevelBox {
         self.solve_and_set_inline_level_properties(containing_block);
         self.solve_and_set_block_level_properties(containing_block);
         self.layout_children(containing_block);
+
+        // After computing and applying values normally through layout, override these values with
+        // the author's specified page relative properties (if present).
+        self.apply_block_page_relative_properties(containing_block);
+        self.apply_inline_page_relative_properties(containing_block);
     }
 }
 
@@ -337,6 +352,7 @@ impl DumpLayoutFormat for AnonymousBlockBox {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct SolveInlineSizeInput {
     pub containing_block: ContainingBlock,
     pub margin_inline_start: LengthPercentageOrAuto,
@@ -354,11 +370,27 @@ pub struct SolveInlineSizeOutput {
     pub inline_size: CSSPixelLength,
 }
 
+/// While the spec _should_ be the correct way to calculate these inline properties, that is not
+/// reality.  If there are specified values for inline margin properties, they always override the
+/// values calculated by the spec formula.
+pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInlineSizeOutput {
+    let mut spec_inline_sizes = solve_block_level_inline_size_to_spec(input);
+    if let LengthPercentageOrAuto::LengthPercentage(lp) = input.margin_inline_start {
+        spec_inline_sizes.margin_inline_start =
+            lp.to_px(input.containing_block.self_relative_inline_size())
+    }
+    if let LengthPercentageOrAuto::LengthPercentage(lp) = input.margin_inline_end {
+        spec_inline_sizes.margin_inline_end =
+            lp.to_px(input.containing_block.self_relative_inline_size())
+    }
+    spec_inline_sizes
+}
+
 /// Pure function to determine used inline-wise direction sizes for a block-level box.
 ///
 /// Corresponds to CSS 2.1 section 10.3.3.  https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#blockwidth
 /// No other sections besides 10.3.3 are currently handled.
-pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInlineSizeOutput {
+fn solve_block_level_inline_size_to_spec(input: SolveInlineSizeInput) -> SolveInlineSizeOutput {
     let SolveInlineSizeInput {
         containing_block,
         mut margin_inline_start,

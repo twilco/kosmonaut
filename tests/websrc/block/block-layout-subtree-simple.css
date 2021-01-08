@@ -1,7 +1,3 @@
-* {
-    writing-mode: horizontal-tb;
-}
-
 div {
     background-color: green;
     height: 200px;
@@ -19,11 +15,11 @@ div {
     border-left-style: solid;
     border-left-width: 10px;
     border-left-color: black;
-    
+
     border-top-style: solid;
     border-top-width: 10px;
     border-top-color: black;
-    
+
     border-right-style: solid;
     border-right-width: 10px;
     border-right-color: black;

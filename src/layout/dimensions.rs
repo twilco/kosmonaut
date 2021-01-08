@@ -328,6 +328,16 @@ impl Dimensions {
     }
 
     #[inline(always)]
+    pub fn set_margin_phys(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.margin.bottom = val,
+            Side::Left => self.margin.left = val,
+            Side::Right => self.margin.right = val,
+            Side::Top => self.margin.top = val,
+        }
+    }
+
+    #[inline(always)]
     pub fn set_border(
         &mut self,
         side: FlowSide,
@@ -339,6 +349,16 @@ impl Dimensions {
     }
 
     #[inline(always)]
+    pub fn set_border_phys(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.border.bottom = val,
+            Side::Left => self.border.left = val,
+            Side::Right => self.border.right = val,
+            Side::Top => self.border.top = val,
+        }
+    }
+
+    #[inline(always)]
     pub fn set_padding(
         &mut self,
         side: FlowSide,
@@ -347,6 +367,16 @@ impl Dimensions {
         direction: Direction,
     ) {
         self.set(side, BoxComponent::Padding, val, writing_mode, direction);
+    }
+
+    #[inline(always)]
+    pub fn set_padding_phys(&mut self, side: Side, val: CSSPixelLength) {
+        match side {
+            Side::Bottom => self.padding.bottom = val,
+            Side::Left => self.padding.left = val,
+            Side::Right => self.padding.right = val,
+            Side::Top => self.padding.top = val,
+        }
     }
 
     pub fn set(

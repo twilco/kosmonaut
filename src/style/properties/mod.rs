@@ -8,13 +8,14 @@ use cssparser::{
 };
 use smallbitvec::SmallBitVec;
 
-use crate::style::properties::id::{LonghandId, PropertyId};
+use crate::style::properties::id::{LonghandId, PropertyId, ShorthandId};
 use crate::style::select::Specificity;
 use crate::style::values::computed::direction::WritingMode;
 use crate::style::values::computed::{Direction, Display, LineStyle};
 use crate::style::values::specified::border::{
     BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
 };
+use crate::style::values::specified::margin::parse_margin_shorthand_into;
 use crate::style::values::specified::{
     BackgroundColor, BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color,
     FontSize, Height, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
@@ -153,111 +154,141 @@ impl PropertyDeclarationBlock {
 }
 
 impl PropertyDeclaration {
-    #[allow(unreachable_patterns)]
     pub fn parse_into<'i, 't>(
         declarations: &mut Vec<PropertyDeclaration>,
         id: PropertyId,
         input: &mut Parser<'i, 't>,
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
-            PropertyId::Longhand(longhand) => match longhand {
-                LonghandId::BackgroundColor => declarations.push(
-                    PropertyDeclaration::BackgroundColor(BackgroundColor::parse(input)?),
-                ),
-                LonghandId::BorderBottomColor => declarations.push(
-                    PropertyDeclaration::BorderBottomColor(BorderBottomColor::parse(input)?),
-                ),
-                LonghandId::BorderLeftColor => declarations.push(
-                    PropertyDeclaration::BorderLeftColor(BorderLeftColor::parse(input)?),
-                ),
-                LonghandId::BorderRightColor => declarations.push(
-                    PropertyDeclaration::BorderRightColor(BorderRightColor::parse(input)?),
-                ),
-                LonghandId::BorderTopColor => declarations.push(
-                    PropertyDeclaration::BorderTopColor(BorderTopColor::parse(input)?),
-                ),
-                LonghandId::BorderBottomStyle => declarations.push(
-                    PropertyDeclaration::BorderBottomStyle(LineStyle::parse(input)?),
-                ),
-                LonghandId::BorderLeftStyle => declarations.push(
-                    PropertyDeclaration::BorderLeftStyle(LineStyle::parse(input)?),
-                ),
-                LonghandId::BorderRightStyle => declarations.push(
-                    PropertyDeclaration::BorderRightStyle(LineStyle::parse(input)?),
-                ),
-                LonghandId::BorderTopStyle => declarations.push(
-                    PropertyDeclaration::BorderTopStyle(LineStyle::parse(input)?),
-                ),
-                LonghandId::BorderBottomWidth => declarations.push(
-                    PropertyDeclaration::BorderBottomWidth(BorderBottomWidth::parse(input)?),
-                ),
-                LonghandId::BorderLeftWidth => declarations.push(
-                    PropertyDeclaration::BorderLeftWidth(BorderLeftWidth::parse(input)?),
-                ),
-                LonghandId::BorderRightWidth => declarations.push(
-                    PropertyDeclaration::BorderRightWidth(BorderRightWidth::parse(input)?),
-                ),
-                LonghandId::BorderTopWidth => declarations.push(
-                    PropertyDeclaration::BorderTopWidth(BorderTopWidth::parse(input)?),
-                ),
-                LonghandId::Color => {
-                    declarations.push(PropertyDeclaration::Color(Color::parse(input)?))
-                }
-                LonghandId::Direction => {
-                    declarations.push(PropertyDeclaration::Direction(Direction::parse(input)?))
-                }
-                LonghandId::Display => {
-                    declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
-                }
-                LonghandId::FontSize => {
-                    declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
-                }
-                LonghandId::Height => {
-                    declarations.push(PropertyDeclaration::Height(Height::parse(input)?));
-                }
-                LonghandId::MarginBottom => {
-                    declarations.push(PropertyDeclaration::MarginBottom(MarginBottom::parse(
-                        input,
-                    )?));
-                }
-                LonghandId::MarginLeft => {
-                    declarations.push(PropertyDeclaration::MarginLeft(MarginLeft::parse(input)?));
-                }
-                LonghandId::MarginRight => {
-                    declarations.push(PropertyDeclaration::MarginRight(MarginRight::parse(input)?));
-                }
-                LonghandId::MarginTop => {
-                    declarations.push(PropertyDeclaration::MarginTop(MarginTop::parse(input)?));
-                }
-                LonghandId::PaddingBottom => {
-                    declarations.push(PropertyDeclaration::PaddingBottom(PaddingBottom::parse(
-                        input,
-                    )?));
-                }
-                LonghandId::PaddingLeft => {
-                    declarations.push(PropertyDeclaration::PaddingLeft(PaddingLeft::parse(input)?));
-                }
-                LonghandId::PaddingRight => {
-                    declarations.push(PropertyDeclaration::PaddingRight(PaddingRight::parse(
-                        input,
-                    )?));
-                }
-                LonghandId::PaddingTop => {
-                    declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
-                }
-                LonghandId::Width => {
-                    declarations.push(PropertyDeclaration::Width(Width::parse(input)?));
-                }
-                LonghandId::WritingMode => {
-                    declarations.push(PropertyDeclaration::WritingMode(WritingMode::parse(input)?));
-                }
-                _ => unimplemented!(
-                    "{}",
-                    format!("value default by longhand for id: {:?}", longhand)
-                ),
-            },
-            PropertyId::Shorthand(_short_id) => {}
+            PropertyId::Longhand(longhand) => {
+                PropertyDeclaration::parse_into_longhand(declarations, longhand, input)?
+            }
+            PropertyId::Shorthand(shorthand) => {
+                PropertyDeclaration::parse_into_shorthand(declarations, shorthand, input)?
+            }
         }
+        Ok(())
+    }
+
+    #[allow(unreachable_patterns)]
+    fn parse_into_longhand<'i, 't>(
+        declarations: &mut Vec<PropertyDeclaration>,
+        id: LonghandId,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
+        match id {
+            LonghandId::BackgroundColor => declarations.push(PropertyDeclaration::BackgroundColor(
+                BackgroundColor::parse(input)?,
+            )),
+            LonghandId::BorderBottomColor => declarations.push(
+                PropertyDeclaration::BorderBottomColor(BorderBottomColor::parse(input)?),
+            ),
+            LonghandId::BorderLeftColor => declarations.push(PropertyDeclaration::BorderLeftColor(
+                BorderLeftColor::parse(input)?,
+            )),
+            LonghandId::BorderRightColor => declarations.push(
+                PropertyDeclaration::BorderRightColor(BorderRightColor::parse(input)?),
+            ),
+            LonghandId::BorderTopColor => declarations.push(PropertyDeclaration::BorderTopColor(
+                BorderTopColor::parse(input)?,
+            )),
+            LonghandId::BorderBottomStyle => declarations.push(
+                PropertyDeclaration::BorderBottomStyle(LineStyle::parse(input)?),
+            ),
+            LonghandId::BorderLeftStyle => declarations.push(PropertyDeclaration::BorderLeftStyle(
+                LineStyle::parse(input)?,
+            )),
+            LonghandId::BorderRightStyle => declarations.push(
+                PropertyDeclaration::BorderRightStyle(LineStyle::parse(input)?),
+            ),
+            LonghandId::BorderTopStyle => declarations.push(PropertyDeclaration::BorderTopStyle(
+                LineStyle::parse(input)?,
+            )),
+            LonghandId::BorderBottomWidth => declarations.push(
+                PropertyDeclaration::BorderBottomWidth(BorderBottomWidth::parse(input)?),
+            ),
+            LonghandId::BorderLeftWidth => declarations.push(PropertyDeclaration::BorderLeftWidth(
+                BorderLeftWidth::parse(input)?,
+            )),
+            LonghandId::BorderRightWidth => declarations.push(
+                PropertyDeclaration::BorderRightWidth(BorderRightWidth::parse(input)?),
+            ),
+            LonghandId::BorderTopWidth => declarations.push(PropertyDeclaration::BorderTopWidth(
+                BorderTopWidth::parse(input)?,
+            )),
+            LonghandId::Color => {
+                declarations.push(PropertyDeclaration::Color(Color::parse(input)?))
+            }
+            LonghandId::Direction => {
+                declarations.push(PropertyDeclaration::Direction(Direction::parse(input)?))
+            }
+            LonghandId::Display => {
+                declarations.push(PropertyDeclaration::Display(Display::parse(input)?))
+            }
+            LonghandId::FontSize => {
+                declarations.push(PropertyDeclaration::FontSize(FontSize::parse(input)?));
+            }
+            LonghandId::Height => {
+                declarations.push(PropertyDeclaration::Height(Height::parse(input)?));
+            }
+            LonghandId::MarginBottom => {
+                declarations.push(PropertyDeclaration::MarginBottom(MarginBottom::parse(
+                    input,
+                )?));
+            }
+            LonghandId::MarginLeft => {
+                declarations.push(PropertyDeclaration::MarginLeft(MarginLeft::parse(input)?));
+            }
+            LonghandId::MarginRight => {
+                declarations.push(PropertyDeclaration::MarginRight(MarginRight::parse(input)?));
+            }
+            LonghandId::MarginTop => {
+                declarations.push(PropertyDeclaration::MarginTop(MarginTop::parse(input)?));
+            }
+            LonghandId::PaddingBottom => {
+                declarations.push(PropertyDeclaration::PaddingBottom(PaddingBottom::parse(
+                    input,
+                )?));
+            }
+            LonghandId::PaddingLeft => {
+                declarations.push(PropertyDeclaration::PaddingLeft(PaddingLeft::parse(input)?));
+            }
+            LonghandId::PaddingRight => {
+                declarations.push(PropertyDeclaration::PaddingRight(PaddingRight::parse(
+                    input,
+                )?));
+            }
+            LonghandId::PaddingTop => {
+                declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
+            }
+            LonghandId::Width => {
+                declarations.push(PropertyDeclaration::Width(Width::parse(input)?));
+            }
+            LonghandId::WritingMode => {
+                declarations.push(PropertyDeclaration::WritingMode(WritingMode::parse(input)?));
+            }
+            _ => unimplemented!("{}", format!("value default by longhand for id: {:?}", id)),
+        };
+        Ok(())
+    }
+
+    #[allow(unreachable_patterns)]
+    fn parse_into_shorthand<'i, 't>(
+        declarations: &mut Vec<PropertyDeclaration>,
+        id: ShorthandId,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
+        match id {
+            // ShorthandId::BorderWidth => {}
+            // ShorthandId::BorderTop => {}
+            // ShorthandId::BorderRight => {}
+            // ShorthandId::BorderBottom => {}
+            // ShorthandId::BorderLeft => {}
+            // ShorthandId::Border => {}
+            ShorthandId::Margin => parse_margin_shorthand_into(declarations, input)?,
+            // ShorthandId::Padding => {}
+            _ => unimplemented!("{}", format!("parse shorthand with id: {:?}", id)),
+        };
         Ok(())
     }
 }

@@ -23,6 +23,7 @@ use crate::style::values::specified::{
 };
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
+use crate::style::values::specified::padding::parse_padding_shorthand_into;
 
 pub mod id;
 
@@ -286,7 +287,7 @@ impl PropertyDeclaration {
             // ShorthandId::BorderLeft => {}
             // ShorthandId::Border => {}
             ShorthandId::Margin => parse_margin_shorthand_into(declarations, input)?,
-            // ShorthandId::Padding => {}
+            ShorthandId::Padding => parse_padding_shorthand_into(declarations, input)?,
             _ => unimplemented!("{}", format!("parse shorthand with id: {:?}", id)),
         };
         Ok(())

@@ -142,23 +142,23 @@ fn parse_border_shorthand_inner<'i, 't>(
     let (mut line_width, mut line_style, mut color) = (None, None, None);
     for _ in 0..3 {
         let parsed_line_width = input.try_parse(|i| LineWidth::parse(i));
-        if parsed_line_width.is_ok() {
+        if let Ok(parsed_line_width) = parsed_line_width {
             if line_width.is_none() {
-                line_width = Some(parsed_line_width.unwrap());
+                line_width = Some(parsed_line_width);
                 continue;
             }
         }
         let parsed_line_style = input.try_parse(|i| LineStyle::parse(i));
-        if parsed_line_style.is_ok() {
+        if let Ok(parsed_line_style) = parsed_line_style {
             if line_style.is_none() {
-                line_style = Some(parsed_line_style.unwrap());
+                line_style = Some(parsed_line_style);
                 continue;
             }
         }
         let parsed_color = input.try_parse(|i| ColorUnit::parse(i));
-        if parsed_color.is_ok() {
+        if let Ok(parsed_color) = parsed_color {
             if color.is_none() {
-                color = Some(parsed_color.unwrap());
+                color = Some(parsed_color);
                 continue;
             }
         }

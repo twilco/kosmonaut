@@ -151,7 +151,7 @@ fn run_layout_dump(
         }
         None => {
             write_to
-                .write("empty box tree".as_bytes())
+                .write_all("empty box tree".as_bytes())
                 .expect("could not write to stdout during layout dump");
         }
     };

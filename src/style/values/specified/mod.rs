@@ -74,36 +74,35 @@ pub fn parse_shorthand_sides<'i, 't, T: CssValueParse + Clone + Debug>(
     );
     // Based on how many LP-auto values we were able to successfully parse, apply the longhands per
     // spec: https://drafts.csswg.org/css-box-3/#margin-shorthand
-    let parsed_sides = if fourth_val.is_ok() {
+    let parsed_sides = if let Ok(fourth) = fourth_val {
         ParsedShorthandSides {
             top: first_val.unwrap(),
             right: second_val.unwrap(),
             bottom: third_val.unwrap(),
-            left: fourth_val.unwrap(),
+            left: fourth,
         }
-    } else if third_val.is_ok() {
+    } else if let Ok(third) = third_val {
         let second = second_val.unwrap();
         ParsedShorthandSides {
             top: first_val.unwrap(),
             right: second.clone(),
-            bottom: third_val.unwrap(),
+            bottom: third,
             left: second,
         }
-    } else if second_val.is_ok() {
-        let (first, second) = (first_val.unwrap(), second_val.unwrap());
+    } else if let Ok(second) = second_val {
+        let first = first_val.unwrap();
         ParsedShorthandSides {
             top: first.clone(),
             right: second.clone(),
             bottom: first,
             left: second,
         }
-    } else if first_val.is_ok() {
-        let val = first_val.unwrap();
+    } else if let Ok(first) = first_val {
         ParsedShorthandSides {
-            top: val.clone(),
-            right: val.clone(),
-            bottom: val.clone(),
-            left: val,
+            top: first.clone(),
+            right: first.clone(),
+            bottom: first.clone(),
+            left: first,
         }
     } else {
         return Err(first_val.unwrap_err());

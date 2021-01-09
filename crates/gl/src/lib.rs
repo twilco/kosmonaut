@@ -12,6 +12,7 @@ use std::rc::Rc;
 mod bindings;
 pub mod error;
 pub mod info_log;
+pub mod pixels;
 pub mod program;
 pub mod shader;
 pub mod texture;

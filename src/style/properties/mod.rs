@@ -12,9 +12,7 @@ use crate::style::properties::id::{LonghandId, PropertyId, ShorthandId};
 use crate::style::select::Specificity;
 use crate::style::values::computed::direction::WritingMode;
 use crate::style::values::computed::{Direction, Display, LineStyle};
-use crate::style::values::specified::border::{
-    BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor,
-};
+use crate::style::values::specified::border::{BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor, parse_border_side_shorthand_into, parse_border_shorthand_into, parse_border_color_shorthand_into, parse_border_style_shorthand_into, parse_border_width_shorthand_into};
 use crate::style::values::specified::margin::parse_margin_shorthand_into;
 use crate::style::values::specified::{
     BackgroundColor, BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color,
@@ -24,6 +22,7 @@ use crate::style::values::specified::{
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
 use crate::style::values::specified::padding::parse_padding_shorthand_into;
+use crate::Side;
 
 pub mod id;
 
@@ -280,12 +279,14 @@ impl PropertyDeclaration {
         input: &mut Parser<'i, 't>,
     ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
         match id {
-            // ShorthandId::BorderWidth => {}
-            // ShorthandId::BorderTop => {}
-            // ShorthandId::BorderRight => {}
-            // ShorthandId::BorderBottom => {}
-            // ShorthandId::BorderLeft => {}
-            // ShorthandId::Border => {}
+            ShorthandId::BorderColor => parse_border_color_shorthand_into(declarations, input)?,
+            ShorthandId::BorderStyle => parse_border_style_shorthand_into(declarations, input)?,
+            ShorthandId::BorderWidth => parse_border_width_shorthand_into(declarations, input)?,
+            ShorthandId::BorderTop => parse_border_side_shorthand_into(Side::Top, declarations, input)?,
+            ShorthandId::BorderRight => parse_border_side_shorthand_into(Side::Right, declarations, input)?,
+            ShorthandId::BorderBottom => parse_border_side_shorthand_into(Side::Bottom, declarations, input)?,
+            ShorthandId::BorderLeft => parse_border_side_shorthand_into(Side::Left, declarations, input)?,
+            ShorthandId::Border => parse_border_shorthand_into(declarations, input)?,
             ShorthandId::Margin => parse_margin_shorthand_into(declarations, input)?,
             ShorthandId::Padding => parse_padding_shorthand_into(declarations, input)?,
             _ => unimplemented!("{}", format!("parse shorthand with id: {:?}", id)),

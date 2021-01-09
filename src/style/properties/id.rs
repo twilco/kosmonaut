@@ -57,6 +57,8 @@ impl PropertyId {
             "writing-mode" => PropertyId::Longhand(LonghandId::WritingMode),
             // Shorthands
             "background" => PropertyId::Shorthand(ShorthandId::Background),
+            "border-color" => PropertyId::Shorthand(ShorthandId::BorderColor),
+            "border-style" => PropertyId::Shorthand(ShorthandId::BorderStyle),
             "border-width" => PropertyId::Shorthand(ShorthandId::BorderWidth),
             "border-top" => PropertyId::Shorthand(ShorthandId::BorderTop),
             "border-right" => PropertyId::Shorthand(ShorthandId::BorderRight),
@@ -588,10 +590,10 @@ pub enum ShorthandId {
     Background = 0,
     //    /// background-position
     //    BackgroundPosition = 1,
-    //    /// border-color
-    //    BorderColor = 2,
-    //    /// border-style
-    //    BorderStyle = 3,
+    /// border-color
+    BorderColor = 2,
+    /// border-style
+    BorderStyle = 3,
     /// border-width
     BorderWidth = 4,
     /// border-top

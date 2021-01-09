@@ -35,7 +35,7 @@ pub fn read_pixels(gl: &Gl, window_width: GLint, window_height: GLint) -> Vec<Rg
     }
     let rgba_chunks = pixels.chunks_exact(4);
     let remainder_len = rgba_chunks.remainder().len();
-    if remainder_len > 4 {
+    if remainder_len > 0 {
         panic!(
             "gl.ReadPixels resulted in an unexpected remainder of size {}",
             remainder_len

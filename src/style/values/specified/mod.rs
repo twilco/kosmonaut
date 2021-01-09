@@ -43,4 +43,70 @@ pub use length::NoCalcLength;
 pub use margin::Margin;
 pub use padding::Padding;
 
+use crate::style::values::CssValueParse;
+use crate::style::StyleParseErrorKind;
+use cssparser::{ParseError, Parser};
+use std::fmt::Debug;
 pub use width::Width;
+
+#[derive(Clone, Copy, Debug)]
+pub struct ParsedShorthandSides<T> {
+    pub top: T,
+    pub right: T,
+    pub bottom: T,
+    pub left: T,
+}
+
+/// Tries to parse shorthand values for the given `T`, returning the resulting parsed sides or a
+/// parse error if no value could be parsed successfully.
+///
+/// The order of the parsed values is assigned to sides according to the typical pattern for
+/// shorthands.  See the margin shorthand for an example:
+/// https://drafts.csswg.org/css-box-3/#margin-shorthand
+pub fn parse_shorthand_sides<'i, 't, T: CssValueParse + Clone + Debug>(
+    input: &mut Parser<'i, 't>,
+) -> Result<ParsedShorthandSides<T>, ParseError<'i, StyleParseErrorKind<'i>>> {
+    let (first_val, second_val, third_val, fourth_val) = (
+        input.try_parse(|i| T::parse(i)),
+        input.try_parse(|i| T::parse(i)),
+        input.try_parse(|i| T::parse(i)),
+        input.try_parse(|i| T::parse(i)),
+    );
+    // Based on how many LP-auto values we were able to successfully parse, apply the longhands per
+    // spec: https://drafts.csswg.org/css-box-3/#margin-shorthand
+    let parsed_sides = if fourth_val.is_ok() {
+        ParsedShorthandSides {
+            top: first_val.unwrap(),
+            right: second_val.unwrap(),
+            bottom: third_val.unwrap(),
+            left: fourth_val.unwrap(),
+        }
+    } else if third_val.is_ok() {
+        let second = second_val.unwrap();
+        ParsedShorthandSides {
+            top: first_val.unwrap(),
+            right: second.clone(),
+            bottom: third_val.unwrap(),
+            left: second,
+        }
+    } else if second_val.is_ok() {
+        let (first, second) = (first_val.unwrap(), second_val.unwrap());
+        ParsedShorthandSides {
+            top: first.clone(),
+            right: second.clone(),
+            bottom: first,
+            left: second,
+        }
+    } else if first_val.is_ok() {
+        let val = first_val.unwrap();
+        ParsedShorthandSides {
+            top: val.clone(),
+            right: val.clone(),
+            bottom: val.clone(),
+            left: val,
+        }
+    } else {
+        return Err(first_val.unwrap_err());
+    };
+    Ok(parsed_sides)
+}

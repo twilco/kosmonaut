@@ -1,6 +1,6 @@
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::computed::LineStyle;
-use crate::style::values::specified::{ColorUnit, NoCalcLength};
+use crate::style::values::specified::{parse_shorthand_sides, ColorUnit, NoCalcLength};
 use crate::style::values::CssValueParse;
 use crate::style::StyleParseErrorKind;
 use crate::Side;
@@ -83,45 +83,18 @@ pub fn parse_border_color_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
-    let (first_val, second_val, third_val, fourth_val) = (
-        input.try_parse(|i| ColorUnit::parse(i)),
-        input.try_parse(|i| ColorUnit::parse(i)),
-        input.try_parse(|i| ColorUnit::parse(i)),
-        input.try_parse(|i| ColorUnit::parse(i)),
-    );
-    // Based on how many LP-auto values we were able to successfully parse, apply the longhands per
-    // spec: https://drafts.csswg.org/css-box-3/#margin-shorthand
-    let (top, right, bottom, left) = if fourth_val.is_ok() {
-        (
-            first_val.unwrap(),
-            second_val.unwrap(),
-            third_val.unwrap(),
-            fourth_val.unwrap(),
-        )
-    } else if third_val.is_ok() {
-        let second = second_val.unwrap();
-        (first_val.unwrap(), second, third_val.unwrap(), second)
-    } else if second_val.is_ok() {
-        let (first, second) = (first_val.unwrap(), second_val.unwrap());
-        (first, second, first, second)
-    } else if first_val.is_ok() {
-        let val = first_val.unwrap();
-        (val, val, val, val)
-    } else {
-        return Err(first_val.unwrap_err());
-    };
-
+    let parsed_sides = parse_shorthand_sides::<ColorUnit>(input)?;
     declarations.push(PropertyDeclaration::BorderTopColor(BorderColor {
-        color: top,
+        color: parsed_sides.top,
     }));
     declarations.push(PropertyDeclaration::BorderRightColor(BorderColor {
-        color: bottom,
+        color: parsed_sides.bottom,
     }));
     declarations.push(PropertyDeclaration::BorderLeftColor(BorderColor {
-        color: left,
+        color: parsed_sides.left,
     }));
     declarations.push(PropertyDeclaration::BorderBottomColor(BorderColor {
-        color: right,
+        color: parsed_sides.right,
     }));
     Ok(())
 }
@@ -130,38 +103,11 @@ pub fn parse_border_style_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
-    let (first_val, second_val, third_val, fourth_val) = (
-        input.try_parse(|i| LineStyle::parse(i)),
-        input.try_parse(|i| LineStyle::parse(i)),
-        input.try_parse(|i| LineStyle::parse(i)),
-        input.try_parse(|i| LineStyle::parse(i)),
-    );
-    // Based on how many LP-auto values we were able to successfully parse, apply the longhands per
-    // spec: https://drafts.csswg.org/css-box-3/#margin-shorthand
-    let (top, right, bottom, left) = if fourth_val.is_ok() {
-        (
-            first_val.unwrap(),
-            second_val.unwrap(),
-            third_val.unwrap(),
-            fourth_val.unwrap(),
-        )
-    } else if third_val.is_ok() {
-        let second = second_val.unwrap();
-        (first_val.unwrap(), second, third_val.unwrap(), second)
-    } else if second_val.is_ok() {
-        let (first, second) = (first_val.unwrap(), second_val.unwrap());
-        (first, second, first, second)
-    } else if first_val.is_ok() {
-        let val = first_val.unwrap();
-        (val, val, val, val)
-    } else {
-        return Err(first_val.unwrap_err());
-    };
-
-    declarations.push(PropertyDeclaration::BorderTopStyle(top));
-    declarations.push(PropertyDeclaration::BorderRightStyle(right));
-    declarations.push(PropertyDeclaration::BorderBottomStyle(bottom));
-    declarations.push(PropertyDeclaration::BorderLeftStyle(left));
+    let parsed_sides = parse_shorthand_sides::<LineStyle>(input)?;
+    declarations.push(PropertyDeclaration::BorderTopStyle(parsed_sides.top));
+    declarations.push(PropertyDeclaration::BorderRightStyle(parsed_sides.right));
+    declarations.push(PropertyDeclaration::BorderBottomStyle(parsed_sides.bottom));
+    declarations.push(PropertyDeclaration::BorderLeftStyle(parsed_sides.left));
     Ok(())
 }
 
@@ -169,45 +115,18 @@ pub fn parse_border_width_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
-    let (first_val, second_val, third_val, fourth_val) = (
-        input.try_parse(|i| LineWidth::parse(i)),
-        input.try_parse(|i| LineWidth::parse(i)),
-        input.try_parse(|i| LineWidth::parse(i)),
-        input.try_parse(|i| LineWidth::parse(i)),
-    );
-    // Based on how many LP-auto values we were able to successfully parse, apply the longhands per
-    // spec: https://drafts.csswg.org/css-box-3/#margin-shorthand
-    let (top, right, bottom, left) = if fourth_val.is_ok() {
-        (
-            first_val.unwrap(),
-            second_val.unwrap(),
-            third_val.unwrap(),
-            fourth_val.unwrap(),
-        )
-    } else if third_val.is_ok() {
-        let second = second_val.unwrap();
-        (first_val.unwrap(), second, third_val.unwrap(), second)
-    } else if second_val.is_ok() {
-        let (first, second) = (first_val.unwrap(), second_val.unwrap());
-        (first, second, first, second)
-    } else if first_val.is_ok() {
-        let val = first_val.unwrap();
-        (val, val, val, val)
-    } else {
-        return Err(first_val.unwrap_err());
-    };
-
+    let parsed_sides = parse_shorthand_sides::<LineWidth>(input)?;
     declarations.push(PropertyDeclaration::BorderTopWidth(BorderTopWidth {
-        line_width: top,
+        line_width: parsed_sides.top,
     }));
     declarations.push(PropertyDeclaration::BorderRightWidth(BorderRightWidth {
-        line_width: right,
+        line_width: parsed_sides.right,
     }));
     declarations.push(PropertyDeclaration::BorderBottomWidth(BorderBottomWidth {
-        line_width: bottom,
+        line_width: parsed_sides.bottom,
     }));
     declarations.push(PropertyDeclaration::BorderLeftWidth(BorderLeftWidth {
-        line_width: left,
+        line_width: parsed_sides.left,
     }));
     Ok(())
 }

@@ -2,8 +2,8 @@ use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::{
     ComputeContext, ComputeValue, ComputeValueWithContext, ValueDefault,
 };
-use crate::style::values::specified;
 use crate::style::values::specified::border::LineWidth;
+use crate::style::values::{specified, CssValueParse};
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser, RGBA};
 
@@ -39,39 +39,39 @@ pub fn compute_border_side_width(
     }
 }
 
-/// Computed `border-bottom-color`.
+/// Computed `border-<side>-color`.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
+/// https://www.w3.org/TR/css-backgrounds-3/#border-color
 #[derive(Clone, Copy, Debug)]
-pub struct BorderBottomColor {
+pub struct BorderColor {
     pub rgba: RGBA,
 }
 
-impl BorderBottomColor {
-    /// Note `current_color` refers to `currentColor` from the specification.
+impl BorderColor {
+    /// Note `computed_color_prop` refers to `currentColor` from the specification.
     /// https://www.w3.org/TR/css-color-3/#currentcolor
     pub fn initial_value(computed_color_prop: RGBA) -> Self {
-        BorderBottomColor {
+        BorderColor {
             rgba: computed_color_prop,
         }
     }
 }
 
-impl ComputeValueWithContext for specified::BorderBottomColor {
-    type ComputedValue = BorderBottomColor;
+impl ComputeValueWithContext for specified::BorderColor {
+    type ComputedValue = BorderColor;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderBottomColor {
+        BorderColor {
             rgba: compute_border_side_color(self.color, context),
         }
     }
 }
 
-impl ValueDefault for specified::BorderBottomColor {
-    type ComputedValue = BorderBottomColor;
+impl ValueDefault for specified::BorderColor {
+    type ComputedValue = BorderColor;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderBottomColor::initial_value(
+        BorderColor::initial_value(
             context
                 .computed_color
                 .expect("color should've been computed before border-bottom-color value default")
@@ -80,140 +80,17 @@ impl ValueDefault for specified::BorderBottomColor {
     }
 }
 
-/// Computed `border-left-color`.
+/// Computed `border-<side>-width`.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
+/// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
-pub struct BorderLeftColor {
-    pub rgba: RGBA,
-}
-
-impl BorderLeftColor {
-    /// Note `current_color` refers to `currentColor` from the specification.
-    /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(computed_color_prop: RGBA) -> Self {
-        BorderLeftColor {
-            rgba: computed_color_prop,
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::BorderLeftColor {
-    type ComputedValue = BorderLeftColor;
-
-    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderLeftColor {
-            rgba: compute_border_side_color(self.color, context),
-        }
-    }
-}
-
-impl ValueDefault for specified::BorderLeftColor {
-    type ComputedValue = BorderLeftColor;
-
-    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderLeftColor::initial_value(
-            context
-                .computed_color
-                .expect("color should've been computed before border-left-color value default")
-                .rgba(),
-        )
-    }
-}
-
-/// Computed `border-right-color`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
-#[derive(Clone, Copy, Debug)]
-pub struct BorderRightColor {
-    pub rgba: RGBA,
-}
-
-impl BorderRightColor {
-    /// Note `current_color` refers to `currentColor` from the specification.
-    /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(computed_color_prop: RGBA) -> Self {
-        BorderRightColor {
-            rgba: computed_color_prop,
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::BorderRightColor {
-    type ComputedValue = BorderRightColor;
-
-    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderRightColor {
-            rgba: compute_border_side_color(self.color, context),
-        }
-    }
-}
-
-impl ValueDefault for specified::BorderRightColor {
-    type ComputedValue = BorderRightColor;
-
-    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderRightColor::initial_value(
-            context
-                .computed_color
-                .expect("color should've been computed before border-right-color value default")
-                .rgba(),
-        )
-    }
-}
-
-/// Computed `border-top-color`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
-#[derive(Clone, Copy, Debug)]
-pub struct BorderTopColor {
-    pub rgba: RGBA,
-}
-
-impl BorderTopColor {
-    /// Note `current_color` refers to `currentColor` from the specification.
-    /// https://www.w3.org/TR/css-color-3/#currentcolor
-    pub fn initial_value(computed_color_prop: RGBA) -> Self {
-        BorderTopColor {
-            rgba: computed_color_prop,
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::BorderTopColor {
-    type ComputedValue = BorderTopColor;
-
-    fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderTopColor {
-            rgba: compute_border_side_color(self.color, context),
-        }
-    }
-}
-
-impl ValueDefault for specified::BorderTopColor {
-    type ComputedValue = BorderTopColor;
-
-    fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderTopColor::initial_value(
-            context
-                .computed_color
-                .expect("color should've been computed before border-top-color value default")
-                .rgba(),
-        )
-    }
-}
-
-/// Computed `border-bottom-width`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
-#[derive(Clone, Copy, Debug)]
-pub struct BorderBottomWidth {
+pub struct BorderWidth {
     pub size: CSSPixelLength,
 }
 
-impl BorderBottomWidth {
-    pub fn initial_value(computed_bottom_style: LineStyle) -> BorderBottomWidth {
-        BorderBottomWidth {
+impl BorderWidth {
+    pub fn initial_value(computed_bottom_style: LineStyle) -> BorderWidth {
+        BorderWidth {
             size: compute_border_side_width(
                 specified::BorderBottomWidth::initial_value().line_width,
                 computed_bottom_style,
@@ -223,131 +100,74 @@ impl BorderBottomWidth {
 }
 
 impl ComputeValueWithContext for specified::BorderBottomWidth {
-    type ComputedValue = BorderBottomWidth;
+    type ComputedValue = BorderWidth;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderBottomWidth {
+        BorderWidth {
             size: compute_border_side_width(self.line_width, context.border_bottom_style()),
         }
     }
 }
 
 impl ValueDefault for specified::BorderBottomWidth {
-    type ComputedValue = BorderBottomWidth;
+    type ComputedValue = BorderWidth;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderBottomWidth::initial_value(context.border_bottom_style())
-    }
-}
-
-/// Computed `border-left-width`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
-#[derive(Clone, Copy, Debug)]
-pub struct BorderLeftWidth {
-    pub size: CSSPixelLength,
-}
-
-impl BorderLeftWidth {
-    pub fn initial_value(computed_left_style: LineStyle) -> BorderLeftWidth {
-        BorderLeftWidth {
-            size: compute_border_side_width(
-                specified::BorderLeftWidth::initial_value().line_width,
-                computed_left_style,
-            ),
-        }
+        BorderWidth::initial_value(context.border_bottom_style())
     }
 }
 
 impl ComputeValueWithContext for specified::BorderLeftWidth {
-    type ComputedValue = BorderLeftWidth;
+    type ComputedValue = BorderWidth;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderLeftWidth {
+        BorderWidth {
             size: compute_border_side_width(self.line_width, context.border_left_style()),
         }
     }
 }
 
 impl ValueDefault for specified::BorderLeftWidth {
-    type ComputedValue = BorderLeftWidth;
+    type ComputedValue = BorderWidth;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderLeftWidth::initial_value(context.border_left_style())
-    }
-}
-
-/// Computed `border-right-width`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
-#[derive(Clone, Copy, Debug)]
-pub struct BorderRightWidth {
-    pub size: CSSPixelLength,
-}
-
-impl BorderRightWidth {
-    pub fn initial_value(computed_right_style: LineStyle) -> BorderRightWidth {
-        BorderRightWidth {
-            size: compute_border_side_width(
-                specified::BorderRightWidth::initial_value().line_width,
-                computed_right_style,
-            ),
-        }
+        BorderWidth::initial_value(context.border_left_style())
     }
 }
 
 impl ComputeValueWithContext for specified::BorderRightWidth {
-    type ComputedValue = BorderRightWidth;
+    type ComputedValue = BorderWidth;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderRightWidth {
+        BorderWidth {
             size: compute_border_side_width(self.line_width, context.border_right_style()),
         }
     }
 }
 
 impl ValueDefault for specified::BorderRightWidth {
-    type ComputedValue = BorderRightWidth;
+    type ComputedValue = BorderWidth;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderRightWidth::initial_value(context.border_right_style())
-    }
-}
-
-/// Computed `border-top-width`.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
-#[derive(Clone, Copy, Debug)]
-pub struct BorderTopWidth {
-    pub size: CSSPixelLength,
-}
-
-impl BorderTopWidth {
-    pub fn initial_value(computed_top_style: LineStyle) -> BorderTopWidth {
-        BorderTopWidth {
-            size: compute_border_side_width(
-                specified::BorderTopWidth::initial_value().line_width,
-                computed_top_style,
-            ),
-        }
+        BorderWidth::initial_value(context.border_right_style())
     }
 }
 
 impl ComputeValueWithContext for specified::BorderTopWidth {
-    type ComputedValue = BorderTopWidth;
+    type ComputedValue = BorderWidth;
 
     fn compute_value_with_context(&self, context: &ComputeContext) -> Self::ComputedValue {
-        BorderTopWidth {
+        BorderWidth {
             size: compute_border_side_width(self.line_width, context.border_top_style()),
         }
     }
 }
 
 impl ValueDefault for specified::BorderTopWidth {
-    type ComputedValue = BorderTopWidth;
+    type ComputedValue = BorderWidth;
 
     fn value_default(context: &ComputeContext) -> Self::ComputedValue {
-        BorderTopWidth::initial_value(context.border_top_style())
+        BorderWidth::initial_value(context.border_top_style())
     }
 }
 
@@ -368,8 +188,8 @@ pub enum LineStyle {
     Outset,
 }
 
-impl LineStyle {
-    pub fn parse<'i, 't>(
+impl CssValueParse for LineStyle {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         try_match_ident_ignore_ascii_case! { input,

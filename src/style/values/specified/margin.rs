@@ -1,7 +1,14 @@
 use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified::LengthPercentageOrAuto;
+use crate::style::values::CssValueParse;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
+
+// pub fn parse_shorthand<'i, 't, T>(
+//     input: &mut Parser<'i, 't>,
+// ) -> Result<(T, T, T, T), ParseError<'i, StyleParseErrorKind<'i>>> {
+//
+// }
 
 pub fn parse_margin_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
@@ -35,89 +42,31 @@ pub fn parse_margin_shorthand_into<'i, 't>(
         return Err(first_val.unwrap_err());
     };
 
-    declarations.push(PropertyDeclaration::MarginTop(MarginTop {
-        lp_or_auto: top,
-    }));
-    declarations.push(PropertyDeclaration::MarginRight(MarginRight {
+    declarations.push(PropertyDeclaration::MarginTop(Margin { lp_or_auto: top }));
+    declarations.push(PropertyDeclaration::MarginRight(Margin {
         lp_or_auto: right,
     }));
-    declarations.push(PropertyDeclaration::MarginBottom(MarginBottom {
+    declarations.push(PropertyDeclaration::MarginBottom(Margin {
         lp_or_auto: bottom,
     }));
-    declarations.push(PropertyDeclaration::MarginLeft(MarginLeft {
-        lp_or_auto: left,
-    }));
+    declarations.push(PropertyDeclaration::MarginLeft(Margin { lp_or_auto: left }));
     Ok(())
 }
 
-/// Specified values for `margin-bottom`.
+/// Specified value for `margin-top`.
 ///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
+/// https://www.w3.org/TR/css-box-3/#margin-physical
 #[derive(Clone, Debug)]
-pub struct MarginBottom {
+pub struct Margin {
     pub lp_or_auto: LengthPercentageOrAuto,
 }
 
-impl MarginBottom {
-    pub fn parse<'i, 't>(
+impl CssValueParse for Margin {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginBottom { lp_or_auto })
-    }
-}
-
-/// Specified values for `margin-left`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct MarginLeft {
-    pub lp_or_auto: LengthPercentageOrAuto,
-}
-
-impl MarginLeft {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginLeft { lp_or_auto })
-    }
-}
-
-/// Specified values for `margin-right`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct MarginRight {
-    pub lp_or_auto: LengthPercentageOrAuto,
-}
-
-impl MarginRight {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginRight { lp_or_auto })
-    }
-}
-
-/// Specified values for `margin-top`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct MarginTop {
-    pub lp_or_auto: LengthPercentageOrAuto,
-}
-
-impl MarginTop {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentageOrAuto::parse(i))
-            .map(|lp_or_auto| MarginTop { lp_or_auto })
+            .map(|lp_or_auto| Margin { lp_or_auto })
     }
 }

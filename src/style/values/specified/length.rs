@@ -1,4 +1,4 @@
-use crate::style::values::{computed, CSSFloat};
+use crate::style::values::{computed, CSSFloat, CssValueParse};
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser, Token};
 
@@ -110,8 +110,8 @@ pub enum LengthPercentage {
     //    Calc(Box<CalcLengthPercentage>),
 }
 
-impl LengthPercentage {
-    pub fn parse<'i, 't>(
+impl CssValueParse for LengthPercentage {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         let location = input.current_source_location();
@@ -139,8 +139,8 @@ pub enum LengthPercentageOrAuto {
     Auto,
 }
 
-impl LengthPercentageOrAuto {
-    pub fn parse<'i, 't>(
+impl CssValueParse for LengthPercentageOrAuto {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         let start = input.state();

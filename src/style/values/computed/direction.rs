@@ -1,4 +1,5 @@
 use crate::style::values::computed::{ComputeContext, ValueDefault};
+use crate::style::values::CssValueParse;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 
@@ -13,8 +14,10 @@ impl Direction {
     pub fn initial_value() -> Direction {
         Direction::Ltr
     }
+}
 
-    pub fn parse<'i, 't>(
+impl CssValueParse for Direction {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         try_match_ident_ignore_ascii_case! { input,
@@ -50,7 +53,19 @@ impl WritingMode {
         WritingMode::HorizontalTb
     }
 
-    pub fn parse<'i, 't>(
+    pub fn is_horizontal(&self) -> bool {
+        match self {
+            WritingMode::VerticalLr
+            | WritingMode::VerticalRl
+            | WritingMode::SidewaysLr
+            | WritingMode::SidewaysRl => false,
+            WritingMode::HorizontalTb => true,
+        }
+    }
+}
+
+impl CssValueParse for WritingMode {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         try_match_ident_ignore_ascii_case! { input,
@@ -59,16 +74,6 @@ impl WritingMode {
             "vertical-lr" => Ok(WritingMode::VerticalLr),
             "sideways-rl" => Ok(WritingMode::SidewaysRl),
             "sideways-lr" => Ok(WritingMode::SidewaysLr),
-        }
-    }
-
-    pub fn is_horizontal(&self) -> bool {
-        match self {
-            WritingMode::VerticalLr
-            | WritingMode::VerticalRl
-            | WritingMode::SidewaysLr
-            | WritingMode::SidewaysRl => false,
-            WritingMode::HorizontalTb => true,
         }
     }
 }

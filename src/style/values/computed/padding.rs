@@ -4,131 +4,36 @@ use crate::style::values::computed::{
 };
 use crate::style::values::specified;
 
-/// Computed value of a `padding-bottom`.
+/// Computed value of a `padding-<side>`.
+/// https://www.w3.org/TR/css-box-3/#padding-physical
 #[derive(Clone, Copy, Debug)]
-pub struct PaddingBottom {
+pub struct Padding {
     pub size: LengthPercentage,
 }
 
-impl PaddingBottom {
-    pub fn initial_value() -> PaddingBottom {
-        PaddingBottom {
+impl Padding {
+    pub fn initial_value() -> Padding {
+        Padding {
             size: LengthPercentage::new_len(0.),
         }
     }
 }
 
-impl ComputeValueWithContext for specified::PaddingBottom {
-    type ComputedValue = PaddingBottom;
+impl ComputeValueWithContext for specified::Padding {
+    type ComputedValue = Padding;
 
     fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
-        PaddingBottom {
+        Padding {
             size: computed_padding_size(&self.length_percentage),
         }
     }
 }
 
-impl ValueDefault for specified::PaddingBottom {
-    type ComputedValue = PaddingBottom;
+impl ValueDefault for specified::Padding {
+    type ComputedValue = Padding;
 
     fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        PaddingBottom::initial_value()
-    }
-}
-
-/// Computed value of a `padding-left`.
-#[derive(Clone, Copy, Debug)]
-pub struct PaddingLeft {
-    pub size: LengthPercentage,
-}
-
-impl PaddingLeft {
-    pub fn initial_value() -> PaddingLeft {
-        PaddingLeft {
-            size: LengthPercentage::new_len(0.),
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::PaddingLeft {
-    type ComputedValue = PaddingLeft;
-
-    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
-        PaddingLeft {
-            size: computed_padding_size(&self.length_percentage),
-        }
-    }
-}
-
-impl ValueDefault for specified::PaddingLeft {
-    type ComputedValue = PaddingLeft;
-
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        PaddingLeft::initial_value()
-    }
-}
-
-/// Computed value of a `padding-right`.
-#[derive(Clone, Copy, Debug)]
-pub struct PaddingRight {
-    pub size: LengthPercentage,
-}
-
-impl PaddingRight {
-    pub fn initial_value() -> PaddingRight {
-        PaddingRight {
-            size: LengthPercentage::new_len(0.),
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::PaddingRight {
-    type ComputedValue = PaddingRight;
-
-    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
-        PaddingRight {
-            size: computed_padding_size(&self.length_percentage),
-        }
-    }
-}
-
-impl ValueDefault for specified::PaddingRight {
-    type ComputedValue = PaddingRight;
-
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        PaddingRight::initial_value()
-    }
-}
-
-/// Computed value of a `padding-top`.
-#[derive(Clone, Copy, Debug)]
-pub struct PaddingTop {
-    pub size: LengthPercentage,
-}
-
-impl PaddingTop {
-    pub fn initial_value() -> PaddingTop {
-        PaddingTop {
-            size: LengthPercentage::new_len(0.),
-        }
-    }
-}
-
-impl ComputeValueWithContext for specified::PaddingTop {
-    type ComputedValue = PaddingTop;
-
-    fn compute_value_with_context(&self, _context: &ComputeContext) -> Self::ComputedValue {
-        PaddingTop {
-            size: computed_padding_size(&self.length_percentage),
-        }
-    }
-}
-
-impl ValueDefault for specified::PaddingTop {
-    type ComputedValue = PaddingTop;
-
-    fn value_default(_context: &ComputeContext) -> Self::ComputedValue {
-        PaddingTop::initial_value()
+        Padding::initial_value()
     }
 }
 

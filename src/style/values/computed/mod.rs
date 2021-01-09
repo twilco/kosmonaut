@@ -14,12 +14,8 @@ pub mod percentage;
 pub mod width;
 
 use crate::style::values::computed::height::Height;
-pub use crate::style::values::computed::margin::{
-    MarginBottom, MarginLeft, MarginRight, MarginTop,
-};
-pub use crate::style::values::computed::padding::{
-    PaddingBottom, PaddingLeft, PaddingRight, PaddingTop,
-};
+pub use crate::style::values::computed::margin::Margin;
+pub use crate::style::values::computed::padding::Padding;
 use crate::style::values::computed::width::Width;
 
 use crate::dom::tree::NodeRef;
@@ -35,10 +31,7 @@ use crate::style::values::computed::length::{
 use crate::Side;
 pub use background::BackgroundColor;
 pub use border::LineStyle;
-pub use border::{
-    border_side_initial_style, BorderBottomColor, BorderBottomWidth, BorderLeftColor,
-    BorderLeftWidth, BorderRightColor, BorderRightWidth, BorderTopColor, BorderTopWidth,
-};
+pub use border::{border_side_initial_style, BorderColor, BorderWidth};
 pub use color::Color;
 use cssparser::RGBA;
 pub use direction::Direction;
@@ -89,31 +82,31 @@ pub trait ValueDefault {
 #[derive(Debug, Clone, Builder)]
 pub struct ComputedValues {
     pub background_color: BackgroundColor,
-    pub border_bottom_color: BorderBottomColor,
-    pub border_left_color: BorderLeftColor,
-    pub border_right_color: BorderRightColor,
-    pub border_top_color: BorderTopColor,
+    pub border_bottom_color: BorderColor,
+    pub border_left_color: BorderColor,
+    pub border_right_color: BorderColor,
+    pub border_top_color: BorderColor,
     pub border_bottom_style: LineStyle,
     pub border_left_style: LineStyle,
     pub border_right_style: LineStyle,
     pub border_top_style: LineStyle,
-    pub border_bottom_width: BorderBottomWidth,
-    pub border_left_width: BorderLeftWidth,
-    pub border_right_width: BorderRightWidth,
-    pub border_top_width: BorderTopWidth,
+    pub border_bottom_width: BorderWidth,
+    pub border_left_width: BorderWidth,
+    pub border_right_width: BorderWidth,
+    pub border_top_width: BorderWidth,
     pub color: Color,
     pub direction: Direction,
     pub display: Display,
     pub font_size: FontSize,
     pub height: Height,
-    pub margin_bottom: MarginBottom,
-    pub margin_left: MarginLeft,
-    pub margin_right: MarginRight,
-    pub margin_top: MarginTop,
-    pub padding_bottom: PaddingBottom,
-    pub padding_left: PaddingLeft,
-    pub padding_right: PaddingRight,
-    pub padding_top: PaddingTop,
+    pub margin_bottom: Margin,
+    pub margin_left: Margin,
+    pub margin_right: Margin,
+    pub margin_top: Margin,
+    pub padding_bottom: Padding,
+    pub padding_left: Padding,
+    pub padding_right: Padding,
+    pub padding_top: Padding,
     pub width: Width,
     pub writing_mode: WritingMode,
 }
@@ -278,31 +271,31 @@ impl Default for ComputedValues {
         let initial_border_style = border_side_initial_style();
         ComputedValues {
             background_color: BackgroundColor::initial_value(initial_color_prop.rgba()),
-            border_bottom_color: BorderBottomColor::initial_value(initial_color_prop.rgba()),
-            border_left_color: BorderLeftColor::initial_value(initial_color_prop.rgba()),
-            border_right_color: BorderRightColor::initial_value(initial_color_prop.rgba()),
-            border_top_color: BorderTopColor::initial_value(initial_color_prop.rgba()),
+            border_bottom_color: BorderColor::initial_value(initial_color_prop.rgba()),
+            border_left_color: BorderColor::initial_value(initial_color_prop.rgba()),
+            border_right_color: BorderColor::initial_value(initial_color_prop.rgba()),
+            border_top_color: BorderColor::initial_value(initial_color_prop.rgba()),
             border_bottom_style: initial_border_style,
             border_left_style: initial_border_style,
             border_right_style: initial_border_style,
             border_top_style: initial_border_style,
-            border_bottom_width: BorderBottomWidth::initial_value(initial_border_style),
-            border_left_width: BorderLeftWidth::initial_value(initial_border_style),
-            border_right_width: BorderRightWidth::initial_value(initial_border_style),
-            border_top_width: BorderTopWidth::initial_value(initial_border_style),
+            border_bottom_width: BorderWidth::initial_value(initial_border_style),
+            border_left_width: BorderWidth::initial_value(initial_border_style),
+            border_right_width: BorderWidth::initial_value(initial_border_style),
+            border_top_width: BorderWidth::initial_value(initial_border_style),
             color: initial_color_prop,
             direction: Direction::initial_value(),
             display: Display::initial_value(),
             font_size: FontSize::initial_value(),
             height: Height::initial_value(),
-            margin_bottom: MarginBottom::initial_value(),
-            margin_left: MarginLeft::initial_value(),
-            margin_right: MarginRight::initial_value(),
-            margin_top: MarginTop::initial_value(),
-            padding_bottom: PaddingBottom::initial_value(),
-            padding_left: PaddingLeft::initial_value(),
-            padding_right: PaddingRight::initial_value(),
-            padding_top: PaddingTop::initial_value(),
+            margin_bottom: Margin::initial_value(),
+            margin_left: Margin::initial_value(),
+            margin_right: Margin::initial_value(),
+            margin_top: Margin::initial_value(),
+            padding_bottom: Padding::initial_value(),
+            padding_left: Padding::initial_value(),
+            padding_right: Padding::initial_value(),
+            padding_top: Padding::initial_value(),
             width: Width::initial_value(),
             writing_mode: WritingMode::initial_value(),
         }

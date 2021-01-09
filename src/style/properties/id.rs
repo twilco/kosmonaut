@@ -441,16 +441,16 @@ impl LonghandId {
                 cv_builder.background_color(specified::BackgroundColor::value_default(ctx));
             }
             LonghandId::BorderBottomColor => {
-                cv_builder.border_bottom_color(specified::BorderBottomColor::value_default(ctx));
+                cv_builder.border_bottom_color(specified::BorderColor::value_default(ctx));
             }
             LonghandId::BorderLeftColor => {
-                cv_builder.border_left_color(specified::BorderLeftColor::value_default(ctx));
+                cv_builder.border_left_color(specified::BorderColor::value_default(ctx));
             }
             LonghandId::BorderRightColor => {
-                cv_builder.border_right_color(specified::BorderRightColor::value_default(ctx));
+                cv_builder.border_right_color(specified::BorderColor::value_default(ctx));
             }
             LonghandId::BorderTopColor => {
-                cv_builder.border_top_color(specified::BorderTopColor::value_default(ctx));
+                cv_builder.border_top_color(specified::BorderColor::value_default(ctx));
             }
             LonghandId::BorderBottomStyle => {
                 cv_builder.border_bottom_style(LineStyle::None);
@@ -492,28 +492,28 @@ impl LonghandId {
                 cv_builder.height(specified::Height::value_default(ctx));
             }
             LonghandId::MarginBottom => {
-                cv_builder.margin_bottom(specified::MarginBottom::value_default(ctx));
+                cv_builder.margin_bottom(specified::Margin::value_default(ctx));
             }
             LonghandId::MarginLeft => {
-                cv_builder.margin_left(specified::MarginLeft::value_default(ctx));
+                cv_builder.margin_left(specified::Margin::value_default(ctx));
             }
             LonghandId::MarginRight => {
-                cv_builder.margin_right(specified::MarginRight::value_default(ctx));
+                cv_builder.margin_right(specified::Margin::value_default(ctx));
             }
             LonghandId::MarginTop => {
-                cv_builder.margin_top(specified::MarginTop::value_default(ctx));
+                cv_builder.margin_top(specified::Margin::value_default(ctx));
             }
             LonghandId::PaddingBottom => {
-                cv_builder.padding_bottom(specified::PaddingBottom::value_default(ctx));
+                cv_builder.padding_bottom(specified::Padding::value_default(ctx));
             }
             LonghandId::PaddingLeft => {
-                cv_builder.padding_left(specified::PaddingLeft::value_default(ctx));
+                cv_builder.padding_left(specified::Padding::value_default(ctx));
             }
             LonghandId::PaddingRight => {
-                cv_builder.padding_right(specified::PaddingRight::value_default(ctx));
+                cv_builder.padding_right(specified::Padding::value_default(ctx));
             }
             LonghandId::PaddingTop => {
-                cv_builder.padding_top(specified::PaddingTop::value_default(ctx));
+                cv_builder.padding_top(specified::Padding::value_default(ctx));
             }
             LonghandId::Width => {
                 cv_builder.width(specified::Width::value_default(ctx));

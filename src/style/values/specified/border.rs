@@ -1,9 +1,10 @@
-use crate::style::values::specified::{ColorUnit, NoCalcLength};
-use crate::style::StyleParseErrorKind;
-use cssparser::{ParseError, Parser, Token};
 use crate::style::properties::PropertyDeclaration;
-use crate::Side;
 use crate::style::values::computed::LineStyle;
+use crate::style::values::specified::{ColorUnit, NoCalcLength};
+use crate::style::values::CssValueParse;
+use crate::style::StyleParseErrorKind;
+use crate::Side;
+use cssparser::{ParseError, Parser, Token};
 
 pub fn parse_border_side_shorthand_into<'i, 't>(
     side: Side,
@@ -13,7 +14,9 @@ pub fn parse_border_side_shorthand_into<'i, 't>(
     let (line_width, line_style, color) = parse_border_shorthand_inner(input)?;
     if let Some(line_width) = line_width {
         declarations.push(match side {
-            Side::Bottom => PropertyDeclaration::BorderBottomWidth(BorderBottomWidth { line_width }),
+            Side::Bottom => {
+                PropertyDeclaration::BorderBottomWidth(BorderBottomWidth { line_width })
+            }
             Side::Left => PropertyDeclaration::BorderLeftWidth(BorderLeftWidth { line_width }),
             Side::Right => PropertyDeclaration::BorderRightWidth(BorderRightWidth { line_width }),
             Side::Top => PropertyDeclaration::BorderTopWidth(BorderTopWidth { line_width }),
@@ -29,10 +32,10 @@ pub fn parse_border_side_shorthand_into<'i, 't>(
     }
     if let Some(color) = color {
         declarations.push(match side {
-            Side::Bottom => PropertyDeclaration::BorderBottomColor(BorderBottomColor { color }),
-            Side::Left => PropertyDeclaration::BorderLeftColor(BorderLeftColor { color}),
-            Side::Right => PropertyDeclaration::BorderRightColor(BorderRightColor { color}),
-            Side::Top => PropertyDeclaration::BorderTopColor(BorderTopColor { color}),
+            Side::Bottom => PropertyDeclaration::BorderBottomColor(BorderColor { color }),
+            Side::Left => PropertyDeclaration::BorderLeftColor(BorderColor { color }),
+            Side::Right => PropertyDeclaration::BorderRightColor(BorderColor { color }),
+            Side::Top => PropertyDeclaration::BorderTopColor(BorderColor { color }),
         })
     }
     Ok(())
@@ -46,10 +49,18 @@ pub fn parse_border_shorthand_into<'i, 't>(
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
     let (line_width, line_style, color) = parse_border_shorthand_inner(input)?;
     if let Some(line_width) = line_width {
-        declarations.push(PropertyDeclaration::BorderBottomWidth(BorderBottomWidth { line_width }));
-        declarations.push(PropertyDeclaration::BorderLeftWidth(BorderLeftWidth { line_width }));
-        declarations.push(PropertyDeclaration::BorderRightWidth(BorderRightWidth { line_width }));
-        declarations.push(PropertyDeclaration::BorderTopWidth(BorderTopWidth { line_width }));
+        declarations.push(PropertyDeclaration::BorderBottomWidth(BorderBottomWidth {
+            line_width,
+        }));
+        declarations.push(PropertyDeclaration::BorderLeftWidth(BorderLeftWidth {
+            line_width,
+        }));
+        declarations.push(PropertyDeclaration::BorderRightWidth(BorderRightWidth {
+            line_width,
+        }));
+        declarations.push(PropertyDeclaration::BorderTopWidth(BorderTopWidth {
+            line_width,
+        }));
     }
     if let Some(line_style) = line_style {
         declarations.push(PropertyDeclaration::BorderBottomStyle(line_style));
@@ -58,10 +69,12 @@ pub fn parse_border_shorthand_into<'i, 't>(
         declarations.push(PropertyDeclaration::BorderTopStyle(line_style));
     }
     if let Some(color) = color {
-        declarations.push(PropertyDeclaration::BorderBottomColor(BorderBottomColor { color }));
-        declarations.push(PropertyDeclaration::BorderLeftColor(BorderLeftColor { color}));
-        declarations.push(PropertyDeclaration::BorderRightColor(BorderRightColor { color}));
-        declarations.push(PropertyDeclaration::BorderTopColor(BorderTopColor { color}));
+        declarations.push(PropertyDeclaration::BorderBottomColor(BorderColor {
+            color,
+        }));
+        declarations.push(PropertyDeclaration::BorderLeftColor(BorderColor { color }));
+        declarations.push(PropertyDeclaration::BorderRightColor(BorderColor { color }));
+        declarations.push(PropertyDeclaration::BorderTopColor(BorderColor { color }));
     }
     Ok(())
 }
@@ -98,10 +111,18 @@ pub fn parse_border_color_shorthand_into<'i, 't>(
         return Err(first_val.unwrap_err());
     };
 
-    declarations.push(PropertyDeclaration::BorderTopColor(BorderTopColor { color: top }));
-    declarations.push(PropertyDeclaration::BorderRightColor(BorderRightColor { color: bottom }));
-    declarations.push(PropertyDeclaration::BorderLeftColor(BorderLeftColor { color: left }));
-    declarations.push(PropertyDeclaration::BorderBottomColor(BorderBottomColor { color: right }));
+    declarations.push(PropertyDeclaration::BorderTopColor(BorderColor {
+        color: top,
+    }));
+    declarations.push(PropertyDeclaration::BorderRightColor(BorderColor {
+        color: bottom,
+    }));
+    declarations.push(PropertyDeclaration::BorderLeftColor(BorderColor {
+        color: left,
+    }));
+    declarations.push(PropertyDeclaration::BorderBottomColor(BorderColor {
+        color: right,
+    }));
     Ok(())
 }
 
@@ -193,7 +214,10 @@ pub fn parse_border_width_shorthand_into<'i, 't>(
 
 fn parse_border_shorthand_inner<'i, 't>(
     input: &mut Parser<'i, 't>,
-) -> Result<(Option<LineWidth>, Option<LineStyle>, Option<ColorUnit>), ParseError<'i, StyleParseErrorKind<'i>>> {
+) -> Result<
+    (Option<LineWidth>, Option<LineStyle>, Option<ColorUnit>),
+    ParseError<'i, StyleParseErrorKind<'i>>,
+> {
     // There are three optional components in the `border-<side>` shorthand that can appear in any
     // order.
     let (mut line_width, mut line_style, mut color) = (None, None, None);
@@ -221,110 +245,46 @@ fn parse_border_shorthand_inner<'i, 't>(
         }
 
         let location = input.current_source_location();
-        return Err(location.new_unexpected_token_error(input.next()?.clone()))
+        return Err(location.new_unexpected_token_error(input.next()?.clone()));
     }
     Ok((line_width, line_style, color))
 }
 
-/// Specified `border-bottom-color` values.
+/// Specified `border-<side>-color` value.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
+/// https://www.w3.org/TR/css-backgrounds-3/#background-color
 #[derive(Clone, Copy, Debug)]
-pub struct BorderBottomColor {
+pub struct BorderColor {
     pub color: ColorUnit,
 }
 
-impl BorderBottomColor {
-    pub fn initial_value() -> BorderBottomColor {
-        BorderBottomColor {
+impl BorderColor {
+    pub fn initial_value() -> BorderColor {
+        BorderColor {
             color: ColorUnit::CurrentColor,
         }
     }
+}
 
-    pub fn parse<'i, 't>(
+impl CssValueParse for BorderColor {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| ColorUnit::parse(i))
-            .map(|color| BorderBottomColor { color })
+            .map(|color| BorderColor { color })
     }
 }
 
-/// Specified `border-left-color` values.
+fn parse_line_width<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<LineWidth, ParseError<'i, StyleParseErrorKind<'i>>> {
+    input.try_parse(|i| LineWidth::parse(i))
+}
+
+/// Specified `border-bottom-width` value.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
-#[derive(Clone, Copy, Debug)]
-pub struct BorderLeftColor {
-    pub color: ColorUnit,
-}
-
-impl BorderLeftColor {
-    pub fn initial_value() -> BorderLeftColor {
-        BorderLeftColor {
-            color: ColorUnit::CurrentColor,
-        }
-    }
-
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| ColorUnit::parse(i))
-            .map(|color| BorderLeftColor { color })
-    }
-}
-
-/// Specified `border-right-color` values.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
-#[derive(Clone, Copy, Debug)]
-pub struct BorderRightColor {
-    pub color: ColorUnit,
-}
-
-impl BorderRightColor {
-    pub fn initial_value() -> BorderRightColor {
-        BorderRightColor {
-            color: ColorUnit::CurrentColor,
-        }
-    }
-
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| ColorUnit::parse(i))
-            .map(|color| BorderRightColor { color })
-    }
-}
-
-/// Specified `border-top-color` values.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-color
-#[derive(Clone, Copy, Debug)]
-pub struct BorderTopColor {
-    pub color: ColorUnit,
-}
-
-impl BorderTopColor {
-    pub fn initial_value() -> BorderTopColor {
-        BorderTopColor {
-            color: ColorUnit::CurrentColor,
-        }
-    }
-
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| ColorUnit::parse(i))
-            .map(|color| BorderTopColor { color })
-    }
-}
-
-/// Specified `border-bottom-width` values.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
+/// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderBottomWidth {
     pub line_width: LineWidth,
@@ -336,19 +296,19 @@ impl BorderBottomWidth {
             line_width: LineWidth::Medium,
         }
     }
+}
 
-    pub fn parse<'i, 't>(
+impl CssValueParse for BorderBottomWidth {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LineWidth::parse(i))
-            .map(|line_width| BorderBottomWidth { line_width })
+        parse_line_width(input).map(|line_width| BorderBottomWidth { line_width })
     }
 }
 
-/// Specified `border-left-width` values.
+/// Specified `border-left-width` value.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
+/// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderLeftWidth {
     pub line_width: LineWidth,
@@ -360,43 +320,19 @@ impl BorderLeftWidth {
             line_width: LineWidth::Medium,
         }
     }
+}
 
-    pub fn parse<'i, 't>(
+impl CssValueParse for BorderLeftWidth {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LineWidth::parse(i))
-            .map(|line_width| BorderLeftWidth { line_width })
+        parse_line_width(input).map(|line_width| BorderLeftWidth { line_width })
     }
 }
 
-/// Specified `border-right-width` values.
+/// Specified `border-top-width` value.
 ///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
-#[derive(Clone, Copy, Debug)]
-pub struct BorderRightWidth {
-    pub line_width: LineWidth,
-}
-
-impl BorderRightWidth {
-    pub fn initial_value() -> BorderRightWidth {
-        BorderRightWidth {
-            line_width: LineWidth::Medium,
-        }
-    }
-
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LineWidth::parse(i))
-            .map(|line_width| BorderRightWidth { line_width })
-    }
-}
-
-/// Specified `border-top-width` values.
-///
-/// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-width
+/// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderTopWidth {
     pub line_width: LineWidth,
@@ -408,13 +344,37 @@ impl BorderTopWidth {
             line_width: LineWidth::Medium,
         }
     }
+}
 
-    pub fn parse<'i, 't>(
+impl CssValueParse for BorderTopWidth {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LineWidth::parse(i))
-            .map(|line_width| BorderTopWidth { line_width })
+        parse_line_width(input).map(|line_width| BorderTopWidth { line_width })
+    }
+}
+
+/// Specified `border-right-width` value.
+///
+/// https://www.w3.org/TR/css-backgrounds-3/#border-width
+#[derive(Clone, Copy, Debug)]
+pub struct BorderRightWidth {
+    pub line_width: LineWidth,
+}
+
+impl BorderRightWidth {
+    pub fn initial_value() -> BorderRightWidth {
+        BorderRightWidth {
+            line_width: LineWidth::Medium,
+        }
+    }
+}
+
+impl CssValueParse for BorderRightWidth {
+    fn parse<'i, 't>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
+        parse_line_width(input).map(|line_width| BorderRightWidth { line_width })
     }
 }
 
@@ -429,8 +389,8 @@ pub enum LineWidth {
     Thick,
 }
 
-impl LineWidth {
-    pub fn parse<'i, 't>(
+impl CssValueParse for LineWidth {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         let start = input.state();
@@ -439,12 +399,12 @@ impl LineWidth {
         match *token {
             Token::Dimension {
                 value, ref unit, ..
-            } => match NoCalcLength::parse_dimension(value, unit) {
-                Ok(no_calc_len) => {
-                    return Ok(LineWidth::Length(no_calc_len));
+            } => {
+                return match NoCalcLength::parse_dimension(value, unit) {
+                    Ok(no_calc_len) => Ok(LineWidth::Length(no_calc_len)),
+                    Err(_) => Err(location.new_unexpected_token_error(token.clone())),
                 }
-                Err(_) => return Err(location.new_unexpected_token_error(token.clone())),
-            },
+            }
             _ => {}
         };
         input.reset(&start);

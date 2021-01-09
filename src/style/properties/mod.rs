@@ -12,16 +12,20 @@ use crate::style::properties::id::{LonghandId, PropertyId, ShorthandId};
 use crate::style::select::Specificity;
 use crate::style::values::computed::direction::WritingMode;
 use crate::style::values::computed::{Direction, Display, LineStyle};
-use crate::style::values::specified::border::{BorderBottomColor, BorderLeftColor, BorderRightColor, BorderTopColor, parse_border_side_shorthand_into, parse_border_shorthand_into, parse_border_color_shorthand_into, parse_border_style_shorthand_into, parse_border_width_shorthand_into};
-use crate::style::values::specified::margin::parse_margin_shorthand_into;
-use crate::style::values::specified::{
-    BackgroundColor, BorderBottomWidth, BorderLeftWidth, BorderRightWidth, BorderTopWidth, Color,
-    FontSize, Height, MarginBottom, MarginLeft, MarginRight, MarginTop, PaddingBottom, PaddingLeft,
-    PaddingRight, PaddingTop, Width,
+use crate::style::values::specified::border::{
+    parse_border_color_shorthand_into, parse_border_shorthand_into,
+    parse_border_side_shorthand_into, parse_border_style_shorthand_into,
+    parse_border_width_shorthand_into, BorderBottomWidth, BorderColor, BorderLeftWidth,
+    BorderRightWidth, BorderTopWidth,
 };
+use crate::style::values::specified::margin::parse_margin_shorthand_into;
+use crate::style::values::specified::padding::parse_padding_shorthand_into;
+use crate::style::values::specified::{
+    BackgroundColor, Color, FontSize, Height, Margin, Padding, Width,
+};
+use crate::style::values::CssValueParse;
 use crate::style::CascadeOrigin;
 use crate::style::{CssOrigin, StyleParseErrorKind};
-use crate::style::values::specified::padding::parse_padding_shorthand_into;
 use crate::Side;
 
 pub mod id;
@@ -181,16 +185,16 @@ impl PropertyDeclaration {
                 BackgroundColor::parse(input)?,
             )),
             LonghandId::BorderBottomColor => declarations.push(
-                PropertyDeclaration::BorderBottomColor(BorderBottomColor::parse(input)?),
+                PropertyDeclaration::BorderBottomColor(BorderColor::parse(input)?),
             ),
             LonghandId::BorderLeftColor => declarations.push(PropertyDeclaration::BorderLeftColor(
-                BorderLeftColor::parse(input)?,
+                BorderColor::parse(input)?,
             )),
             LonghandId::BorderRightColor => declarations.push(
-                PropertyDeclaration::BorderRightColor(BorderRightColor::parse(input)?),
+                PropertyDeclaration::BorderRightColor(BorderColor::parse(input)?),
             ),
             LonghandId::BorderTopColor => declarations.push(PropertyDeclaration::BorderTopColor(
-                BorderTopColor::parse(input)?,
+                BorderColor::parse(input)?,
             )),
             LonghandId::BorderBottomStyle => declarations.push(
                 PropertyDeclaration::BorderBottomStyle(LineStyle::parse(input)?),
@@ -232,34 +236,28 @@ impl PropertyDeclaration {
                 declarations.push(PropertyDeclaration::Height(Height::parse(input)?));
             }
             LonghandId::MarginBottom => {
-                declarations.push(PropertyDeclaration::MarginBottom(MarginBottom::parse(
-                    input,
-                )?));
+                declarations.push(PropertyDeclaration::MarginBottom(Margin::parse(input)?));
             }
             LonghandId::MarginLeft => {
-                declarations.push(PropertyDeclaration::MarginLeft(MarginLeft::parse(input)?));
+                declarations.push(PropertyDeclaration::MarginLeft(Margin::parse(input)?));
             }
             LonghandId::MarginRight => {
-                declarations.push(PropertyDeclaration::MarginRight(MarginRight::parse(input)?));
+                declarations.push(PropertyDeclaration::MarginRight(Margin::parse(input)?));
             }
             LonghandId::MarginTop => {
-                declarations.push(PropertyDeclaration::MarginTop(MarginTop::parse(input)?));
+                declarations.push(PropertyDeclaration::MarginTop(Margin::parse(input)?));
             }
             LonghandId::PaddingBottom => {
-                declarations.push(PropertyDeclaration::PaddingBottom(PaddingBottom::parse(
-                    input,
-                )?));
+                declarations.push(PropertyDeclaration::PaddingBottom(Padding::parse(input)?));
             }
             LonghandId::PaddingLeft => {
-                declarations.push(PropertyDeclaration::PaddingLeft(PaddingLeft::parse(input)?));
+                declarations.push(PropertyDeclaration::PaddingLeft(Padding::parse(input)?));
             }
             LonghandId::PaddingRight => {
-                declarations.push(PropertyDeclaration::PaddingRight(PaddingRight::parse(
-                    input,
-                )?));
+                declarations.push(PropertyDeclaration::PaddingRight(Padding::parse(input)?));
             }
             LonghandId::PaddingTop => {
-                declarations.push(PropertyDeclaration::PaddingTop(PaddingTop::parse(input)?));
+                declarations.push(PropertyDeclaration::PaddingTop(Padding::parse(input)?));
             }
             LonghandId::Width => {
                 declarations.push(PropertyDeclaration::Width(Width::parse(input)?));
@@ -282,10 +280,18 @@ impl PropertyDeclaration {
             ShorthandId::BorderColor => parse_border_color_shorthand_into(declarations, input)?,
             ShorthandId::BorderStyle => parse_border_style_shorthand_into(declarations, input)?,
             ShorthandId::BorderWidth => parse_border_width_shorthand_into(declarations, input)?,
-            ShorthandId::BorderTop => parse_border_side_shorthand_into(Side::Top, declarations, input)?,
-            ShorthandId::BorderRight => parse_border_side_shorthand_into(Side::Right, declarations, input)?,
-            ShorthandId::BorderBottom => parse_border_side_shorthand_into(Side::Bottom, declarations, input)?,
-            ShorthandId::BorderLeft => parse_border_side_shorthand_into(Side::Left, declarations, input)?,
+            ShorthandId::BorderTop => {
+                parse_border_side_shorthand_into(Side::Top, declarations, input)?
+            }
+            ShorthandId::BorderRight => {
+                parse_border_side_shorthand_into(Side::Right, declarations, input)?
+            }
+            ShorthandId::BorderBottom => {
+                parse_border_side_shorthand_into(Side::Bottom, declarations, input)?
+            }
+            ShorthandId::BorderLeft => {
+                parse_border_side_shorthand_into(Side::Left, declarations, input)?
+            }
             ShorthandId::Border => parse_border_shorthand_into(declarations, input)?,
             ShorthandId::Margin => parse_margin_shorthand_into(declarations, input)?,
             ShorthandId::Padding => parse_padding_shorthand_into(declarations, input)?,
@@ -299,10 +305,10 @@ impl PropertyDeclaration {
 #[repr(u16)]
 pub enum PropertyDeclaration {
     BackgroundColor(crate::style::values::specified::BackgroundColor),
-    BorderBottomColor(crate::style::values::specified::BorderBottomColor),
-    BorderLeftColor(crate::style::values::specified::BorderLeftColor),
-    BorderRightColor(crate::style::values::specified::BorderRightColor),
-    BorderTopColor(crate::style::values::specified::BorderTopColor),
+    BorderBottomColor(crate::style::values::specified::BorderColor),
+    BorderLeftColor(crate::style::values::specified::BorderColor),
+    BorderRightColor(crate::style::values::specified::BorderColor),
+    BorderTopColor(crate::style::values::specified::BorderColor),
     BorderBottomStyle(crate::style::values::computed::LineStyle),
     BorderLeftStyle(crate::style::values::computed::LineStyle),
     BorderRightStyle(crate::style::values::computed::LineStyle),
@@ -316,14 +322,14 @@ pub enum PropertyDeclaration {
     Display(crate::style::values::computed::Display),
     FontSize(crate::style::values::specified::FontSize),
     Height(crate::style::values::specified::Height),
-    MarginBottom(crate::style::values::specified::MarginBottom),
-    MarginLeft(crate::style::values::specified::MarginLeft),
-    MarginRight(crate::style::values::specified::MarginRight),
-    MarginTop(crate::style::values::specified::MarginTop),
-    PaddingBottom(crate::style::values::specified::PaddingBottom),
-    PaddingLeft(crate::style::values::specified::PaddingLeft),
-    PaddingRight(crate::style::values::specified::PaddingRight),
-    PaddingTop(crate::style::values::specified::PaddingTop),
+    MarginBottom(crate::style::values::specified::Margin),
+    MarginLeft(crate::style::values::specified::Margin),
+    MarginRight(crate::style::values::specified::Margin),
+    MarginTop(crate::style::values::specified::Margin),
+    PaddingBottom(crate::style::values::specified::Padding),
+    PaddingLeft(crate::style::values::specified::Padding),
+    PaddingRight(crate::style::values::specified::Padding),
+    PaddingTop(crate::style::values::specified::Padding),
     Width(crate::style::values::specified::Width),
     WritingMode(crate::style::values::computed::WritingMode),
 }

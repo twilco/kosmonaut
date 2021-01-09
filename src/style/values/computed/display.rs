@@ -1,4 +1,5 @@
 use crate::style::values::computed::{ComputeContext, ValueDefault};
+use crate::style::values::CssValueParse;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 
@@ -32,7 +33,13 @@ impl Display {
         Display::Full(FullDisplay::new(outer, inner))
     }
 
-    pub fn parse<'i, 't>(
+    pub fn initial_value() -> Self {
+        Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)
+    }
+}
+
+impl CssValueParse for Display {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         // FIXME: Parse multi-ident 'full display' values (e.g. "block flow", "block flow-root", ...) here.
@@ -43,10 +50,6 @@ impl Display {
             "inline" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)),
             "inline-block" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::FlowRoot)),
         }
-    }
-
-    pub fn initial_value() -> Self {
-        Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)
     }
 }
 

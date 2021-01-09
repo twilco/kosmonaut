@@ -1,7 +1,8 @@
+use crate::style::properties::PropertyDeclaration;
 use crate::style::values::specified::LengthPercentage;
+use crate::style::values::CssValueParse;
 use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
-use crate::style::properties::PropertyDeclaration;
 
 pub fn parse_padding_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
@@ -35,96 +36,36 @@ pub fn parse_padding_shorthand_into<'i, 't>(
         return Err(first_val.unwrap_err());
     };
 
-    declarations.push(PropertyDeclaration::PaddingTop(PaddingTop {
+    declarations.push(PropertyDeclaration::PaddingTop(Padding {
         length_percentage: top,
     }));
-    declarations.push(PropertyDeclaration::PaddingRight(PaddingRight {
+    declarations.push(PropertyDeclaration::PaddingRight(Padding {
         length_percentage: right,
     }));
-    declarations.push(PropertyDeclaration::PaddingBottom(PaddingBottom {
+    declarations.push(PropertyDeclaration::PaddingBottom(Padding {
         length_percentage: bottom,
     }));
-    declarations.push(PropertyDeclaration::PaddingLeft(PaddingLeft {
+    declarations.push(PropertyDeclaration::PaddingLeft(Padding {
         length_percentage: left,
     }));
     Ok(())
 }
 
-/// Specified values for `padding-bottom`.
+/// Specified value for `padding-<side>`.
 ///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
+/// https://www.w3.org/TR/css-box-3/#padding-physical
 #[derive(Clone, Debug)]
-pub struct PaddingBottom {
+pub struct Padding {
     pub length_percentage: LengthPercentage,
 }
 
-impl PaddingBottom {
-    pub fn parse<'i, 't>(
+impl CssValueParse for Padding {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         input
             .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| PaddingBottom {
-                length_percentage: lp,
-            })
-    }
-}
-
-/// Specified values for `padding-left`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct PaddingLeft {
-    pub length_percentage: LengthPercentage,
-}
-
-impl PaddingLeft {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| PaddingLeft {
-                length_percentage: lp,
-            })
-    }
-}
-
-/// Specified values for `padding-right`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct PaddingRight {
-    pub length_percentage: LengthPercentage,
-}
-
-impl PaddingRight {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| PaddingRight {
-                length_percentage: lp,
-            })
-    }
-}
-
-/// Specified values for `padding-top`.
-///
-/// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#property-index
-#[derive(Clone, Debug)]
-pub struct PaddingTop {
-    pub length_percentage: LengthPercentage,
-}
-
-impl PaddingTop {
-    pub fn parse<'i, 't>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        input
-            .try_parse(|i| LengthPercentage::parse(i))
-            .map(|lp| PaddingTop {
+            .map(|lp| Padding {
                 length_percentage: lp,
             })
     }

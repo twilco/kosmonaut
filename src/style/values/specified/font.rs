@@ -2,6 +2,7 @@ use crate::style::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 
 use crate::style::values::specified::length::LengthPercentage;
+use crate::style::values::CssValueParse;
 
 /// The default font size.
 pub const FONT_MEDIUM_PX: i32 = 16;
@@ -33,8 +34,8 @@ pub enum KeywordSize {
     XXXLarge,
 }
 
-impl KeywordSize {
-    pub fn parse<'i, 't>(
+impl CssValueParse for KeywordSize {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         try_match_ident_ignore_ascii_case! { input,
@@ -51,7 +52,13 @@ impl KeywordSize {
 }
 
 impl FontSize {
-    pub fn parse<'i, 't>(
+    pub fn initial_value() -> Self {
+        FontSize::Keyword(KeywordSize::Medium)
+    }
+}
+
+impl CssValueParse for FontSize {
+    fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
         if let Ok(lp) = input.try_parse(|i| LengthPercentage::parse(i)) {
@@ -61,9 +68,5 @@ impl FontSize {
             Ok(kws) => Ok(FontSize::Keyword(kws)),
             Err(parse_err) => Err(parse_err),
         }
-    }
-
-    pub fn initial_value() -> Self {
-        FontSize::Keyword(KeywordSize::Medium)
     }
 }

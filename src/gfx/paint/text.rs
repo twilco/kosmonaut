@@ -1,10 +1,10 @@
 use crate::gfx::display::CharCommand;
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, CharPaintData, ToVertices};
+use gl::buffer::vbo::VertexBufferObject;
 use gl::program::Program;
 use gl::types::{GLint, GLsizeiptr};
 use gl::vao::VertexArrayObject;
-use gl::vbo::VertexBufferObject;
 use gl::{Gl, ARRAY_BUFFER, DYNAMIC_DRAW, FALSE, FLOAT, TEXTURE0, TEXTURE_2D, TRIANGLES};
 use std::ffi::CString;
 

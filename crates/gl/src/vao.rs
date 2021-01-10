@@ -1,6 +1,7 @@
 use crate::bindings::types::GLuint;
-use crate::vbo::VertexBufferObject;
-use crate::{unbind_buffer_from, Buffer, Gl};
+use crate::buffer::vbo::VertexBufferObject;
+use crate::buffer::{unbind_array_buffer_globally, Buffer};
+use crate::Gl;
 
 /// Represents an OpenGL vertex array object (VAO).
 ///
@@ -38,7 +39,7 @@ impl VertexArrayObject {
 
         config_vao_fn(gl);
 
-        unbind_buffer_from(gl);
+        unbind_array_buffer_globally(gl);
         gl.BindVertexArray(0);
 
         VertexArrayObject {

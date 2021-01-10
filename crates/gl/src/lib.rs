@@ -1,8 +1,10 @@
-use crate::util::opengl_version;
-pub use bindings::*;
 use std::fmt::{Debug, Error, Formatter};
 use std::ops::Deref;
 use std::rc::Rc;
+
+pub use bindings::*;
+
+use crate::util::opengl_version;
 
 #[allow(
     clippy::too_many_arguments,
@@ -10,6 +12,7 @@ use std::rc::Rc;
     clippy::unreadable_literal
 )]
 mod bindings;
+pub mod buffer;
 pub mod error;
 pub mod info_log;
 pub mod pixels;
@@ -18,7 +21,6 @@ pub mod shader;
 pub mod texture;
 pub mod util;
 pub mod vao;
-pub mod vbo;
 pub mod viewport;
 
 // This crate generates `gl_bindings.rs` in the `target` folder.  I have copy-pasted this file
@@ -64,15 +66,4 @@ impl Debug for Gl {
             opengl_version(self)
         )
     }
-}
-
-/// Trait to represent behavior of OpenGL buffers (like a vertex buffer object, VBO).
-pub trait Buffer {
-    /// Binds this buffer to the specified OpenGL instance.
-    fn bind_to(&self, gl: &Gl);
-}
-
-/// Unbinds whatever buffer is currently bound to the specified OpenGL instance.
-pub fn unbind_buffer_from(gl: &Gl) {
-    unsafe { gl.BindBuffer(ARRAY_BUFFER, 0) }
 }

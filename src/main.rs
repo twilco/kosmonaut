@@ -30,14 +30,15 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    css_file_paths_from_files, dump_layout_tree, dump_layout_tree_verbose,
+    css_file_paths_from_files, dump_layout_tree_verbose, has_dump_layout_tree_subcommand,
     html_file_path_from_files, inner_window_height, inner_window_width, scale_factor,
-    setup_and_get_cli_args, DumpLayoutVerbosity,
+    setup_and_get_cli_args, validate_command, DumpLayoutVerbosity,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::{build_display_list, DisplayCommand};
+use crate::gfx::headed::init_window_and_gl;
 use crate::gfx::paint::MasterPainter;
-use crate::gfx::{init_main_window_and_gl, print_gl_info, resize_window};
+use crate::gfx::resize_window;
 use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
 use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
@@ -59,6 +60,10 @@ use std::io::Write;
 #[allow(unused_variables)]
 fn main() {
     let arg_matches = setup_and_get_cli_args();
+    if let Err(error_message) = validate_command(&arg_matches) {
+        eprintln!("{}", error_message);
+        return;
+    }
     let fallback_local_html = "tests/websrc/rainbow-divs.html";
     let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
     let dom = parse_html()
@@ -93,7 +98,7 @@ fn main() {
     let scale_factor_opt = scale_factor(&arg_matches);
     let verbose_dump_layout =
         dump_layout_tree_verbose(&arg_matches).unwrap_or(DumpLayoutVerbosity::NonVerbose);
-    if dump_layout_tree(&arg_matches) {
+    if has_dump_layout_tree_subcommand(&arg_matches) {
         let scale_factor = scale_factor_opt
             .expect("scale factor must be explicitly specified when running layout dump");
         run_layout_dump(
@@ -105,9 +110,7 @@ fn main() {
         );
         return;
     }
-    let (windowed_context, event_loop, gl) =
-        init_main_window_and_gl(inner_width_opt, inner_height_opt);
-    print_gl_info(&windowed_context, &gl);
+    let (windowed_context, event_loop, gl) = init_window_and_gl(inner_width_opt, inner_height_opt);
     run_event_loop(event_loop, gl, dom, windowed_context, scale_factor_opt);
 }
 

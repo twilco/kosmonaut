@@ -13,7 +13,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                 .short("f")
                 .long("files")
                 .value_name("SPACE SEPARATED FILE PATHS")
-                .help("Pass files for Kosmonaut to render.")
+                .help("Pass files for Kosmonaut to render.  This is also the flag that should be used to pass files to any sub-command (e.g. `dump-layout`, `similarity`).")
                 .multiple(true)
                 .takes_value(true)
                 .global(true),
@@ -57,6 +57,23 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                         .long("verbose")
                         .value_name("BOOLEAN")
                         .help("Set to true to make layout dumps more verbose (e.g. include margin, border, padding values).")
+                        .takes_value(true)
+                        .validator(is_bool_validator)
+                )
+        )
+        .subcommand(
+            SubCommand::with_name("similarity")
+                .long_about("
+Performs a pixel-by-pixel comparison of the renderings of two input HTML files, returning their \
+similarity as a percentage.  Use the --files flag to pass input HTML files.  If you any more or \
+any less than two files, this command will error.  If these two files are not HTML, this command \
+will error.
+                ".trim())
+                .arg(
+                    Arg::with_name("similarity-percent-only")
+                        .long("similarity-percent-only")
+                        .value_name("BOOLEAN")
+                        .help("Set to true to make the command only output the similarity percent between the two renderings (e.g. \"99.32%\".")
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
@@ -111,8 +128,12 @@ pub fn css_file_paths_from_files<'a>(arg_matches: &'a ArgMatches<'a>) -> Option<
     })
 }
 
-pub fn dump_layout_tree(arg_matches: &ArgMatches) -> bool {
+pub fn has_dump_layout_tree_subcommand(arg_matches: &ArgMatches) -> bool {
     arg_matches.subcommand_matches("dump-layout").is_some()
+}
+
+pub fn has_similarity_subcommand(arg_matches: &ArgMatches) -> bool {
+    arg_matches.subcommand_matches("similarity").is_some()
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -156,6 +177,59 @@ pub fn inner_window_height(arg_matches: &ArgMatches) -> Option<f32> {
 
 pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
     try_get_arg::<f32>(arg_matches, "scale-factor")
+}
+
+pub fn validate_command(arg_matches: &ArgMatches) -> Result<(), String> {
+    if has_similarity_subcommand(arg_matches) {
+        return validate_similarity_subcommand(arg_matches);
+    }
+    Ok(())
+}
+
+fn validate_similarity_subcommand(arg_matches: &ArgMatches) -> Result<(), String> {
+    let help_str = "Run --help to learn how to use `similarity`.";
+    let files = arg_matches.values_of("files");
+    let err_message = match files {
+        Some(files) => match files.len() {
+            len @ 0..=1 => {
+                format!(
+                    "`similarity` sub-command was specified but only {} --files were passed.  {}",
+                    len, help_str
+                )
+            }
+            2 => {
+                let mut msg = "".to_owned();
+                for file in files {
+                    let parts = file.split('.');
+                    let bad_extension_msg = &format!(
+                        "The `similarity` command only accepts .html files (got {}).  {}",
+                        file, help_str
+                    );
+                    match parts.last() {
+                        Some(file_extension) => {
+                            if file_extension != "html" {
+                                msg += bad_extension_msg
+                            }
+                        }
+                        None => msg += bad_extension_msg,
+                    }
+                }
+                msg
+            }
+            len => {
+                format!("`similarity` sub-command was specified but too many --files ({}) were passed.  {}", len, help_str)
+            }
+        },
+        None => format!(
+            "`similarity` sub-command was specified but no --files were passed.  {}",
+            help_str
+        ),
+    };
+
+    match err_message.trim().is_empty() {
+        true => Ok(()),
+        false => Err(err_message),
+    }
 }
 
 fn try_get_arg<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {

@@ -1,6 +1,7 @@
 use crate::bindings::types::GLuint;
+use crate::buffer::{unbind_array_buffer_globally, Buffer};
 use crate::types::{GLsizeiptr, GLvoid};
-use crate::{unbind_buffer_from, Buffer, Gl, ARRAY_BUFFER, STATIC_DRAW};
+use crate::{Gl, ARRAY_BUFFER, STATIC_DRAW};
 
 /// Represents an OpenGL vertex buffer object (VBO).
 ///
@@ -39,7 +40,7 @@ impl VertexBufferObject {
                 data.as_ptr() as *const GLvoid,                          // pointer to data
                 STATIC_DRAW,                                             // usage
             );
-            unbind_buffer_from(&self.gl);
+            unbind_array_buffer_globally(&self.gl);
         }
     }
 }

@@ -1,0 +1,18 @@
+use crate::{Gl, ARRAY_BUFFER};
+
+pub mod framebuffer;
+pub mod renderbuffer;
+pub mod vbo;
+
+/// Trait to represent behavior of OpenGL buffers (like a vertex buffer object, VBO).
+pub trait Buffer {
+    /// Binds this buffer to the specified OpenGL instance.
+    fn bind_to(&self, gl: &Gl);
+}
+
+/// Unbinds whatever buffer is currently bound to the specified OpenGL instance.
+///
+/// https://khronos.org/registry/OpenGL-Refpages/gl4/
+pub(crate) fn unbind_array_buffer_globally(gl: &Gl) {
+    unsafe { gl.BindBuffer(ARRAY_BUFFER, 0) }
+}

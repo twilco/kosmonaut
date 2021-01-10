@@ -2,10 +2,10 @@ use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, ToVertices};
 use crate::layout::rect::Rect;
 use cssparser::RGBA;
+use gl::buffer::vbo::VertexBufferObject;
 use gl::program::Program;
 use gl::types::{GLint, GLvoid};
 use gl::vao::VertexArrayObject;
-use gl::vbo::VertexBufferObject;
 use gl::Gl;
 use std::ffi::CString;
 

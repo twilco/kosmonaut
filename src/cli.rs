@@ -15,7 +15,6 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
             .help("Pass files for Kosmonaut to render.  This is also the flag that should be used to pass files to any sub-command (e.g. `dump-layout`, `similarity`).")
             .multiple(true)
             .takes_value(true);
-    let files_arg_required = files_arg.clone().required(true);
     let scale_factor_help = format!(
         "Device/window scale factor.  {}",
         headed_or_headless_applicable
@@ -27,7 +26,6 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
         .help(&scale_factor_help)
         .takes_value(true)
         .validator(is_num_validator);
-    let scale_factor_arg_required = scale_factor_arg.clone().required(true);
     let width_help = format!("Window width.  {}", headed_or_headless_applicable);
     let width_arg = Arg::with_name("width")
         .short("w")
@@ -36,7 +34,6 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
         .help(&width_help)
         .takes_value(true)
         .validator(is_num_validator);
-    let width_arg_required = width_arg.clone().required(true);
     let height_help = format!("Window height.  {}", headed_or_headless_applicable);
     let height_arg = Arg::with_name("height")
         .short("h")
@@ -45,7 +42,6 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
         .help(&height_help)
         .takes_value(true)
         .validator(is_num_validator);
-    let height_arg_required = height_arg.clone().required(true);
 
     App::new("Kosmonaut")
         .version("0.1")
@@ -67,10 +63,10 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
-                .arg(files_arg_required.clone())
-                .arg(scale_factor_arg_required)
-                .arg(width_arg_required)
-                .arg(height_arg_required)
+                .arg(files_arg.clone().required(true))
+                .arg(scale_factor_arg.clone().required(true))
+                .arg(width_arg.clone().required(true))
+                .arg(height_arg.clone().required(true))
         )
         .subcommand(
             SubCommand::with_name(SIMILARITY_CMD_NAME)
@@ -88,7 +84,7 @@ will error.
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
-                .arg(files_arg_required.clone())
+                .arg(files_arg.required(true).min_values(2).max_values(2))
                 .arg(scale_factor_arg)
                 .arg(width_arg)
                 .arg(height_arg)
@@ -287,40 +283,22 @@ pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
 }
 
 fn validate_similarity_subcommand(files: &Values) -> Result<(), String> {
-    let help_str = "Run --help to learn how to use `similarity`.";
-    let err_message = match files.len() {
-        len @ 0..=1 => {
-            format!(
-                "`similarity` sub-command was specified but only {} --files were passed.  {}",
-                len, help_str
-            )
-        }
-        2 => {
-            let mut msg = "".to_owned();
-            for file in files.clone() {
-                let parts = file.split('.');
-                let bad_extension_msg = &format!(
-                    "The `similarity` command only accepts .html files (got {}).  {}",
-                    file, help_str
-                );
-                match parts.last() {
-                    Some(file_extension) => {
-                        if file_extension != "html" {
-                            msg += bad_extension_msg
-                        }
-                    }
-                    None => msg += bad_extension_msg,
+    let mut err_message = "".to_owned();
+    for file in files.clone() {
+        let parts = file.split('.');
+        let bad_extension_msg = &format!(
+            "The `similarity` command only accepts .html files (got {}).  Run --help to learn how to use `similarity`.",
+            file
+        );
+        match parts.last() {
+            Some(file_extension) => {
+                if file_extension != "html" {
+                    err_message += bad_extension_msg
                 }
             }
-            msg
+            None => err_message += bad_extension_msg,
         }
-        len => {
-            format!(
-                "`similarity` sub-command was specified but too many --files ({}) were passed.  {}",
-                len, help_str
-            )
-        }
-    };
+    }
 
     match err_message.trim().is_empty() {
         true => Ok(()),

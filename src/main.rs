@@ -30,9 +30,9 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    css_file_paths_from_files, dump_layout_tree_verbose, has_dump_layout_tree_subcommand,
-    html_file_path_from_files, inner_window_height, inner_window_width, scale_factor,
-    setup_and_get_cli_args, validate_command, DumpLayoutVerbosity,
+    css_file_paths_from_files, get_command, html_file_path_from_files,
+    html_file_path_from_files_opt, setup_and_get_cli_args, Command, DumpLayoutCmd, RenderCmd,
+    SimilarityCmd,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::{build_display_list, DisplayCommand};
@@ -44,7 +44,7 @@ use crate::layout::layout_box::LayoutBox;
 use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
 use crate::style::parse_css_to_rules;
 use crate::style::stylesheet::Stylesheet;
-use clap::ArgMatches;
+use clap::Values;
 pub use common::Side;
 use cssparser::RGBA;
 use gl::Gl;
@@ -60,15 +60,51 @@ use std::io::Write;
 #[allow(unused_variables)]
 fn main() {
     let arg_matches = setup_and_get_cli_args();
-    if let Err(error_message) = validate_command(&arg_matches) {
-        eprintln!("{}", error_message);
-        return;
+    match get_command(&arg_matches) {
+        Ok(command) => run(command),
+        Err(err_msg) => {
+            eprintln!("{}", err_msg);
+        }
+    };
+}
+
+fn run(command: Command) {
+    match command {
+        Command::Render(render_cmd) => run_render(render_cmd),
+        Command::DumpLayout(dump_layout_cmd) => run_dump_layout(dump_layout_cmd),
+        Command::Similarity(similarity_cmd) => run_similarity(similarity_cmd),
     }
-    let fallback_local_html = "tests/websrc/rainbow-divs.html";
-    let html_file = html_file_path_from_files(&arg_matches).unwrap_or(fallback_local_html);
+}
+
+fn run_dump_layout(dump_layout_cmd: DumpLayoutCmd) {
+    // TODO: Fix unwrap
+    let html_file_path = html_file_path_from_files(dump_layout_cmd.files.clone()).unwrap();
+    let styled_dom = load_and_style_dom(html_file_path, get_author_sheets(dump_layout_cmd.files));
+
+    let write_to = &mut std::io::stdout();
+    match build_box_tree(styled_dom, None) {
+        Some(mut box_tree) => {
+            global_layout(
+                &mut box_tree,
+                dump_layout_cmd.window_width,
+                dump_layout_cmd.window_height,
+                dump_layout_cmd.scale_factor,
+            );
+            box_tree.dump_layout(write_to, 0, dump_layout_cmd.verbosity);
+        }
+        None => {
+            write_to
+                .write_all("empty box tree".as_bytes())
+                .expect("could not write to stdout during layout dump");
+        }
+    };
+}
+
+// TODO: This should probably take PathBuf, not &str
+fn load_and_style_dom(html_file_path: &str, author_sheets: Vec<Stylesheet>) -> NodeRef {
     let dom = parse_html()
         .from_utf8()
-        .read_from(&mut File::open(html_file).unwrap())
+        .read_from(&mut File::open(html_file_path).unwrap())
         .unwrap();
     let mut embedded_styles_str = extract_embedded_styles(dom.clone());
     let embedded_styles = match parse_css_to_rules(&mut embedded_styles_str) {
@@ -88,76 +124,42 @@ fn main() {
         &embedded_styles,
         &[ua_sheet],
         &[],
-        &get_author_sheets(&arg_matches),
+        &author_sheets,
     );
-    let (inner_width_opt, inner_height_opt) = (
-        inner_window_width(&arg_matches),
-        inner_window_height(&arg_matches),
-    );
-
-    let scale_factor_opt = scale_factor(&arg_matches);
-    let verbose_dump_layout =
-        dump_layout_tree_verbose(&arg_matches).unwrap_or(DumpLayoutVerbosity::NonVerbose);
-    if has_dump_layout_tree_subcommand(&arg_matches) {
-        let scale_factor = scale_factor_opt
-            .expect("scale factor must be explicitly specified when running layout dump");
-        run_layout_dump(
-            dom,
-            inner_width_opt,
-            inner_height_opt,
-            scale_factor,
-            verbose_dump_layout,
-        );
-        return;
-    }
-    let (windowed_context, event_loop, gl) = init_window_and_gl(inner_width_opt, inner_height_opt);
-    run_event_loop(event_loop, gl, dom, windowed_context, scale_factor_opt);
+    dom
 }
 
-fn get_author_sheets(arg_matches: &ArgMatches) -> Vec<Stylesheet> {
-    css_file_paths_from_files(&arg_matches).map_or(Vec::new(), |css_file_paths| {
-        css_file_paths
-            .iter()
-            .map(|&css_file_path| {
-                style::stylesheet::parse_css_to_stylesheet(
-                    Some(css_file_path.to_owned()),
-                    &mut std::fs::read_to_string(css_file_path)
-                        .expect("couldn't read css file to string"),
-                )
-                .expect("error parsing stylesheet")
-            })
-            .collect::<Vec<_>>()
-    })
+fn run_render(render_cmd: RenderCmd) {
+    let fallback_local_html = "tests/websrc/rainbow-divs.html";
+    let html_file_path =
+        html_file_path_from_files_opt(render_cmd.files.clone()).unwrap_or(fallback_local_html);
+    let author_sheets = render_cmd.files.map(get_author_sheets).unwrap_or_default();
+    let styled_dom = load_and_style_dom(html_file_path, author_sheets);
+    let (windowed_context, event_loop, gl) =
+        init_window_and_gl(render_cmd.window_width, render_cmd.window_height);
+    run_event_loop(
+        event_loop,
+        gl,
+        styled_dom,
+        windowed_context,
+        render_cmd.scale_factor,
+    );
 }
 
-fn run_layout_dump(
-    styled_dom: NodeRef,
-    inner_width_opt: Option<f32>,
-    inner_height_opt: Option<f32>,
-    scale_factor: f32,
-    verbosity: DumpLayoutVerbosity,
-) {
-    let write_to = &mut std::io::stdout();
-    match build_box_tree(styled_dom, None) {
-        Some(mut box_tree) => {
-            global_layout(
-                &mut box_tree,
-                inner_width_opt.expect(
-                    "Inner window width CLI arg 'width' must be specified for dump-layout.",
-                ),
-                inner_height_opt.expect(
-                    "Inner window height CLI arg 'height' must be specified for dump-layout.",
-                ),
-                scale_factor,
-            );
-            box_tree.dump_layout(write_to, 0, verbosity);
-        }
-        None => {
-            write_to
-                .write_all("empty box tree".as_bytes())
-                .expect("could not write to stdout during layout dump");
-        }
-    };
+fn run_similarity(similarity_cmd: SimilarityCmd) {}
+
+fn get_author_sheets(files: Values) -> Vec<Stylesheet> {
+    css_file_paths_from_files(files)
+        .iter()
+        .map(|css_file_path| {
+            style::stylesheet::parse_css_to_stylesheet(
+                Some((*css_file_path).to_owned()),
+                &mut std::fs::read_to_string(css_file_path)
+                    .expect("couldn't read css file to string"),
+            )
+            .expect("error parsing stylesheet")
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn run_event_loop(

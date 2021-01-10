@@ -49,7 +49,7 @@ pub fn dump_layout_cmd_verbose_scaled(
     cmd.arg("--height");
     cmd.arg(format!("{}", LAYOUT_DUMP_INNER_WINDOW_HEIGHT_PX));
     cmd.arg("--verbose");
-    cmd.arg(format!("{}", verbosity.to_cli_string()));
+    cmd.arg(format!("{}", dbg!(verbosity.to_cli_string())));
     cmd.arg("--scale-factor");
     cmd.arg(format!("{}", scale_factor));
     cmd

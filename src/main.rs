@@ -31,8 +31,8 @@ pub mod style;
 
 use crate::cli::{
     css_file_paths_from_files, get_command, html_file_path_from_files,
-    html_file_path_from_files_opt, setup_and_get_cli_args, Command, DumpLayoutCmd, RenderCmd,
-    SimilarityCmd,
+    html_file_path_from_files_opt, setup_and_get_cli_args, CliCommand, Command, DumpLayoutCmd,
+    RenderCmd, SimilarityCmd,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::{build_display_list, DisplayCommand};
@@ -60,47 +60,89 @@ use std::io::Write;
 #[allow(unused_variables)]
 fn main() {
     let arg_matches = setup_and_get_cli_args();
-    match get_command(&arg_matches) {
-        Ok(command) => run(command),
-        Err(err_msg) => {
-            eprintln!("{}", err_msg);
-        }
+    if let Err(err_msg) = get_command(&arg_matches).run() {
+        eprintln!("{}", err_msg);
     };
 }
 
-fn run(command: Command) {
-    match command {
-        Command::Render(render_cmd) => run_render(render_cmd),
-        Command::DumpLayout(dump_layout_cmd) => run_dump_layout(dump_layout_cmd),
-        Command::Similarity(similarity_cmd) => run_similarity(similarity_cmd),
+impl<'a> CliCommand for Command<'a> {
+    fn run(&self) -> Result<(), String> {
+        match self {
+            Command::Render(cmd) => cmd.run(),
+            Command::DumpLayout(cmd) => cmd.run(),
+            Command::Similarity(cmd) => cmd.run(),
+        }
     }
 }
 
-fn run_dump_layout(dump_layout_cmd: DumpLayoutCmd) {
-    // TODO: Fix unwrap
-    let html_file_path = html_file_path_from_files(dump_layout_cmd.files.clone()).unwrap();
-    let styled_dom = load_and_style_dom(html_file_path, get_author_sheets(dump_layout_cmd.files));
+impl CliCommand for DumpLayoutCmd<'_> {
+    fn run(&self) -> Result<(), String> {
+        let html_file_path = html_file_path_from_files(self.files.clone()).ok_or(
+            "a .html file must be passed via --files when running the 'dump-layout' command",
+        )?;
+        let styled_dom = load_and_style_dom(html_file_path, get_author_sheets(self.files.clone()));
 
-    let write_to = &mut std::io::stdout();
-    match build_box_tree(styled_dom, None) {
-        Some(mut box_tree) => {
-            global_layout(
-                &mut box_tree,
-                dump_layout_cmd.window_width,
-                dump_layout_cmd.window_height,
-                dump_layout_cmd.scale_factor,
-            );
-            box_tree.dump_layout(write_to, 0, dump_layout_cmd.verbosity);
-        }
-        None => {
-            write_to
-                .write_all("empty box tree".as_bytes())
-                .expect("could not write to stdout during layout dump");
-        }
-    };
+        let write_to = &mut std::io::stdout();
+        match build_box_tree(styled_dom, None) {
+            Some(mut box_tree) => {
+                global_layout(
+                    &mut box_tree,
+                    self.window_width,
+                    self.window_height,
+                    self.scale_factor,
+                );
+                box_tree.dump_layout(write_to, 0, self.verbosity);
+            }
+            None => {
+                write_to
+                    .write_all("empty box tree".as_bytes())
+                    .expect("could not write to stdout during layout dump");
+            }
+        };
+        Ok(())
+    }
 }
 
-// TODO: This should probably take PathBuf, not &str
+impl CliCommand for SimilarityCmd<'_> {
+    fn run(&self) -> Result<(), String> {
+        let mut html_file_paths = Vec::new();
+        for file in self.files.clone() {
+            let parts = file.split('.');
+            if let Some(file_extension) = parts.last() {
+                if file_extension != "html" {
+                    return Err(format!("The `similarity` command only accepts .html files (got {}).  Run --help to learn how to use `similarity`.", file));
+                }
+                html_file_paths.push(file);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl CliCommand for RenderCmd<'_> {
+    fn run(&self) -> Result<(), String> {
+        let fallback_local_html = "tests/websrc/rainbow-divs.html";
+        let html_file_path =
+            html_file_path_from_files_opt(self.files.clone()).unwrap_or(fallback_local_html);
+        let author_sheets = self
+            .files
+            .clone()
+            .map(get_author_sheets)
+            .unwrap_or_default();
+        let styled_dom = load_and_style_dom(html_file_path, author_sheets);
+        let (windowed_context, event_loop, gl) =
+            init_window_and_gl(self.window_width, self.window_height);
+        run_event_loop(
+            event_loop,
+            gl,
+            styled_dom,
+            windowed_context,
+            self.scale_factor,
+        );
+        Ok(())
+    }
+}
+
 fn load_and_style_dom(html_file_path: &str, author_sheets: Vec<Stylesheet>) -> NodeRef {
     let dom = parse_html()
         .from_utf8()
@@ -128,25 +170,6 @@ fn load_and_style_dom(html_file_path: &str, author_sheets: Vec<Stylesheet>) -> N
     );
     dom
 }
-
-fn run_render(render_cmd: RenderCmd) {
-    let fallback_local_html = "tests/websrc/rainbow-divs.html";
-    let html_file_path =
-        html_file_path_from_files_opt(render_cmd.files.clone()).unwrap_or(fallback_local_html);
-    let author_sheets = render_cmd.files.map(get_author_sheets).unwrap_or_default();
-    let styled_dom = load_and_style_dom(html_file_path, author_sheets);
-    let (windowed_context, event_loop, gl) =
-        init_window_and_gl(render_cmd.window_width, render_cmd.window_height);
-    run_event_loop(
-        event_loop,
-        gl,
-        styled_dom,
-        windowed_context,
-        render_cmd.scale_factor,
-    );
-}
-
-fn run_similarity(similarity_cmd: SimilarityCmd) {}
 
 fn get_author_sheets(files: Values) -> Vec<Stylesheet> {
     css_file_paths_from_files(files)

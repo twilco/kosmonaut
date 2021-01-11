@@ -1,4 +1,3 @@
-use crate::cli::Command::Similarity;
 use clap::{App, Arg, ArgMatches, SubCommand, Values};
 use std::str::FromStr;
 
@@ -8,10 +7,10 @@ const SIMILARITY_CMD_NAME: &str = "similarity";
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     let headed_or_headless_applicable =
         "Applicable in both headed and headless (e.g. the dump-layout and similarity commands) contexts.";
+    let default_files_arg_value_name = "FILES";
     let files_arg = Arg::with_name("files")
             .short("f")
             .long("files")
-            .value_name("SPACE SEPARATED FILE PATHS")
             .help("Pass files for Kosmonaut to render.  This is also the flag that should be used to pass files to any sub-command (e.g. `dump-layout`, `similarity`).")
             .multiple(true)
             .takes_value(true);
@@ -47,7 +46,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
         .version("0.1")
         .author("Tyler Wilcock (twilco)")
         .about("A web browser for the space age 🚀")
-        .arg(files_arg.clone())
+        .arg(files_arg.clone().value_name(default_files_arg_value_name))
         .arg(width_arg.clone())
         .arg(height_arg.clone())
         .arg(scale_factor_arg.clone())
@@ -63,7 +62,7 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
-                .arg(files_arg.clone().required(true))
+                .arg(files_arg.clone().required(true).value_name(default_files_arg_value_name))
                 .arg(scale_factor_arg.clone().required(true))
                 .arg(width_arg.clone().required(true))
                 .arg(height_arg.clone().required(true))
@@ -84,7 +83,7 @@ will error.
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
-                .arg(files_arg.required(true).min_values(2).max_values(2))
+                .arg(files_arg.required(true).min_values(2).max_values(2).value_name("EXACTLY TWO HTML FILES"))
                 .arg(scale_factor_arg)
                 .arg(width_arg)
                 .arg(height_arg)
@@ -177,6 +176,10 @@ pub fn dump_layout_tree_verbose(
     })
 }
 
+pub(crate) trait CliCommand {
+    fn run(&self) -> Result<(), String>;
+}
+
 #[derive(Clone, Debug)]
 pub struct RenderCmd<'a> {
     pub files: Option<Values<'a>>,
@@ -226,8 +229,8 @@ impl<'a> From<SimilarityCmd<'a>> for Command<'a> {
     }
 }
 
-pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Result<Command<'a>, String> {
-    Ok(if has_dump_layout_tree_subcommand(global_matches) {
+pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Command<'a> {
+    if has_dump_layout_tree_subcommand(global_matches) {
         let matches = global_matches
             .subcommand_matches(DUMP_LAYOUT_CMD_NAME)
             .unwrap();
@@ -245,7 +248,6 @@ pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Result<Command<'a>, St
             .subcommand_matches(SIMILARITY_CMD_NAME)
             .unwrap();
         let files = matches.values_of("files").unwrap();
-        validate_similarity_subcommand(&files)?;
         SimilarityCmd {
             files,
             window_width: window_width(matches),
@@ -267,7 +269,7 @@ pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Result<Command<'a>, St
             scale_factor,
         }
         .into()
-    })
+    }
 }
 
 pub fn window_width(arg_matches: &ArgMatches) -> Option<f32> {
@@ -280,30 +282,6 @@ pub fn window_height(arg_matches: &ArgMatches) -> Option<f32> {
 
 pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
     try_get_arg::<f32>(arg_matches, "scale-factor")
-}
-
-fn validate_similarity_subcommand(files: &Values) -> Result<(), String> {
-    let mut err_message = "".to_owned();
-    for file in files.clone() {
-        let parts = file.split('.');
-        let bad_extension_msg = &format!(
-            "The `similarity` command only accepts .html files (got {}).  Run --help to learn how to use `similarity`.",
-            file
-        );
-        match parts.last() {
-            Some(file_extension) => {
-                if file_extension != "html" {
-                    err_message += bad_extension_msg
-                }
-            }
-            None => err_message += bad_extension_msg,
-        }
-    }
-
-    match err_message.trim().is_empty() {
-        true => Ok(()),
-        false => Err(err_message),
-    }
 }
 
 fn try_get_arg<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {

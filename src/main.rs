@@ -115,6 +115,10 @@ impl CliCommand for SimilarityCmd<'_> {
                 html_file_paths.push(file);
             }
         }
+        let num_paths = html_file_paths.len();
+        if num_paths != 2 {
+            return Err(format!("The `similarity` command requires that exactly 2 .html files are specified -- got {}", num_paths));
+        }
         Ok(())
     }
 }

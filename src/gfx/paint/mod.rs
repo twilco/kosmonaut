@@ -1,6 +1,7 @@
 use crate::gfx::display::DisplayCommand;
 use crate::gfx::paint::rect::RectPainter;
 use crate::gfx::paint::text::TextPainter;
+use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::CSSFloat;
 use cssparser::RGBA;
 use gl::program::Program;
@@ -58,7 +59,7 @@ impl MasterPainter {
         })
     }
 
-    pub fn paint(
+    pub fn paint_headed(
         &mut self,
         windowed_context: &WindowedContext<PossiblyCurrent>,
         display_list: &[DisplayCommand],
@@ -70,11 +71,36 @@ impl MasterPainter {
         let viewport_width = windowed_context.window().inner_size().width;
         let viewport_height = windowed_context.window().inner_size().height;
 
+        self.paint_inner(
+            CSSPixelLength::new(viewport_width as f32),
+            CSSPixelLength::new(viewport_height as f32),
+            display_list,
+        );
+        windowed_context
+            .swap_buffers()
+            .expect("couldn't swap window buffers");
+    }
+
+    pub fn paint_headless(
+        &mut self,
+        viewport_width: CSSPixelLength,
+        viewport_height: CSSPixelLength,
+        display_list: &[DisplayCommand],
+    ) {
+        self.paint_inner(viewport_width, viewport_height, display_list);
+    }
+
+    fn paint_inner(
+        &mut self,
+        viewport_width: CSSPixelLength,
+        viewport_height: CSSPixelLength,
+        display_list: &[DisplayCommand],
+    ) {
         for command in display_list {
             self.process_display_command(
                 command,
-                viewport_width as CSSFloat,
-                viewport_height as CSSFloat,
+                viewport_width.px(),
+                viewport_height.px(),
             );
         }
         self.rect_painter.paint(self.rect_vertices.as_slice());
@@ -82,9 +108,6 @@ impl MasterPainter {
         // Now that we've painted, let's dump the paint buckets so they're clean for the next paint.
         self.rect_vertices.clear();
         self.text_vertices.clear();
-        windowed_context
-            .swap_buffers()
-            .expect("couldn't swap window buffers");
     }
 
     fn process_display_command(

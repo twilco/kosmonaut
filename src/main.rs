@@ -119,6 +119,11 @@ impl CliCommand for SimilarityCmd<'_> {
         if num_paths != 2 {
             return Err(format!("The `similarity` command requires that exactly 2 .html files are specified -- got {}", num_paths));
         }
+
+        let (dom_one, dom_two) = (
+            load_and_style_dom(html_file_paths.get(0).unwrap(), vec![]),
+            load_and_style_dom(html_file_paths.get(1).unwrap(), vec![]),
+        );
         Ok(())
     }
 }
@@ -205,7 +210,7 @@ pub fn run_event_loop(
         sanitize_windowed_context_scale_factor(windowed_context.window().scale_factor() as f32)
     });
     let mut master_painter = MasterPainter::new(&gl, scale).unwrap();
-    paint(
+    paint_headed(
         clean_box_tree.clone(),
         &windowed_context,
         &char_handle,
@@ -220,7 +225,7 @@ pub fn run_event_loop(
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(physical_size) => {
                     resize_window(&gl, &windowed_context, physical_size);
-                    paint(
+                    paint_headed(
                         clean_box_tree.clone(),
                         &windowed_context,
                         &char_handle,
@@ -234,7 +239,7 @@ pub fn run_event_loop(
                 } => {
                     scale = *scale_factor as f32;
                     resize_window(&gl, &windowed_context, new_inner_size);
-                    paint(
+                    paint_headed(
                         clean_box_tree.clone(),
                         &windowed_context,
                         &char_handle,
@@ -248,34 +253,34 @@ pub fn run_event_loop(
             _ => (),
         }
     });
+}
 
-    fn paint(
-        box_tree_opt: Option<LayoutBox>,
-        windowed_context: &WindowedContext<PossiblyCurrent>,
-        char_handle: &CharHandle,
-        painter: &mut MasterPainter,
-        scale_factor: f32,
-    ) {
-        let display_list = if let Some(mut box_tree) = box_tree_opt {
-            let inner_window_size = windowed_context.window().inner_size();
-            global_layout(
-                &mut box_tree,
-                inner_window_size.width as f32,
-                inner_window_size.width as f32,
-                scale_factor,
-            );
-            build_display_list(&box_tree, &char_handle, scale_factor)
-        } else {
-            // There is no box tree to paint (e.g. in the case of `html { display: none }`, so paint
-            // only the viewport background.
-            // TODO: The viewport background color should come from system colors, not be hardcoded
-            // to white.
-            vec![DisplayCommand::ViewportBackground(RGBA::new(
-                255, 255, 255, 0,
-            ))]
-        };
-        painter.paint(&windowed_context, &display_list);
-    }
+fn paint_headed(
+    box_tree_opt: Option<LayoutBox>,
+    windowed_context: &WindowedContext<PossiblyCurrent>,
+    char_handle: &CharHandle,
+    painter: &mut MasterPainter,
+    scale_factor: f32,
+) {
+    let display_list = if let Some(mut box_tree) = box_tree_opt {
+        let inner_window_size = windowed_context.window().inner_size();
+        global_layout(
+            &mut box_tree,
+            inner_window_size.width as f32,
+            inner_window_size.width as f32,
+            scale_factor,
+        );
+        build_display_list(&box_tree, &char_handle, scale_factor)
+    } else {
+        // There is no box tree to paint (e.g. in the case of `html { display: none }`, so paint
+        // only the viewport background.
+        // TODO: The viewport background color should come from system colors, not be hardcoded
+        // to white.
+        vec![DisplayCommand::ViewportBackground(RGBA::new(
+            255, 255, 255, 0,
+        ))]
+    };
+    painter.paint_headed(&windowed_context, &display_list);
 }
 
 fn sanitize_windowed_context_scale_factor(scale_factor: f32) -> f32 {

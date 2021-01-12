@@ -93,6 +93,6 @@ pub enum VaoErr {
 
 impl Drop for VertexArrayObject {
     fn drop(&mut self) {
-        unsafe { self.gl.DeleteVertexArrays(1, self.name as *const GLuint) }
+        unsafe { self.gl.DeleteVertexArrays(1, &mut self.name) }
     }
 }

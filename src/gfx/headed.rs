@@ -1,5 +1,5 @@
 use crate::gfx::{
-    load_and_config_gl, print_gl_info, resize_window, DEFAULT_INNER_WINDOW_HEIGHT_PX,
+    load_and_config_gl, print_gl_info, resize_window, LogGlInfo, DEFAULT_INNER_WINDOW_HEIGHT_PX,
     DEFAULT_INNER_WINDOW_WIDTH_PX, TARGETED_GL_PROFILE,
 };
 use gl::Gl;
@@ -14,6 +14,7 @@ use std::io::Cursor;
 pub fn init_window_and_gl(
     inner_width_opt: Option<f32>,
     inner_height_opt: Option<f32>,
+    log_gl_info: LogGlInfo,
 ) -> (WindowedContext<PossiblyCurrent>, EventLoop<()>, Gl) {
     let el = EventLoop::new();
     let initial_physical_size = PhysicalSize {
@@ -38,17 +39,22 @@ pub fn init_window_and_gl(
         .build_windowed(wb, &el)
         .unwrap();
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
-    let gl = load_and_config_headed_gl(&windowed_context);
+    let gl = load_and_config_headed_gl(&windowed_context, log_gl_info);
     resize_window(&gl, &windowed_context, &initial_physical_size);
     (windowed_context, el, gl)
 }
 
-fn load_and_config_headed_gl(windowed_context: &WindowedContext<PossiblyCurrent>) -> Gl {
+fn load_and_config_headed_gl(
+    windowed_context: &WindowedContext<PossiblyCurrent>,
+    log_gl_info: LogGlInfo,
+) -> Gl {
     let gl = load_and_config_gl(windowed_context.context());
-    print_gl_info(
-        &windowed_context,
-        Some(windowed_context.get_pixel_format()),
-        &gl,
-    );
+    if log_gl_info == LogGlInfo::Yes {
+        print_gl_info(
+            &windowed_context,
+            Some(windowed_context.get_pixel_format()),
+            &gl,
+        );
+    }
     gl
 }

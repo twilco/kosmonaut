@@ -1,7 +1,7 @@
 use crate::bindings::types::{GLint, GLsizei, GLvoid};
 use crate::{Gl, RGBA, UNSIGNED_BYTE};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct RgbaPixel {
     pub r: u8,
     pub g: u8,

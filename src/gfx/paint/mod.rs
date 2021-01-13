@@ -68,12 +68,12 @@ impl MasterPainter {
         // also have its viewport specified to the below dimensions, presumably done outside this
         // function when the window is resized.
         // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml
-        let viewport_width = windowed_context.window().inner_size().width;
-        let viewport_height = windowed_context.window().inner_size().height;
+        let window_width = windowed_context.window().inner_size().width;
+        let window_height = windowed_context.window().inner_size().height;
 
         self.paint_inner(
-            CSSPixelLength::new(viewport_width as f32),
-            CSSPixelLength::new(viewport_height as f32),
+            CSSPixelLength::new(window_width as f32),
+            CSSPixelLength::new(window_height as f32),
             display_list,
         );
         windowed_context
@@ -83,25 +83,21 @@ impl MasterPainter {
 
     pub fn paint_headless(
         &mut self,
-        viewport_width: CSSPixelLength,
-        viewport_height: CSSPixelLength,
+        window_width: CSSPixelLength,
+        window_height: CSSPixelLength,
         display_list: &[DisplayCommand],
     ) {
-        self.paint_inner(viewport_width, viewport_height, display_list);
+        self.paint_inner(window_width, window_height, display_list);
     }
 
     fn paint_inner(
         &mut self,
-        viewport_width: CSSPixelLength,
-        viewport_height: CSSPixelLength,
+        window_width: CSSPixelLength,
+        window_height: CSSPixelLength,
         display_list: &[DisplayCommand],
     ) {
         for command in display_list {
-            self.process_display_command(
-                command,
-                viewport_width.px(),
-                viewport_height.px(),
-            );
+            self.process_display_command(command, window_width.px(), window_height.px());
         }
         self.rect_painter.paint(self.rect_vertices.as_slice());
         self.text_painter.paint(self.text_vertices.as_slice());

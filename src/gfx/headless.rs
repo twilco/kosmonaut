@@ -1,11 +1,11 @@
-use crate::gfx::{
-    load_and_config_gl, print_gl_info, DEFAULT_INNER_WINDOW_HEIGHT_PX,
-    DEFAULT_INNER_WINDOW_WIDTH_PX, TARGETED_GL_PROFILE,
-};
+use crate::gfx::{load_and_config_gl, print_gl_info, LogGlInfo, TARGETED_GL_PROFILE};
 use gl::buffer::framebuffer::FrameBuffer;
 use gl::buffer::renderbuffer::RenderBuffer;
+use gl::buffer::Buffer;
+use gl::pixels::{read_pixels, RgbaPixel};
+use gl::types::GLint;
 use gl::viewport::resize_viewport;
-use gl::Gl;
+use gl::{Gl, COLOR_ATTACHMENT0};
 use glutin::dpi::PhysicalSize;
 use glutin::event_loop::EventLoop;
 use glutin::{
@@ -14,19 +14,17 @@ use glutin::{
 };
 
 pub fn init_framebuffer_and_gl(
-    width_px_opt: Option<f32>,
-    height_px_opt: Option<f32>,
+    width_px: f32,
+    height_px: f32,
+    log_gl_info: LogGlInfo,
 ) -> HeadlessGfxContent<PossiblyCurrent> {
     let cb = ContextBuilder::new()
         .with_gl_profile(TARGETED_GL_PROFILE)
         .with_gl(GlRequest::Latest);
-    let size = PhysicalSize::new(
-        width_px_opt.unwrap_or(DEFAULT_INNER_WINDOW_WIDTH_PX),
-        height_px_opt.unwrap_or(DEFAULT_INNER_WINDOW_HEIGHT_PX),
-    );
-    let (headless_context, _el) = build_context(cb).unwrap();
+    let size = PhysicalSize::new(width_px, height_px);
+    let (headless_context, _el) = build_context(cb, log_gl_info).unwrap();
     let headless_context = unsafe { headless_context.make_current().unwrap() };
-    let gl = load_and_config_headless_gl(&headless_context);
+    let gl = load_and_config_headless_gl(&headless_context, log_gl_info);
     let framebuffer = FrameBuffer::new(
         RenderBuffer::new(&gl, size.width as _, size.height as _),
         &gl,
@@ -35,15 +33,20 @@ pub fn init_framebuffer_and_gl(
     HeadlessGfxContent::new(headless_context, framebuffer, gl)
 }
 
-pub fn load_and_config_headless_gl(context: &Context<PossiblyCurrent>) -> Gl {
+pub fn load_and_config_headless_gl(
+    context: &Context<PossiblyCurrent>,
+    log_gl_info: LogGlInfo,
+) -> Gl {
     let gl = load_and_config_gl(context);
-    print_gl_info(context, None, &gl);
+    if log_gl_info == LogGlInfo::Yes {
+        print_gl_info(context, None, &gl);
+    }
     gl
 }
 
 pub struct HeadlessGfxContent<T: ContextCurrentState> {
     /// The OpenGL context.
-    context: Context<T>,
+    _context: Context<T>,
     /// The framebuffer to render to.
     framebuffer: FrameBuffer,
     /// The handle to the OpenGL API associated with `context`.
@@ -53,10 +56,29 @@ pub struct HeadlessGfxContent<T: ContextCurrentState> {
 impl<T: ContextCurrentState> HeadlessGfxContent<T> {
     pub fn new(context: Context<T>, framebuffer: FrameBuffer, gl: Gl) -> HeadlessGfxContent<T> {
         HeadlessGfxContent {
-            context,
+            _context: context,
             framebuffer,
             gl,
         }
+    }
+
+    pub fn gl(&self) -> &Gl {
+        &self.gl
+    }
+
+    pub fn read_pixels(&self, window_width: f32, window_height: f32) -> Vec<RgbaPixel> {
+        // All framebuffers in Kosmonaut are currently attached to COLOR_ATTACHMENT0.
+        // https://docs.gl/gl3/glReadBuffer
+        unsafe {
+            self.gl.ReadBuffer(COLOR_ATTACHMENT0);
+        }
+        read_pixels(&self.gl, window_width as GLint, window_height as GLint)
+    }
+
+    /// Binds the framebuffer associated with this context to the GL handle associated with this
+    /// context.  Note this is a GL-handle-global operation.
+    pub fn bind_framebuffer(&self) {
+        self.framebuffer.bind_to(&self.gl);
     }
 }
 
@@ -86,11 +108,14 @@ fn build_context_osmesa<T1: ContextCurrentState>(
     cb.build_osmesa(size_one)
 }
 
+// This function was aken from here and modified slightly for our needs (Glutin is Apache 2.0 licensed):
+// https://github.com/rust-windowing/glutin/blob/bab33a84dfb094ff65c059400bed7993434638e2/glutin_examples/examples/headless.rs#L38
 #[cfg(target_os = "linux")]
 fn build_context<T1: ContextCurrentState>(
     cb: ContextBuilder<T1>,
+    log_gl_info: LogGlInfo,
 ) -> Result<(Context<NotCurrent>, EventLoop<()>), [CreationError; 3]> {
-    // On unix operating systems, you should always try for surfaceless first,
+    // On Unix operating systems, you should always try for surfaceless first,
     // and if that does not work, headless (pbuffers), and if that too fails,
     // finally osmesa.
     //
@@ -99,19 +124,25 @@ fn build_context<T1: ContextCurrentState>(
     // events loop.
     let el = EventLoop::new();
 
-    println!("Trying surfaceless");
+    if log_gl_info == LogGlInfo::Yes {
+        println!("Trying surfaceless");
+    }
     let err1 = match build_context_surfaceless(cb.clone(), &el) {
         Ok(ctx) => return Ok((ctx, el)),
         Err(err) => err,
     };
 
-    println!("Trying headless");
+    if log_gl_info == LogGlInfo::Yes {
+        println!("Trying headless");
+    }
     let err2 = match build_context_headless(cb.clone(), &el) {
         Ok(ctx) => return Ok((ctx, el)),
         Err(err) => err,
     };
 
-    println!("Trying osmesa");
+    if log_gl_info == LogGlInfo::Yes {
+        println!("Trying osmesa");
+    }
     let err3 = match build_context_osmesa(cb) {
         Ok(ctx) => return Ok((ctx, el)),
         Err(err) => err,

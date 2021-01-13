@@ -53,6 +53,6 @@ impl Buffer for VertexBufferObject {
 
 impl Drop for VertexBufferObject {
     fn drop(&mut self) {
-        unsafe { self.gl.DeleteBuffers(1, &mut self.name) }
+        unsafe { self.gl.DeleteBuffers(1, &self.name) }
     }
 }

@@ -43,6 +43,12 @@ pub fn resize_window(
     windowed_context.resize(*new_size);
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum LogGlInfo {
+    Yes,
+    No,
+}
+
 /// Print's basic diagnostic information about the given OpenGL context and GL instance.
 ///
 /// If you have a WindowedContext, you can also pass the the pixel format of the underlying frame

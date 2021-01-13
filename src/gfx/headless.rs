@@ -108,7 +108,7 @@ fn build_context_osmesa<T1: ContextCurrentState>(
     cb.build_osmesa(size_one)
 }
 
-// This function was aken from here and modified slightly for our needs (Glutin is Apache 2.0 licensed):
+// This function was taken from here and modified slightly for our needs (Glutin is Apache 2.0 licensed):
 // https://github.com/rust-windowing/glutin/blob/bab33a84dfb094ff65c059400bed7993434638e2/glutin_examples/examples/headless.rs#L38
 #[cfg(target_os = "linux")]
 fn build_context<T1: ContextCurrentState>(

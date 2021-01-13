@@ -78,10 +78,7 @@ will error.
                 .arg(
                     Arg::with_name("similarity-percent-only")
                         .long("similarity-percent-only")
-                        .value_name("BOOLEAN")
                         .help("Set to true to make the command only output the similarity percent between the two renderings (e.g. \"99.32%\".")
-                        .takes_value(true)
-                        .validator(is_bool_validator)
                 )
                 .arg(files_arg.required(true).min_values(2).max_values(2).value_name("EXACTLY TWO HTML FILES"))
                 .arg(scale_factor_arg)
@@ -203,6 +200,7 @@ pub struct SimilarityCmd<'a> {
     pub window_width: Option<f32>,
     pub window_height: Option<f32>,
     pub scale_factor: Option<f32>,
+    pub percent_only: bool,
 }
 
 pub enum Command<'a> {
@@ -253,6 +251,7 @@ pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Command<'a> {
             window_width: window_width(matches),
             window_height: window_height(matches),
             scale_factor: scale_factor(matches),
+            percent_only: similarity_percent_only(matches),
         }
         .into()
     } else {
@@ -282,6 +281,10 @@ pub fn window_height(arg_matches: &ArgMatches) -> Option<f32> {
 
 pub fn scale_factor(arg_matches: &ArgMatches) -> Option<f32> {
     try_get_arg::<f32>(arg_matches, "scale-factor")
+}
+
+pub fn similarity_percent_only(arg_matches: &ArgMatches) -> bool {
+    arg_matches.is_present("similarity-percent-only")
 }
 
 fn try_get_arg<'a, T: FromStr>(arg_matches: &ArgMatches, arg_name: &'a str) -> Option<T> {

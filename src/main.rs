@@ -56,7 +56,6 @@ use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
 use std::cmp::{max, min};
-use std::collections::HashSet;
 use std::io::Write;
 
 /// Welcome to Kosmonaut.
@@ -112,7 +111,6 @@ impl CliCommand for DumpLayoutCmd<'_> {
 
 impl CliCommand for SimilarityCmd<'_> {
     // TODO: Split this up, it's massive
-    // TODO: Respect the --similarity-percent-only flag
     fn run(&self) -> Result<(), String> {
         fn paint_and_get_pixels(
             box_tree: Option<LayoutBox>,
@@ -181,24 +179,28 @@ impl CliCommand for SimilarityCmd<'_> {
         }
         num_differing_pixels += (pixels_one.len() as i64 - pixels_two.len() as i64).abs() as u64;
         let percent_similar_str = if num_differing_pixels == 0 {
-            "100%".to_owned()
+            "100".to_owned()
         } else {
             let percent = 100.0 - (num_differing_pixels as f64 / longest_len as f64);
             let str = format!("{:.6}", percent);
             let trimmed_percent = str.trim_end_matches('0').trim_end_matches('.');
-            trimmed_percent.to_owned() + "%"
+            trimmed_percent.to_owned()
         };
 
-        // TODO: Make this look prettier (colors, bolding)
-        // TODO: Verify these numbers are actually correct...rainbows divs vs. basic box is 99.7% similar
-        println!(
-            "'{}' and '{}' are {} similar in a pixel-by-pixel comparison ({} / {} pixels different)",
-            html_file_one,
-            html_file_two,
-            percent_similar_str,
-            num_differing_pixels,
-            longest_len
-        );
+        if self.percent_only {
+            println!("{}", percent_similar_str);
+        } else {
+            // TODO: Make this look prettier (colors, bolding)
+            // TODO: Verify these numbers are actually correct...rainbows divs vs. basic box is 99.7% similar
+            println!(
+                "'{}' and '{}' are {}% similar in a pixel-by-pixel comparison ({} / {} pixels different)",
+                html_file_one,
+                html_file_two,
+                percent_similar_str,
+                num_differing_pixels,
+                longest_len
+            );
+        }
         Ok(())
     }
 }

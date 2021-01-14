@@ -66,13 +66,13 @@ impl<T: ContextCurrentState> HeadlessGfxContent<T> {
         &self.gl
     }
 
-    pub fn read_pixels(&self, window_width: f32, window_height: f32) -> Vec<RgbaPixel> {
+    pub fn read_pixels(&self, viewport_width: f32, viewport_height: f32) -> Vec<RgbaPixel> {
         // All framebuffers in Kosmonaut are currently attached to COLOR_ATTACHMENT0.
         // https://docs.gl/gl3/glReadBuffer
         unsafe {
             self.gl.ReadBuffer(COLOR_ATTACHMENT0);
         }
-        read_pixels(&self.gl, window_width as GLint, window_height as GLint)
+        read_pixels(&self.gl, viewport_width as GLint, viewport_height as GLint)
     }
 
     /// Binds the framebuffer associated with this context to the GL handle associated with this

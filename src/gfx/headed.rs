@@ -1,6 +1,6 @@
 use crate::gfx::{
-    load_and_config_gl, print_gl_info, resize_window, LogGlInfo, DEFAULT_INNER_WINDOW_HEIGHT_PX,
-    DEFAULT_INNER_WINDOW_WIDTH_PX, TARGETED_GL_PROFILE,
+    load_and_config_gl, print_gl_info, resize_window, LogGlInfo, DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX,
+    DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX, TARGETED_GL_PROFILE,
 };
 use gl::Gl;
 use glutin::dpi::PhysicalSize;
@@ -18,8 +18,8 @@ pub fn init_window_and_gl(
 ) -> (WindowedContext<PossiblyCurrent>, EventLoop<()>, Gl) {
     let el = EventLoop::new();
     let initial_physical_size = PhysicalSize {
-        width: inner_width_opt.unwrap_or(DEFAULT_INNER_WINDOW_WIDTH_PX) as u32,
-        height: inner_height_opt.unwrap_or(DEFAULT_INNER_WINDOW_HEIGHT_PX) as u32,
+        width: inner_width_opt.unwrap_or(DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX) as u32,
+        height: inner_height_opt.unwrap_or(DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX) as u32,
     };
     let icon = image::load(
         Cursor::new(&include_bytes!("../../img/Kosmonaut_Logo_164x164-01.png")[..]),

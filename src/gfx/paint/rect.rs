@@ -1,6 +1,7 @@
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, ToVertices};
 use crate::layout::rect::Rect;
+use crate::layout::LayoutViewportDimensions;
 use cssparser::RGBA;
 use gl::buffer::vbo::VertexBufferObject;
 use gl::program::Program;
@@ -90,47 +91,36 @@ fn build_triangle_program(gl: &Gl) -> Result<Program, String> {
 }
 
 impl ToVertices for (&RGBA, &Rect) {
-    fn to_vertices(
-        &self,
-        scaled_viewport_width: f32,
-        scaled_viewport_height: f32,
-        scale_factor: f32,
-    ) -> Vec<f32> {
-        (self.1, self.0).to_vertices(scaled_viewport_width, scaled_viewport_height, scale_factor)
+    fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32> {
+        (self.1, self.0).to_vertices(viewport, scale_factor)
     }
 }
 
 impl ToVertices for (&Rect, &RGBA) {
-    fn to_vertices(
-        &self,
-        scaled_viewport_width: f32,
-        scaled_viewport_height: f32,
-        scale_factor: f32,
-    ) -> Vec<f32> {
+    fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32> {
         let rect = self.0.scaled_by(scale_factor);
-        let rgba_vec =
-            self.1
-                .to_vertices(scaled_viewport_width, scaled_viewport_height, scale_factor);
+        let rgba_vec = self.1.to_vertices(viewport, scale_factor);
         let rect_colors = rgba_vec.as_slice();
+        let (viewport_width, viewport_height) = viewport.width_height_px();
 
         let mut vertex_data = Vec::new();
         // Top-left vertex.
         vertex_data.extend_from_slice(&[
-            ndc_x(rect.start_x, scaled_viewport_width),
-            ndc_y(rect.start_y, scaled_viewport_height),
+            ndc_x(rect.start_x, viewport_width),
+            ndc_y(rect.start_y, viewport_height),
             // TODO: Implement z-indexing.
             0.0,
         ]);
         vertex_data.extend_from_slice(rect_colors);
 
         let top_right_vertex = &[
-            ndc_x((rect.start_x + rect.width).px(), scaled_viewport_width),
-            ndc_y(rect.start_y, scaled_viewport_height),
+            ndc_x((rect.start_x + rect.width).px(), viewport_width),
+            ndc_y(rect.start_y, viewport_height),
             0.0,
         ];
         let bottom_left_vertex = &[
-            ndc_x(rect.start_x, scaled_viewport_width),
-            ndc_y((rect.start_y + rect.height).px(), scaled_viewport_height),
+            ndc_x(rect.start_x, viewport_width),
+            ndc_y((rect.start_y + rect.height).px(), viewport_height),
             0.0,
         ];
         vertex_data.extend_from_slice(top_right_vertex);
@@ -145,8 +135,8 @@ impl ToVertices for (&Rect, &RGBA) {
         vertex_data.extend_from_slice(rect_colors);
         // Bottom-right vertex.
         vertex_data.extend_from_slice(&[
-            ndc_x((rect.start_x + rect.width).px(), scaled_viewport_width),
-            ndc_y((rect.start_y + rect.height).px(), scaled_viewport_height),
+            ndc_x((rect.start_x + rect.width).px(), viewport_width),
+            ndc_y((rect.start_y + rect.height).px(), viewport_height),
             0.0,
         ]);
         vertex_data.extend_from_slice(rect_colors);

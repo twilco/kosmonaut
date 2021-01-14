@@ -72,7 +72,7 @@ pub struct CharCommand {
     color: RGBA,
     /// The size to render the char as.
     size: Vector2F,
-    /// The x and y coordinates of where the glyph origin should be placed on the viewport.
+    /// The x and y coordinates of where the glyph origin should be placed on the layout viewport.
     start_coords: Vector2F,
     // This is the only OpenGL-specific part of state associated with the command.  Kosmonaut is
     // pretty hardcoded to OpenGL, but I _really_ wanted to keep the DisplayCommands renderer-agnostic...

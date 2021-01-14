@@ -1,8 +1,7 @@
 use crate::gfx::display::DisplayCommand;
 use crate::gfx::paint::rect::RectPainter;
 use crate::gfx::paint::text::TextPainter;
-use crate::style::values::computed::length::CSSPixelLength;
-use crate::style::values::CSSFloat;
+use crate::layout::LayoutViewportDimensions;
 use cssparser::RGBA;
 use gl::program::Program;
 use gl::shader::{Shader, ShaderKind};
@@ -64,16 +63,16 @@ impl MasterPainter {
         windowed_context: &WindowedContext<PossiblyCurrent>,
         display_list: &[DisplayCommand],
     ) {
-        // Note: For semantic correctness, the OpenGL context handle (the `gl` member on `self`) must
-        // also have its viewport specified to the below dimensions, presumably done outside this
-        // function when the window is resized.
+        // Note: For semantic correctness, the OpenGL context (the `gl` member on `self`) must also have its viewport
+        // set to the below dimensions, presumably done outside this function when the window is resized.
         // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml
-        let window_width = windowed_context.window().inner_size().width;
-        let window_height = windowed_context.window().inner_size().height;
+        let inner_window_size = windowed_context.window().inner_size();
 
         self.paint_inner(
-            CSSPixelLength::new(window_width as f32),
-            CSSPixelLength::new(window_height as f32),
+            LayoutViewportDimensions::new_px(
+                inner_window_size.width as f32,
+                inner_window_size.height as f32,
+            ),
             display_list,
         );
         windowed_context
@@ -83,21 +82,15 @@ impl MasterPainter {
 
     pub fn paint_headless(
         &mut self,
-        window_width: CSSPixelLength,
-        window_height: CSSPixelLength,
+        viewport: LayoutViewportDimensions,
         display_list: &[DisplayCommand],
     ) {
-        self.paint_inner(window_width, window_height, display_list);
+        self.paint_inner(viewport, display_list);
     }
 
-    fn paint_inner(
-        &mut self,
-        window_width: CSSPixelLength,
-        window_height: CSSPixelLength,
-        display_list: &[DisplayCommand],
-    ) {
+    fn paint_inner(&mut self, viewport: LayoutViewportDimensions, display_list: &[DisplayCommand]) {
         for command in display_list {
-            self.process_display_command(command, window_width.px(), window_height.px());
+            self.process_display_command(command, viewport);
         }
         self.rect_painter.paint(self.rect_vertices.as_slice());
         self.text_painter.paint(self.text_vertices.as_slice());
@@ -109,20 +102,19 @@ impl MasterPainter {
     fn process_display_command(
         &mut self,
         command: &DisplayCommand,
-        viewport_width: CSSFloat,
-        viewport_height: CSSFloat,
+        viewport: LayoutViewportDimensions,
     ) {
         match command {
             DisplayCommand::Char(char_command) => {
                 self.text_vertices.push(CharPaintData::new(
                     char_command.color(),
                     char_command.texture_id(),
-                    char_command.to_vertices(viewport_width, viewport_height, self.scale_factor),
+                    char_command.to_vertices(viewport, self.scale_factor),
                 ));
             }
-            DisplayCommand::RectSolidColor(rgba, rect) => self.rect_vertices.extend(
-                (rect, rgba).to_vertices(viewport_width, viewport_height, self.scale_factor),
-            ),
+            DisplayCommand::RectSolidColor(rgba, rect) => self
+                .rect_vertices
+                .extend((rect, rgba).to_vertices(viewport, self.scale_factor)),
             DisplayCommand::ViewportBackground(rgba) => unsafe {
                 self.gl.ClearColor(
                     rgba.red_f32(),
@@ -138,21 +130,11 @@ impl MasterPainter {
 
 /// Represents the conversion from some entity to OpenGL vertex data.
 pub trait ToVertices {
-    fn to_vertices(
-        &self,
-        scaled_viewport_width: CSSFloat,
-        scaled_viewport_height: CSSFloat,
-        scale_factor: f32,
-    ) -> Vec<f32>;
+    fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32>;
 }
 
 impl ToVertices for RGBA {
-    fn to_vertices(
-        &self,
-        _scaled_viewport_width: f32,
-        _scaled_viewport_height: f32,
-        _scale_factor: f32,
-    ) -> Vec<f32> {
+    fn to_vertices(&self, _viewport: LayoutViewportDimensions, _scale_factor: f32) -> Vec<f32> {
         let mut vertices = Vec::new();
         vertices.extend_from_slice(&[
             self.red_f32(),

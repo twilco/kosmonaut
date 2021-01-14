@@ -12,8 +12,8 @@ pub struct RgbaPixel {
 /// Reads all pixels rendered to this GL context into the given buffer via `glReadPixels`.
 ///
 /// https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glReadPixels.xhtml
-pub fn read_pixels(gl: &Gl, window_width: GLint, window_height: GLint) -> Vec<RgbaPixel> {
-    let total_window_pixels = window_width * window_height;
+pub fn read_pixels(gl: &Gl, viewport_width: GLint, viewport_height: GLint) -> Vec<RgbaPixel> {
+    let total_window_pixels = viewport_width * viewport_height;
     // The `4` in this multiplication is because the pixel format we request below is RGBA (one byte
     // for each value), so it takes 4 bytes to describe each window pixel.
     let len = (4 * total_window_pixels) as usize;
@@ -26,8 +26,8 @@ pub fn read_pixels(gl: &Gl, window_width: GLint, window_height: GLint) -> Vec<Rg
         gl.ReadPixels(
             0,
             0,
-            window_width as GLsizei,
-            window_height as GLsizei,
+            viewport_width as GLsizei,
+            viewport_height as GLsizei,
             RGBA,
             UNSIGNED_BYTE,
             pixels.as_mut_ptr() as *mut GLvoid,

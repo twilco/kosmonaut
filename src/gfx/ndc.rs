@@ -13,7 +13,7 @@ use crate::style::values::CSSFloat;
 ///
 /// `relative_to_px` is the length of the plane that `px_len` is relative to, which is required for
 /// calculating the NDC.  For example, if `px_len` was an x-coord value, `relative_to` would be
-/// the width of the viewport.
+/// the width of the layout viewport.
 ///
 /// https://stackoverflow.com/a/52331832/2421349
 /// https://www.khronos.org/opengl/wiki/Viewing_and_Transformations
@@ -32,7 +32,7 @@ fn distance_between_pixel_locations(relative_to_px: CSSFloat) -> f32 {
 /// Gets the NDC of an y-value, then flips the sign of the result to properly put content with a
 /// lower pixel height towards the top of the screen rather than the bottom.  For example:
 ///
-///               |||||> px height of the viewport
+///               |||||> px height of the layout viewport
 ///      ndc(0.0, 800.0) === approx. -1.0, which is the bottom of the screen (wrong).
 ///          ^^^ px y-value of rectangle
 ///
@@ -43,7 +43,7 @@ pub fn ndc_y(px_len: CSSFloat, relative_to_height_px: CSSFloat) -> f32 {
 }
 
 /// Gets the NDC of an x-value.  The `ndc` function itself returns the correct value already from
-/// the perspective of the viewport, so this function simply calls `ndc` as-is.
+/// the perspective of the layout viewport, so this function simply calls `ndc` as-is.
 #[inline(always)]
 pub fn ndc_x(px_len: CSSFloat, relative_to_width_px: CSSFloat) -> f32 {
     ndc(px_len, relative_to_width_px)

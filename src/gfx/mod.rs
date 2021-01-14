@@ -12,8 +12,8 @@ pub mod headless;
 pub mod ndc;
 pub mod paint;
 
-pub const DEFAULT_INNER_WINDOW_WIDTH_PX: f32 = 1920.;
-pub const DEFAULT_INNER_WINDOW_HEIGHT_PX: f32 = 1080.;
+pub const DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX: f32 = 1920.;
+pub const DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX: f32 = 1080.;
 pub const TARGETED_GL_PROFILE: GlProfile = GlProfile::Core;
 
 pub fn load_and_config_gl(context: &Context<PossiblyCurrent>) -> Gl {

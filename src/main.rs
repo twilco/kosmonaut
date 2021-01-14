@@ -20,7 +20,7 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
 use crate::dom::tree::NodeRef;
-use crate::layout::{global_layout, DumpLayout};
+use crate::layout::{global_layout, DumpLayout, LayoutViewportDimensions};
 
 pub mod cli;
 pub mod common;
@@ -40,14 +40,13 @@ use crate::gfx::headed::init_window_and_gl;
 use crate::gfx::headless::init_framebuffer_and_gl;
 use crate::gfx::paint::MasterPainter;
 use crate::gfx::{
-    resize_window, LogGlInfo, DEFAULT_INNER_WINDOW_HEIGHT_PX, DEFAULT_INNER_WINDOW_WIDTH_PX,
+    resize_window, LogGlInfo, DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX, DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX,
 };
 use crate::layout::box_tree::build_box_tree;
 use crate::layout::layout_box::LayoutBox;
 use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
 use crate::style::parse_css_to_rules;
 use crate::style::stylesheet::Stylesheet;
-use crate::style::values::computed::length::CSSPixelLength;
 use clap::Values;
 pub use common::Side;
 use cssparser::RGBA;
@@ -88,15 +87,11 @@ impl CliCommand for DumpLayoutCmd<'_> {
         )?;
         let styled_dom = load_and_style_dom(html_file_path, get_author_sheets(self.files.clone()));
 
+        let viewport = LayoutViewportDimensions::new_px(self.window_width, self.window_height);
         let write_to = &mut std::io::stdout();
         match build_box_tree(styled_dom, None) {
             Some(mut box_tree) => {
-                global_layout(
-                    &mut box_tree,
-                    self.window_width,
-                    self.window_height,
-                    self.scale_factor,
-                );
+                global_layout(&mut box_tree, viewport, self.scale_factor);
                 box_tree.dump_layout(write_to, 0, self.verbosity);
             }
             None => {
@@ -113,25 +108,18 @@ impl CliCommand for SimilarityCmd<'_> {
     fn run(&self) -> Result<(), String> {
         fn paint_and_get_pixels(
             box_tree: Option<LayoutBox>,
-            window_width: CSSPixelLength,
-            window_height: CSSPixelLength,
+            viewport: LayoutViewportDimensions,
             scale_factor: f32,
         ) -> Result<Vec<RgbaPixel>, String> {
+            let (viewport_width, viewport_height) = viewport.width_height_px();
             let headless_gfx_context =
-                init_framebuffer_and_gl(window_width.px(), window_height.px(), LogGlInfo::No);
+                init_framebuffer_and_gl(viewport_width, viewport_height, LogGlInfo::No);
             // Bind our framebuffer in preparation for painting.
             headless_gfx_context.bind_framebuffer();
             let mut painter = MasterPainter::new(headless_gfx_context.gl(), scale_factor)?;
             let char_handle = CharHandle::new(headless_gfx_context.gl());
-            layout_and_paint_headless(
-                box_tree,
-                window_width,
-                window_height,
-                &char_handle,
-                &mut painter,
-                scale_factor,
-            );
-            Ok(headless_gfx_context.read_pixels(window_width.px(), window_height.px()))
+            layout_and_paint_headless(box_tree, viewport, &char_handle, &mut painter, scale_factor);
+            Ok(headless_gfx_context.read_pixels(viewport_width, viewport_height))
         }
 
         let mut html_file_paths = Vec::new();
@@ -159,15 +147,15 @@ impl CliCommand for SimilarityCmd<'_> {
         );
         let (box_tree_one, box_tree_two) =
             (build_box_tree(dom_one, None), build_box_tree(dom_two, None));
-        let (window_width, window_height) = (
-            CSSPixelLength::new(self.window_width.unwrap_or(DEFAULT_INNER_WINDOW_WIDTH_PX)),
-            CSSPixelLength::new(self.window_height.unwrap_or(DEFAULT_INNER_WINDOW_HEIGHT_PX)),
+        let viewport = LayoutViewportDimensions::new_px(
+            self.window_width
+                .unwrap_or(DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX),
+            self.window_height
+                .unwrap_or(DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX),
         );
         let scale_factor = self.scale_factor.unwrap_or(1.0);
-        let pixels_one =
-            paint_and_get_pixels(box_tree_one, window_width, window_height, scale_factor)?;
-        let pixels_two =
-            paint_and_get_pixels(box_tree_two, window_width, window_height, scale_factor)?;
+        let pixels_one = paint_and_get_pixels(box_tree_one, viewport, scale_factor)?;
+        let pixels_two = paint_and_get_pixels(box_tree_two, viewport, scale_factor)?;
         let longest_len = max(pixels_one.len(), pixels_two.len());
         let shortest_len = min(pixels_one.len(), pixels_two.len());
         let mut num_differing_pixels: u64 = 0;
@@ -337,11 +325,9 @@ fn layout_and_paint_headed(
     painter: &mut MasterPainter,
     scale_factor: f32,
 ) {
-    let inner_window_size = windowed_context.window().inner_size();
     let display_list = display_list_from_box_tree(
         box_tree_opt,
-        inner_window_size.width as f32,
-        inner_window_size.height as f32,
+        windowed_context.window().inner_size().into(),
         char_handle,
         scale_factor,
     );
@@ -350,31 +336,24 @@ fn layout_and_paint_headed(
 
 fn layout_and_paint_headless(
     box_tree_opt: Option<LayoutBox>,
-    window_width: CSSPixelLength,
-    window_height: CSSPixelLength,
+    viewport: LayoutViewportDimensions,
     char_handle: &CharHandle,
     painter: &mut MasterPainter,
     scale_factor: f32,
 ) {
-    let display_list = display_list_from_box_tree(
-        box_tree_opt,
-        window_width.px(),
-        window_height.px(),
-        char_handle,
-        scale_factor,
-    );
-    painter.paint_headless(window_width, window_height, &display_list);
+    let display_list =
+        display_list_from_box_tree(box_tree_opt, viewport, char_handle, scale_factor);
+    painter.paint_headless(viewport, &display_list);
 }
 
 fn display_list_from_box_tree(
     box_tree_opt: Option<LayoutBox>,
-    window_width: f32,
-    window_height: f32,
+    viewport: LayoutViewportDimensions,
     char_handle: &CharHandle,
     scale_factor: f32,
 ) -> DisplayList {
     if let Some(mut box_tree) = box_tree_opt {
-        global_layout(&mut box_tree, window_width, window_height, scale_factor);
+        global_layout(&mut box_tree, viewport, scale_factor);
         build_display_list(&box_tree, &char_handle, scale_factor)
     } else {
         // There is no box tree to paint (e.g. in the case of `html { display: none }`, so paint

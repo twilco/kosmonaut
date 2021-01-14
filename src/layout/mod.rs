@@ -21,13 +21,13 @@ use crate::layout::rect::Rect;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::CSSFloat;
 use enum_dispatch::enum_dispatch;
+use glutin::dpi::PhysicalSize;
 use std::io::Write;
 
 /// Given a `window` and a `layout_root_box`, perform a layout with the dimensions of the `window`.
 pub fn global_layout(
     layout_root_box: &mut LayoutBox,
-    inner_window_width: f32,
-    inner_window_height: f32,
+    viewport: LayoutViewportDimensions,
     scale_factor: f32,
 ) {
     let writing_mode = layout_root_box.computed_values().writing_mode;
@@ -36,8 +36,8 @@ pub fn global_layout(
         Rect {
             start_x: 0.0,
             start_y: 0.0,
-            width: CSSPixelLength::new(inner_window_width / scale_factor),
-            height: CSSPixelLength::new(inner_window_height / scale_factor),
+            width: CSSPixelLength::new(viewport.width.px() / scale_factor),
+            height: CSSPixelLength::new(viewport.height.px() / scale_factor),
         },
         direction,
         writing_mode,
@@ -69,6 +69,48 @@ impl LayoutContext {
     pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
         self.containing_block
             .block_start_origin_relative_progression()
+    }
+}
+
+/// The dimensions of the viewport into which content is laid out.  This differs from the visual
+/// viewport, which changes when users perform certain actions (e.g. pinch to zoom).
+///
+/// https://wicg.github.io/visual-viewport/#the-visualviewport-interface
+/// https://developer.mozilla.org/en-US/docs/Web/CSS/Viewport_concepts
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct LayoutViewportDimensions {
+    width: CSSPixelLength,
+    height: CSSPixelLength,
+}
+
+impl LayoutViewportDimensions {
+    pub fn new(width: CSSPixelLength, height: CSSPixelLength) -> Self {
+        LayoutViewportDimensions { width, height }
+    }
+
+    pub fn new_px(width: CSSFloat, height: CSSFloat) -> Self {
+        LayoutViewportDimensions {
+            width: CSSPixelLength::new(width),
+            height: CSSPixelLength::new(height),
+        }
+    }
+
+    pub fn width(&self) -> CSSPixelLength {
+        self.width
+    }
+
+    pub fn height(&self) -> CSSPixelLength {
+        self.height
+    }
+
+    pub fn width_height_px(&self) -> (CSSFloat, CSSFloat) {
+        (self.width.px(), self.height.px())
+    }
+}
+
+impl From<PhysicalSize<u32>> for LayoutViewportDimensions {
+    fn from(size: PhysicalSize<u32>) -> Self {
+        LayoutViewportDimensions::new_px(size.width as f32, size.height as f32)
     }
 }
 

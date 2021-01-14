@@ -110,7 +110,6 @@ impl CliCommand for DumpLayoutCmd<'_> {
 }
 
 impl CliCommand for SimilarityCmd<'_> {
-    // TODO: Split this up, it's massive
     fn run(&self) -> Result<(), String> {
         fn paint_and_get_pixels(
             box_tree: Option<LayoutBox>,
@@ -181,7 +180,7 @@ impl CliCommand for SimilarityCmd<'_> {
         let percent_similar_str = if num_differing_pixels == 0 {
             "100".to_owned()
         } else {
-            let percent = 100.0 - (num_differing_pixels as f64 / longest_len as f64);
+            let percent = 100.0 - (num_differing_pixels as f64 / longest_len as f64) * 100.0;
             let str = format!("{:.6}", percent);
             let trimmed_percent = str.trim_end_matches('0').trim_end_matches('.');
             trimmed_percent.to_owned()
@@ -191,7 +190,6 @@ impl CliCommand for SimilarityCmd<'_> {
             println!("{}", percent_similar_str);
         } else {
             // TODO: Make this look prettier (colors, bolding)
-            // TODO: Verify these numbers are actually correct...rainbows divs vs. basic box is 99.7% similar
             println!(
                 "'{}' and '{}' are {}% similar in a pixel-by-pixel comparison ({} / {} pixels different)",
                 html_file_one,

@@ -11,7 +11,7 @@ pub struct VertexArrayObject {
     bound_buffer: Option<VertexBufferObject>,
     /// The name of this VAO given by OpenGL upon creation.
     name: GLuint,
-    /// The shared OpenGL instance.
+    /// The GL context handle this VAO belongs to.
     gl: Gl,
 }
 

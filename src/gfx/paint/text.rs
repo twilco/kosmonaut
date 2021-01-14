@@ -8,7 +8,7 @@ use gl::vao::VertexArrayObject;
 use gl::{Gl, ARRAY_BUFFER, DYNAMIC_DRAW, FALSE, FLOAT, TEXTURE0, TEXTURE_2D, TRIANGLES};
 use std::ffi::CString;
 
-/// Uses given OpenGL instance to paint arbitrary text.
+/// Uses given OpenGL context handle to paint arbitrary text.
 pub struct TextPainter {
     /// An instance of OpenGL.
     gl: Gl,

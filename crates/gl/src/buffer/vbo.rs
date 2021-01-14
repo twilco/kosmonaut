@@ -9,7 +9,7 @@ use crate::{Gl, ARRAY_BUFFER, STATIC_DRAW};
 pub struct VertexBufferObject {
     /// The buffer name given by OpenGL for this VBO upon creation.
     name: GLuint,
-    /// The shared OpenGL instance.
+    /// The OpenGL context this VBO belongs to.
     gl: Gl,
 }
 

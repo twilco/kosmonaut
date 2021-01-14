@@ -19,7 +19,7 @@ pub mod text;
 /// be painted differently (namely, different OpenGL drawing sequences) than vertex data for text,
 /// as an example.
 pub struct MasterPainter {
-    /// The OpenGL instance to paint to.
+    /// The OpenGL context to paint to.
     gl: Gl,
     rect_painter: RectPainter,
     rect_vertices: Vec<f32>,
@@ -64,7 +64,7 @@ impl MasterPainter {
         windowed_context: &WindowedContext<PossiblyCurrent>,
         display_list: &[DisplayCommand],
     ) {
-        // Note: For semantic correctness, the OpenGL instance (the `gl` member on `self`) must
+        // Note: For semantic correctness, the OpenGL context handle (the `gl` member on `self`) must
         // also have its viewport specified to the below dimensions, presumably done outside this
         // function when the window is resized.
         // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml

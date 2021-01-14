@@ -22,7 +22,7 @@ pub fn load_and_config_gl(context: &Context<PossiblyCurrent>) -> Gl {
     gl
 }
 
-/// Enables and configures blending for the entire OpenGL instance.  This blending configuration is
+/// Enables and configures blending for the entire OpenGL context.  This blending configuration is
 /// required to support text rendering.  If we require other blending configurations, this function
 /// probably shouldn't set this blending configuration instance-wide here.
 ///
@@ -49,7 +49,7 @@ pub enum LogGlInfo {
     No,
 }
 
-/// Print's basic diagnostic information about the given OpenGL context and GL instance.
+/// Print's basic diagnostic information about the given OpenGL context and GL context handle.
 ///
 /// If you have a WindowedContext, you can also pass the the pixel format of the underlying frame
 /// buffer(s).

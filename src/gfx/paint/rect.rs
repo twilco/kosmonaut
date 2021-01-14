@@ -9,7 +9,7 @@ use gl::vao::VertexArrayObject;
 use gl::Gl;
 use std::ffi::CString;
 
-/// Uses given OpenGL instance to paint arbitrary rectangles.
+/// Uses given OpenGL context handle to paint arbitrary rectangles.
 pub struct RectPainter {
     /// The OpenGL program that will be used to paint rectangles.
     program: Program,

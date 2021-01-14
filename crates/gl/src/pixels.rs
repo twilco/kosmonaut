@@ -9,7 +9,7 @@ pub struct RgbaPixel {
     pub a: u8,
 }
 
-/// Reads all pixels rendered to this GL instance into the given buffer via `glReadPixels`.
+/// Reads all pixels rendered to this GL context into the given buffer via `glReadPixels`.
 ///
 /// https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glReadPixels.xhtml
 pub fn read_pixels(gl: &Gl, window_width: GLint, window_height: GLint) -> Vec<RgbaPixel> {

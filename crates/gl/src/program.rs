@@ -58,7 +58,7 @@ impl Program {
         bool_from_glint(link_successful)
     }
 
-    /// Updates the stored OpenGL instance to use this program to render objects.
+    /// Updates the GL context stored in `self` to use this program to render objects.
     pub fn use_globally(&self) {
         unsafe { self.gl.UseProgram(self.id()) }
     }

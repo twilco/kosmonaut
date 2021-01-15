@@ -47,7 +47,6 @@ use crate::layout::layout_box::LayoutBox;
 use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
 use crate::style::parse_css_to_rules;
 use crate::style::stylesheet::Stylesheet;
-use clap::Values;
 pub use common::Side;
 use cssparser::RGBA;
 use gl::pixels::RgbaPixel;
@@ -56,6 +55,7 @@ use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
 use std::cmp::{max, min};
 use std::io::Write;
+use std::path::Path;
 
 /// Welcome to Kosmonaut.
 ///
@@ -70,22 +70,35 @@ fn main() {
     };
 }
 
-impl<'a> CliCommand for Command<'a> {
-    fn run(&self) -> Result<(), String> {
+pub enum CommandReturn {
+    DumpLayout(<DumpLayoutCmd as CliCommand>::RunReturn),
+    Render(<RenderCmd as CliCommand>::RunReturn),
+    Similarity(<SimilarityCmd as CliCommand>::RunReturn),
+}
+
+impl CliCommand for Command {
+    type RunReturn = CommandReturn;
+
+    fn run(&self) -> Result<Self::RunReturn, String> {
         match self {
-            Command::Render(cmd) => cmd.run(),
-            Command::DumpLayout(cmd) => cmd.run(),
-            Command::Similarity(cmd) => cmd.run(),
+            Command::Render(cmd) => cmd.run().map(|unit| CommandReturn::Render(unit)),
+            Command::DumpLayout(cmd) => cmd.run().map(|unit| CommandReturn::DumpLayout(unit)),
+            Command::Similarity(cmd) => cmd
+                .run()
+                .map(|percent_similar| CommandReturn::Similarity(percent_similar)),
         }
     }
 }
 
-impl CliCommand for DumpLayoutCmd<'_> {
-    fn run(&self) -> Result<(), String> {
-        let html_file_path = html_file_path_from_files(self.files.clone()).ok_or(
+impl CliCommand for DumpLayoutCmd {
+    type RunReturn = ();
+
+    fn run(&self) -> Result<Self::RunReturn, String> {
+        let html_file_path = html_file_path_from_files(self.file_paths.clone()).ok_or(
             "a .html file must be passed via --files when running the 'dump-layout' command",
         )?;
-        let styled_dom = load_and_style_dom(html_file_path, get_author_sheets(self.files.clone()));
+        let styled_dom =
+            load_and_style_dom(html_file_path, get_author_sheets(self.file_paths.clone()));
 
         let viewport = LayoutViewportDimensions::new_px(self.window_width, self.window_height);
         let write_to = &mut std::io::stdout();
@@ -104,8 +117,10 @@ impl CliCommand for DumpLayoutCmd<'_> {
     }
 }
 
-impl CliCommand for SimilarityCmd<'_> {
-    fn run(&self) -> Result<(), String> {
+impl CliCommand for SimilarityCmd {
+    type RunReturn = f64;
+
+    fn run(&self) -> Result<Self::RunReturn, String> {
         fn paint_and_get_pixels(
             box_tree: Option<LayoutBox>,
             viewport: LayoutViewportDimensions,
@@ -123,7 +138,7 @@ impl CliCommand for SimilarityCmd<'_> {
         }
 
         let mut html_file_paths = Vec::new();
-        for file in self.files.clone() {
+        for file in self.file_paths.clone() {
             let parts = file.split('.');
             if let Some(file_extension) = parts.last() {
                 if file_extension != "html" {
@@ -187,17 +202,22 @@ impl CliCommand for SimilarityCmd<'_> {
                 longest_len
             );
         }
-        Ok(())
+        Ok(percent_similar_str.parse().expect(&*format!(
+            "error running 'similarity' -- couldn't parse {} as float",
+            percent_similar_str
+        )))
     }
 }
 
-impl CliCommand for RenderCmd<'_> {
-    fn run(&self) -> Result<(), String> {
-        let fallback_local_html = "tests/websrc/rainbow-divs.html";
+impl CliCommand for RenderCmd {
+    type RunReturn = ();
+
+    fn run(&self) -> Result<Self::RunReturn, String> {
+        let fallback_local_html = "tests/websrc/rainbow-divs.html".to_owned();
         let html_file_path =
-            html_file_path_from_files_opt(self.files.clone()).unwrap_or(fallback_local_html);
+            html_file_path_from_files_opt(self.file_paths.clone()).unwrap_or(fallback_local_html);
         let author_sheets = self
-            .files
+            .file_paths
             .clone()
             .map(get_author_sheets)
             .unwrap_or_default();
@@ -215,7 +235,10 @@ impl CliCommand for RenderCmd<'_> {
     }
 }
 
-fn load_and_style_dom(html_file_path: &str, author_sheets: Vec<Stylesheet>) -> NodeRef {
+fn load_and_style_dom<P: AsRef<Path>>(
+    html_file_path: P,
+    author_sheets: Vec<Stylesheet>,
+) -> NodeRef {
     let dom = parse_html()
         .from_utf8()
         .read_from(&mut File::open(html_file_path).unwrap())
@@ -243,8 +266,8 @@ fn load_and_style_dom(html_file_path: &str, author_sheets: Vec<Stylesheet>) -> N
     dom
 }
 
-fn get_author_sheets(files: Values) -> Vec<Stylesheet> {
-    css_file_paths_from_files(files)
+fn get_author_sheets<S: AsRef<str>>(file_paths: Vec<S>) -> Vec<Stylesheet> {
+    css_file_paths_from_files(file_paths)
         .iter()
         .map(|css_file_path| {
             style::stylesheet::parse_css_to_stylesheet(

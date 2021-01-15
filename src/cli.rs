@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand, Values};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use std::str::FromStr;
 
 const DUMP_LAYOUT_CMD_NAME: &str = "dump-layout";
@@ -105,33 +105,38 @@ fn is_bool_validator(string: String) -> Result<(), String> {
     }
 }
 
-pub fn html_file_path_from_files_opt(files_opt: Option<Values>) -> Option<&str> {
+pub fn html_file_path_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Option<String> {
     files_opt.map(html_file_path_from_files).flatten()
 }
 
-pub fn html_file_path_from_files(mut files: Values) -> Option<&str> {
-    files.find(|file| {
-        let parts = file.split('.');
-        if let Some(last_part) = parts.last() {
-            return last_part == "html";
-        }
-        false
-    })
+pub fn html_file_path_from_files<S: AsRef<str>>(files: Vec<S>) -> Option<String> {
+    files
+        .iter()
+        .find(|file| {
+            let parts = file.as_ref().split('.');
+            if let Some(last_part) = parts.last() {
+                return last_part == "html";
+            }
+            false
+        })
+        .map(|file_path| file_path.as_ref().to_owned())
 }
 
-pub fn css_file_paths_from_files_opt(files_opt: Option<Values>) -> Vec<&str> {
+pub fn css_file_paths_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Vec<String> {
     files_opt.map(css_file_paths_from_files).unwrap_or_default()
 }
 
-pub fn css_file_paths_from_files(files: Values) -> Vec<&str> {
+pub fn css_file_paths_from_files<S: AsRef<str>>(files: Vec<S>) -> Vec<String> {
     files
+        .iter()
         .filter(|file| {
-            let parts = file.split('.');
+            let parts = file.as_ref().split('.');
             if let Some(last_part) = parts.last() {
                 return last_part == "css";
             }
             false
         })
+        .map(|file_path| file_path.as_ref().to_owned())
         .collect::<Vec<_>>()
 }
 
@@ -173,21 +178,23 @@ pub fn dump_layout_tree_verbose(
     })
 }
 
-pub(crate) trait CliCommand {
-    fn run(&self) -> Result<(), String>;
+pub trait CliCommand {
+    type RunReturn;
+
+    fn run(&self) -> Result<Self::RunReturn, String>;
 }
 
 #[derive(Clone, Debug)]
-pub struct RenderCmd<'a> {
-    pub files: Option<Values<'a>>,
+pub struct RenderCmd {
+    pub file_paths: Option<Vec<String>>,
     pub window_width: Option<f32>,
     pub window_height: Option<f32>,
     pub scale_factor: Option<f32>,
 }
 
 #[derive(Clone, Debug)]
-pub struct DumpLayoutCmd<'a> {
-    pub files: Values<'a>,
+pub struct DumpLayoutCmd {
+    pub file_paths: Vec<String>,
     pub window_width: f32,
     pub window_height: f32,
     pub scale_factor: f32,
@@ -195,46 +202,51 @@ pub struct DumpLayoutCmd<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct SimilarityCmd<'a> {
-    pub files: Values<'a>,
+pub struct SimilarityCmd {
+    pub file_paths: Vec<String>,
     pub window_width: Option<f32>,
     pub window_height: Option<f32>,
     pub scale_factor: Option<f32>,
     pub percent_only: bool,
 }
 
-pub enum Command<'a> {
-    Render(RenderCmd<'a>),
-    DumpLayout(DumpLayoutCmd<'a>),
-    Similarity(SimilarityCmd<'a>),
+pub enum Command {
+    Render(RenderCmd),
+    DumpLayout(DumpLayoutCmd),
+    Similarity(SimilarityCmd),
 }
 
-impl<'a> From<DumpLayoutCmd<'a>> for Command<'a> {
-    fn from(cmd: DumpLayoutCmd<'a>) -> Self {
+impl From<DumpLayoutCmd> for Command {
+    fn from(cmd: DumpLayoutCmd) -> Self {
         Command::DumpLayout(cmd)
     }
 }
 
-impl<'a> From<RenderCmd<'a>> for Command<'a> {
-    fn from(cmd: RenderCmd<'a>) -> Self {
+impl From<RenderCmd> for Command {
+    fn from(cmd: RenderCmd) -> Self {
         Command::Render(cmd)
     }
 }
 
-impl<'a> From<SimilarityCmd<'a>> for Command<'a> {
-    fn from(cmd: SimilarityCmd<'a>) -> Self {
+impl From<SimilarityCmd> for Command {
+    fn from(cmd: SimilarityCmd) -> Self {
         Command::Similarity(cmd)
     }
 }
 
-pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Command<'a> {
+pub fn get_command(global_matches: &ArgMatches) -> Command {
     if has_dump_layout_tree_subcommand(global_matches) {
         let matches = global_matches
             .subcommand_matches(DUMP_LAYOUT_CMD_NAME)
             .unwrap();
         // unwraps safe here because these args are marked as required for `dump-layout`.
+        let file_paths = matches
+            .values_of("files")
+            .unwrap()
+            .map(|value| value.to_owned())
+            .collect::<Vec<_>>();
         DumpLayoutCmd {
-            files: matches.values_of("files").unwrap(),
+            file_paths,
             window_width: window_width(matches).unwrap(),
             window_height: window_height(matches).unwrap(),
             scale_factor: scale_factor(matches).unwrap(),
@@ -245,9 +257,13 @@ pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Command<'a> {
         let matches = global_matches
             .subcommand_matches(SIMILARITY_CMD_NAME)
             .unwrap();
-        let files = matches.values_of("files").unwrap();
+        let file_paths = matches
+            .values_of("files")
+            .unwrap()
+            .map(|value| value.to_owned())
+            .collect::<Vec<_>>();
         SimilarityCmd {
-            files,
+            file_paths,
             window_width: window_width(matches),
             window_height: window_height(matches),
             scale_factor: scale_factor(matches),
@@ -257,12 +273,15 @@ pub fn get_command<'a>(global_matches: &'a ArgMatches) -> Command<'a> {
     } else {
         // If no sub-command was specified, assume the user wants to render the headed-representation
         // of the passed --files.
-        let files = global_matches.values_of("files");
+        let file_paths = match global_matches.values_of("files") {
+            Some(values) => Some(values.map(|value| value.to_owned()).collect::<Vec<_>>()),
+            None => None,
+        };
         let width = window_width(global_matches);
         let height = window_height(global_matches);
         let scale_factor = scale_factor(global_matches);
         RenderCmd {
-            files,
+            file_paths,
             window_width: width,
             window_height: height,
             scale_factor,

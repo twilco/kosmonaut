@@ -424,7 +424,8 @@ impl Default for ContextualPropertyDeclarations {
 /// bullet points.  The final deciding factor in the cascade, order of appearance, can't possibly
 /// be exercised here.
 ///
-/// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade-origin
+///
+/// https://www.w3.org/TR/css-cascade-3/#cascade-origin
 /// The cascade sorts declarations according to the following criteria, in descending order of priority:
 ///
 /// * Origin and Importance

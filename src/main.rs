@@ -81,11 +81,9 @@ impl CliCommand for Command {
 
     fn run(&self) -> Result<Self::RunReturn, String> {
         match self {
-            Command::Render(cmd) => cmd.run().map(|unit| CommandReturn::Render(unit)),
-            Command::DumpLayout(cmd) => cmd.run().map(|unit| CommandReturn::DumpLayout(unit)),
-            Command::Similarity(cmd) => cmd
-                .run()
-                .map(|percent_similar| CommandReturn::Similarity(percent_similar)),
+            Command::Render(cmd) => cmd.run().map(|_| CommandReturn::Render(())),
+            Command::DumpLayout(cmd) => cmd.run().map(|_| CommandReturn::DumpLayout(())),
+            Command::Similarity(cmd) => cmd.run().map(CommandReturn::Similarity),
         }
     }
 }

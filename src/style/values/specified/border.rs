@@ -88,13 +88,13 @@ pub fn parse_border_color_shorthand_into<'i, 't>(
         color: parsed_sides.top,
     }));
     declarations.push(PropertyDeclaration::BorderRightColor(BorderColor {
-        color: parsed_sides.bottom,
+        color: parsed_sides.right,
     }));
     declarations.push(PropertyDeclaration::BorderLeftColor(BorderColor {
         color: parsed_sides.left,
     }));
     declarations.push(PropertyDeclaration::BorderBottomColor(BorderColor {
-        color: parsed_sides.right,
+        color: parsed_sides.bottom,
     }));
     Ok(())
 }

@@ -1,10 +1,28 @@
+#![feature(custom_test_frameworks)]
+#![test_runner(datatest::runner)]
+
 use crate::util::CommandUnderTest;
 use std::ffi::OsStr;
+use std::path::Path;
 
 mod util;
 
 mod layout;
 mod style;
+
+/// This automatically finds and runs any <filename>.reftest.html and <filename>.expected.html as
+/// a reftest.  A reftest renders the given documents headlessly and performs a pixel-by-pixel
+/// comparison of the results.
+#[datatest::files("tests/websrc", {
+reftest_html_file in r"^(.*).reftest.html",
+expected_html_file = r"${1}.expected.html",
+})]
+fn auto_reftests(reftest_html_file: &Path, expected_html_file: &Path) {
+    reftest_expect_similar(
+        reftest_html_file.to_str().unwrap(),
+        expected_html_file.to_str().unwrap(),
+    )
+}
 
 pub fn reftest_expect_similar<S: AsRef<str> + AsRef<OsStr>>(file_path_one: S, file_path_two: S) {
     let (file_path_one, file_path_two): (&str, &str) =

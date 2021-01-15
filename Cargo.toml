@@ -9,7 +9,7 @@ accountable-refcell = "0.2.1"
 app_units = "0.7.1"
 cssparser = "0.27"
 clap = "2.33.0"
-enum_dispatch = "0.3.4"
+enum_dispatch = "0.3.5"
 font-kit = { git = "https://github.com/twilco/font-kit" }
 gl = { path = "crates/gl" }
 glutin = "0.26"
@@ -27,6 +27,8 @@ derive_builder = "0.9.0"
 
 [dev-dependencies]
 insta = "0.16"
+datatest = "0.6.3"
+datatest-derive = "0.6.3"
 
 [features]
 gl_debug = ["gl/debug"]

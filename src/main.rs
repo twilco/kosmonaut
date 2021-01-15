@@ -190,7 +190,7 @@ impl CliCommand for SimilarityCmd {
         };
 
         if self.percent_only {
-            println!("{}", percent_similar_str);
+            println!("{}", percent_similar_str)
         } else {
             // TODO: Make this look prettier (colors, bolding)
             println!(

@@ -53,8 +53,12 @@ use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
 use std::cmp::{max, min};
+use std::error::Error;
 use std::io::Write;
 use std::path::Path;
+use url::Url;
+
+const UA_STYLESHEET_STR: &str = include_str!("../web/useragent.css");
 
 /// Welcome to Kosmonaut.
 ///
@@ -92,8 +96,10 @@ impl CliCommand for DumpLayoutCmd {
 
     fn run(&self) -> Result<Self::RunReturn, String> {
         let html_file_path = html_file_path_from_files(self.file_paths.clone()).unwrap();
-        let styled_dom =
-            load_and_style_dom(html_file_path, get_author_sheets(self.file_paths.clone()));
+        let styled_dom = load_and_style_dom_from_file(
+            html_file_path,
+            get_author_sheets(self.file_paths.clone()),
+        );
 
         let viewport = LayoutViewportDimensions::new_px(self.window_width, self.window_height);
         let write_to = &mut std::io::stdout();
@@ -152,8 +158,8 @@ impl CliCommand for SimilarityCmd {
             html_file_paths.get(1).unwrap(),
         );
         let (dom_one, dom_two) = (
-            load_and_style_dom(html_file_one, vec![]),
-            load_and_style_dom(html_file_two, vec![]),
+            load_and_style_dom_from_file(html_file_one, vec![]),
+            load_and_style_dom_from_file(html_file_two, vec![]),
         );
         let (box_tree_one, box_tree_two) =
             (build_box_tree(dom_one, None), build_box_tree(dom_two, None));
@@ -209,14 +215,19 @@ impl CliCommand for RenderCmd {
 
     fn run(&self) -> Result<Self::RunReturn, String> {
         let fallback_local_html = "tests/websrc/rainbow-divs.html".to_owned();
-        let html_file_path = html_file_path_from_files_opt(self.files_or_urls.clone())
-            .unwrap_or(fallback_local_html);
         let author_sheets = self
             .files_or_urls
             .clone()
             .map(get_author_sheets)
             .unwrap_or_default();
-        let styled_dom = load_and_style_dom(html_file_path, author_sheets);
+        let styled_dom = if let Some(files_or_urls) = self.files_or_urls.clone() {
+            style_dom(
+                self.dom_from_file_or_url(files_or_urls.get(0).unwrap())?,
+                author_sheets,
+            )
+        } else {
+            load_and_style_dom_from_file(fallback_local_html, author_sheets)
+        };
         let (windowed_context, event_loop, gl) =
             init_window_and_gl(self.window_width, self.window_height, LogGlInfo::Yes);
         run_event_loop(
@@ -230,8 +241,48 @@ impl CliCommand for RenderCmd {
     }
 }
 
-fn html_file_path_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Option<String> {
-    files_opt.map(html_file_path_from_files).flatten()
+impl RenderCmd {
+    fn dom_from_file_or_url<S: AsRef<str>>(&self, file_or_url: S) -> Result<NodeRef, String> {
+        fn dom_from_readable<R: std::io::Read>(mut readable: R) -> Result<NodeRef, Box<dyn Error>> {
+            parse_html()
+                .from_utf8()
+                .read_from(&mut readable)
+                .map_err(|err| err.into())
+        }
+        let url_error = match Url::parse(file_or_url.as_ref()) {
+            Ok(url) => match isahc::get(url.as_str()) {
+                Ok(mut response) => {
+                    return dom_from_readable(response.body_mut()).map_err(|err| {
+                        format!(
+                            "failed to parse html with contents from url '{}': {}",
+                            url.as_str(),
+                            err
+                        )
+                    });
+                }
+                Err(err) => format!("{}", err),
+            },
+            Err(err) => format!("{}", err),
+        };
+        let file_error = match File::open(file_or_url.as_ref()) {
+            Ok(mut file) => {
+                return dom_from_readable(&mut file).map_err(|err| {
+                    format!(
+                        "failed to parse html with contents from file '{}': {}",
+                        file_or_url.as_ref(),
+                        err
+                    )
+                })
+            }
+            Err(err) => err,
+        };
+        Err(format!(
+            "input '{}' was neither a valid file path nor valid url\n{}\n{}",
+            file_or_url.as_ref(),
+            url_error,
+            file_error.to_string()
+        ))
+    }
 }
 
 fn html_file_path_from_files<S: AsRef<str>>(files: Vec<S>) -> Option<String> {
@@ -261,14 +312,7 @@ fn css_file_paths_from_files<S: AsRef<str>>(files: Vec<S>) -> Vec<String> {
         .collect::<Vec<_>>()
 }
 
-fn load_and_style_dom<P: AsRef<Path>>(
-    html_file_path: P,
-    author_sheets: Vec<Stylesheet>,
-) -> NodeRef {
-    let dom = parse_html()
-        .from_utf8()
-        .read_from(&mut File::open(html_file_path).unwrap())
-        .unwrap();
+fn style_dom(dom: NodeRef, author_sheets: Vec<Stylesheet>) -> NodeRef {
     let mut embedded_styles_str = extract_embedded_styles(dom.clone());
     let embedded_styles = match parse_css_to_rules(&mut embedded_styles_str) {
         Ok(rules) => rules,
@@ -279,7 +323,7 @@ fn load_and_style_dom<P: AsRef<Path>>(
     };
     let ua_sheet = style::stylesheet::parse_css_to_stylesheet(
         Some("browser.css".to_owned()),
-        &mut std::fs::read_to_string("web/browser.css").expect("file fail"),
+        &mut UA_STYLESHEET_STR.to_owned(),
     )
     .expect("parse stylesheet fail");
     apply_styles(
@@ -290,6 +334,17 @@ fn load_and_style_dom<P: AsRef<Path>>(
         &author_sheets,
     );
     dom
+}
+
+fn load_and_style_dom_from_file<P: AsRef<Path>>(
+    html_file_path: P,
+    author_sheets: Vec<Stylesheet>,
+) -> NodeRef {
+    let dom = parse_html()
+        .from_utf8()
+        .read_from(&mut File::open(html_file_path).unwrap())
+        .unwrap();
+    style_dom(dom, author_sheets)
 }
 
 fn get_author_sheets<S: AsRef<str>>(file_paths: Vec<S>) -> Vec<Stylesheet> {

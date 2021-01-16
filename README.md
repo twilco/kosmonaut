@@ -50,23 +50,26 @@ To build from source:
     * For those running on other operating systems, you'll need to install the equivalent packages.  I'd love to get more documentation on installation for other systems, so open an issue if you have trouble or if you'd like to share your setup process.
 3. `cargo build`
 
-Kosmonaut does not currently support any networking.  To render HTML and CSS with Kosmonaut, you may instead run the executable you just built passing any number of HTML and CSS files via the `--files` (or `-f`) flag.
+To render HTML and CSS with Kosmonaut, either pass files (HTML and optionally CSS):
 
-`cargo run -- --files my.html my.css more.css`
+`cargo run -- tests/websrc/rainbow-divs.html`
 
-To run the rainbow divs example pictured above, try:
+or a URL:
 
-`cargo run -- --files tests/websrc/rainbow-divs.html tests/websrc/rainbow-divs.css`
+`cargo run -- https://twilco.github.io/assets/html/rainbow-divs.html`
 
-To run the tests, both unit and layout, run:
+To run the tests, both unit and layout, execute:
 
 `cargo test`
 
 For layout tests, Kosmonaut transforms the given HTML and CSS into a box tree, lays it out, and dumps it as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
 
-If you need to review / update snapshots, it is helpful to install the Cargo insta CLI tool like so:
+If you need to review / update layout snapshots, it is helpful to install the Cargo insta CLI tool like so:
 
 `cargo install cargo-insta`
+
+Kosmonaut can also run ref-tests.  Ref-tests render two HTML files and compares the result pixel-by-pixel, ensuring they are the same.
+This is useful in lots of scenarios, such as testing that shorthands render the same as their longhand equivalents.
  
 ### License and credits
 

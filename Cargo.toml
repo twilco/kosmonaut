@@ -15,6 +15,7 @@ gl = { path = "crates/gl" }
 glutin = "0.26"
 html5ever = "0.25.1"
 image = "0.23"
+isahc = "1.0"
 matches = "0.1.8"
 pathfinder_geometry = "0.5.1"
 rand = "0.8"
@@ -24,6 +25,7 @@ strum = "0.18.0"
 strum_macros = "0.18.0"
 tempdir = "0.3.7"
 derive_builder = "0.9.0"
+url = "2.2.0"
 
 [dev-dependencies]
 insta = "0.16"

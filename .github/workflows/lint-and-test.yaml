@@ -7,6 +7,7 @@ jobs:
     name: Layout and unit tests
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt-get -y install xorg openbox
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:

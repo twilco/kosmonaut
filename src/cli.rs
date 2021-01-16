@@ -3,17 +3,13 @@ use std::str::FromStr;
 
 const DUMP_LAYOUT_CMD_NAME: &str = "dump-layout";
 const SIMILARITY_CMD_NAME: &str = "similarity";
+const RENDER_INPUT_ARG_NAME: &str = "FILES OR URLS";
+const DUMP_LAYOUT_INPUT_ARG_NAME: &str = "FILES";
+const SIMILARITY_INPUT_ARG_NAME: &str = "FILES";
 
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     let headed_or_headless_applicable =
         "Applicable in both headed and headless (e.g. the dump-layout and similarity commands) contexts.";
-    let default_files_arg_value_name = "FILES";
-    let files_arg = Arg::with_name("files")
-            .short("f")
-            .long("files")
-            .help("Pass files for Kosmonaut to render.  This is also the flag that should be used to pass files to any sub-command (e.g. `dump-layout`, `similarity`).")
-            .multiple(true)
-            .takes_value(true);
     let scale_factor_help = format!(
         "Device/window scale factor.  {}",
         headed_or_headless_applicable
@@ -46,10 +42,15 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
         .version("0.1")
         .author("Tyler Wilcock (twilco)")
         .about("A web browser for the space age 🚀")
-        .arg(files_arg.clone().value_name(default_files_arg_value_name))
         .arg(width_arg.clone())
         .arg(height_arg.clone())
         .arg(scale_factor_arg.clone())
+        .arg(
+            Arg::with_name(RENDER_INPUT_ARG_NAME)
+                .help("File(s) or URL(s) for Kosmonaut to render.")
+                .index(1)
+                .multiple(true)
+        )
         .subcommand(
             SubCommand::with_name(DUMP_LAYOUT_CMD_NAME)
                 .about("Dumps layout-tree as text to stdout after first global layout, exiting afterwards.")
@@ -62,7 +63,13 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
                         .takes_value(true)
                         .validator(is_bool_validator)
                 )
-                .arg(files_arg.clone().required(true).value_name(default_files_arg_value_name))
+                .arg(
+                    Arg::with_name(DUMP_LAYOUT_INPUT_ARG_NAME)
+                        .help("File(s) for Kosmonaut dump the layout of.  Note only the first HTML file found is rendered, and beyond that only CSS files will be used.")
+                        .index(1)
+                        .required(true)
+                        .min_values(1)
+                )
                 .arg(scale_factor_arg.clone().required(true))
                 .arg(width_arg.clone().required(true))
                 .arg(height_arg.clone().required(true))
@@ -71,16 +78,22 @@ pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
             SubCommand::with_name(SIMILARITY_CMD_NAME)
                 .long_about("
 Performs a pixel-by-pixel comparison of the renderings of two input HTML files, returning their \
-similarity as a percentage.  Use the --files flag to pass input HTML files.  If you any more or \
-any less than two files, this command will error.  If these two files are not HTML, this command \
-will error.
+similarity as a percentage.  If you pass any more or any less than two HTML files, this command will \
+error.
                 ".trim())
                 .arg(
                     Arg::with_name("similarity-percent-only")
                         .long("similarity-percent-only")
                         .help("Set to true to make the command only output the similarity percent between the two renderings (e.g. \"99.32%\".")
                 )
-                .arg(files_arg.required(true).min_values(2).max_values(2).value_name("EXACTLY TWO HTML FILES"))
+                .arg(
+                    Arg::with_name(DUMP_LAYOUT_INPUT_ARG_NAME)
+                        .help("Two HTML files for Kosmonaut to render and compare.")
+                        .index(1)
+                        .required(true)
+                        .min_values(2)
+                        .max_values(2)
+                )
                 .arg(scale_factor_arg)
                 .arg(width_arg)
                 .arg(height_arg)
@@ -103,41 +116,6 @@ fn is_bool_validator(string: String) -> Result<(), String> {
             _ => Err(format!("given arg '{}' is not a bool value", string)),
         },
     }
-}
-
-pub fn html_file_path_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Option<String> {
-    files_opt.map(html_file_path_from_files).flatten()
-}
-
-pub fn html_file_path_from_files<S: AsRef<str>>(files: Vec<S>) -> Option<String> {
-    files
-        .iter()
-        .find(|file| {
-            let parts = file.as_ref().split('.');
-            if let Some(last_part) = parts.last() {
-                return last_part == "html";
-            }
-            false
-        })
-        .map(|file_path| file_path.as_ref().to_owned())
-}
-
-pub fn css_file_paths_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Vec<String> {
-    files_opt.map(css_file_paths_from_files).unwrap_or_default()
-}
-
-pub fn css_file_paths_from_files<S: AsRef<str>>(files: Vec<S>) -> Vec<String> {
-    files
-        .iter()
-        .filter(|file| {
-            let parts = file.as_ref().split('.');
-            if let Some(last_part) = parts.last() {
-                return last_part == "css";
-            }
-            false
-        })
-        .map(|file_path| file_path.as_ref().to_owned())
-        .collect::<Vec<_>>()
 }
 
 pub fn has_dump_layout_tree_subcommand(arg_matches: &ArgMatches) -> bool {
@@ -186,7 +164,7 @@ pub trait CliCommand {
 
 #[derive(Clone, Debug)]
 pub struct RenderCmd {
-    pub file_paths: Option<Vec<String>>,
+    pub files_or_urls: Option<Vec<String>>,
     pub window_width: Option<f32>,
     pub window_height: Option<f32>,
     pub scale_factor: Option<f32>,
@@ -240,11 +218,7 @@ pub fn get_command(global_matches: &ArgMatches) -> Command {
             .subcommand_matches(DUMP_LAYOUT_CMD_NAME)
             .unwrap();
         // unwraps safe here because these args are marked as required for `dump-layout`.
-        let file_paths = matches
-            .values_of("files")
-            .unwrap()
-            .map(|value| value.to_owned())
-            .collect::<Vec<_>>();
+        let file_paths = files_or_urls(matches, DUMP_LAYOUT_INPUT_ARG_NAME).unwrap();
         DumpLayoutCmd {
             file_paths,
             window_width: window_width(matches).unwrap(),
@@ -257,11 +231,7 @@ pub fn get_command(global_matches: &ArgMatches) -> Command {
         let matches = global_matches
             .subcommand_matches(SIMILARITY_CMD_NAME)
             .unwrap();
-        let file_paths = matches
-            .values_of("files")
-            .unwrap()
-            .map(|value| value.to_owned())
-            .collect::<Vec<_>>();
+        let file_paths = files_or_urls(matches, SIMILARITY_INPUT_ARG_NAME).unwrap();
         SimilarityCmd {
             file_paths,
             window_width: window_width(matches),
@@ -272,22 +242,24 @@ pub fn get_command(global_matches: &ArgMatches) -> Command {
         .into()
     } else {
         // If no sub-command was specified, assume the user wants to render the headed-representation
-        // of the passed --files.
-        let file_paths = match global_matches.values_of("files") {
-            Some(values) => Some(values.map(|value| value.to_owned()).collect::<Vec<_>>()),
-            None => None,
-        };
+        // of the passed file / URL.
         let width = window_width(global_matches);
         let height = window_height(global_matches);
         let scale_factor = scale_factor(global_matches);
         RenderCmd {
-            file_paths,
+            files_or_urls: files_or_urls(global_matches, RENDER_INPUT_ARG_NAME),
             window_width: width,
             window_height: height,
             scale_factor,
         }
         .into()
     }
+}
+
+pub fn files_or_urls(arg_matches: &ArgMatches, arg_name: &str) -> Option<Vec<String>> {
+    arg_matches
+        .values_of(arg_name)
+        .map(|values| values.map(|value| value.to_owned()).collect::<Vec<_>>())
 }
 
 pub fn window_width(arg_matches: &ArgMatches) -> Option<f32> {

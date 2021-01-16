@@ -15,7 +15,6 @@ mod tests {
     fn rainbow_divs_baseline() {
         let mut dump_layout_cmd = dump_layout_cmd(DumpLayoutVerbosity::NonVerbose);
         dump_layout_cmd
-            .arg("--files")
             .arg("tests/websrc/rainbow-divs.html")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());
@@ -26,7 +25,6 @@ mod tests {
         let mut dump_layout_cmd =
             dump_layout_cmd_verbose_scaled(DumpLayoutVerbosity::NonVerbose, 2.0);
         dump_layout_cmd
-            .arg("--files")
             .arg("tests/websrc/rainbow-divs.html")
             .succeeds();
         assert_snapshot!(dump_layout_cmd.stdout());

@@ -30,9 +30,8 @@ pub mod layout;
 pub mod style;
 
 use crate::cli::{
-    css_file_paths_from_files, get_command, html_file_path_from_files,
-    html_file_path_from_files_opt, setup_and_get_cli_args, CliCommand, Command, DumpLayoutCmd,
-    RenderCmd, SimilarityCmd,
+    get_command, setup_and_get_cli_args, CliCommand, Command, DumpLayoutCmd, RenderCmd,
+    SimilarityCmd,
 };
 use crate::gfx::char::CharHandle;
 use crate::gfx::display::{build_display_list, DisplayCommand, DisplayList};
@@ -92,9 +91,7 @@ impl CliCommand for DumpLayoutCmd {
     type RunReturn = ();
 
     fn run(&self) -> Result<Self::RunReturn, String> {
-        let html_file_path = html_file_path_from_files(self.file_paths.clone()).ok_or(
-            "a .html file must be passed via --files when running the 'dump-layout' command",
-        )?;
+        let html_file_path = html_file_path_from_files(self.file_paths.clone()).unwrap();
         let styled_dom =
             load_and_style_dom(html_file_path, get_author_sheets(self.file_paths.clone()));
 
@@ -212,10 +209,10 @@ impl CliCommand for RenderCmd {
 
     fn run(&self) -> Result<Self::RunReturn, String> {
         let fallback_local_html = "tests/websrc/rainbow-divs.html".to_owned();
-        let html_file_path =
-            html_file_path_from_files_opt(self.file_paths.clone()).unwrap_or(fallback_local_html);
+        let html_file_path = html_file_path_from_files_opt(self.files_or_urls.clone())
+            .unwrap_or(fallback_local_html);
         let author_sheets = self
-            .file_paths
+            .files_or_urls
             .clone()
             .map(get_author_sheets)
             .unwrap_or_default();
@@ -231,6 +228,37 @@ impl CliCommand for RenderCmd {
         );
         Ok(())
     }
+}
+
+fn html_file_path_from_files_opt<S: AsRef<str>>(files_opt: Option<Vec<S>>) -> Option<String> {
+    files_opt.map(html_file_path_from_files).flatten()
+}
+
+fn html_file_path_from_files<S: AsRef<str>>(files: Vec<S>) -> Option<String> {
+    files
+        .iter()
+        .find(|file| {
+            let parts = file.as_ref().split('.');
+            if let Some(last_part) = parts.last() {
+                return last_part == "html";
+            }
+            false
+        })
+        .map(|file_path| file_path.as_ref().to_owned())
+}
+
+fn css_file_paths_from_files<S: AsRef<str>>(files: Vec<S>) -> Vec<String> {
+    files
+        .iter()
+        .filter(|file| {
+            let parts = file.as_ref().split('.');
+            if let Some(last_part) = parts.last() {
+                return last_part == "css";
+            }
+            false
+        })
+        .map(|file_path| file_path.as_ref().to_owned())
+        .collect::<Vec<_>>()
 }
 
 fn load_and_style_dom<P: AsRef<Path>>(

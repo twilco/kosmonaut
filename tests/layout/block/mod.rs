@@ -5,7 +5,6 @@ use insta::assert_snapshot;
 fn block_layout_subtree_simple() {
     let mut dump_layout_cmd = dump_layout_cmd(DumpLayoutVerbosity::NonVerbose);
     dump_layout_cmd
-        .arg("--files")
         .arg("tests/websrc/block/block-layout-subtree-simple.html")
         .succeeds();
     assert_snapshot!(dump_layout_cmd.stdout());
@@ -14,7 +13,6 @@ fn block_layout_subtree_simple() {
 fn block_layout_subtrees() {
     let mut dump_layout_cmd = dump_layout_cmd(DumpLayoutVerbosity::NonVerbose);
     dump_layout_cmd
-        .arg("--files")
         .arg("tests/websrc/block/block-layout-subtrees.html")
         .succeeds();
     assert_snapshot!(dump_layout_cmd.stdout());

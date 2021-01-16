@@ -48,7 +48,6 @@ fn run_similarity_cmd<S: AsRef<str> + AsRef<OsStr>>(
 ) -> Result<f64, String> {
     let mut cmd = CommandUnderTest::new();
     cmd.arg("similarity");
-    cmd.arg("--files");
     cmd.arg(file_path_one);
     cmd.arg(file_path_two);
     cmd.arg("--similarity-percent-only");

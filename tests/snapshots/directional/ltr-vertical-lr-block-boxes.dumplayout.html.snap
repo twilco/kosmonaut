@@ -1,6 +1,7 @@
 ---
-source: tests/layout/directional/mod.rs
+source: tests/lib.rs
 expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/directional/ltr-vertical-lr-block-boxes.dumplayout.html
 ---
 HTML BlockContainer at (0, 0) size 1006x1080
   BODY BlockContainer at (8, 8) size 990x1064

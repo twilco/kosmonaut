@@ -1,10 +1,9 @@
 ---
-source: tests/layout/block/mod.rs
+source: tests/lib.rs
 expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/display/subtree-display-none.dumplayout.html
 ---
 HTML BlockContainer at (0, 0) size 1920x266
   BODY BlockContainer at (8, 8) size 1904x250
     DIV BlockContainer at (33, 33) size 300x200
-      DIV BlockContainer at (58, 58) size 300x200
-      DIV BlockContainer at (58, 308) size 300x200
 

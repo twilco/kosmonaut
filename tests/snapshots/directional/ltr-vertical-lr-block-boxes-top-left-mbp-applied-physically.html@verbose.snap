@@ -1,6 +1,7 @@
 ---
-source: tests/layout/directional/mod.rs
+source: tests/lib.rs
 expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/directional/ltr-vertical-lr-block-boxes-top-left-mbp-applied-physically.html
 ---
 HTML BlockContainer at (0, 0) size 1045x1080 (ml0 mr0 mb0 mt0 bl0 br0 bb0 bt0 pl0 pr0 pb0 pt0)
   BODY BlockContainer at (8, 8) size 1029x1064 (ml8 mr8 mb8 mt8 bl0 br0 bb0 bt0 pl0 pr0 pb0 pt0)

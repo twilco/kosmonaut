@@ -126,7 +126,7 @@ pub fn has_similarity_subcommand(arg_matches: &ArgMatches) -> bool {
     arg_matches.subcommand_matches("similarity").is_some()
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum DumpLayoutVerbosity {
     /// Includes more information in layout-dump, such as margin, border, and padding values for
     /// each box.

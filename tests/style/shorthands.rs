@@ -1,7 +1,6 @@
 use crate::reftest_expect_similar;
 
 const BORDER_WEBSRC_DIR: &str = "tests/websrc/style/shorthands/border";
-
 fn test_file_path<S: AsRef<str>>(filename: S) -> String {
     format!("{}/{}", BORDER_WEBSRC_DIR, filename.as_ref())
 }

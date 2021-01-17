@@ -1,6 +1,7 @@
 ---
-source: tests/layout/display/mod.rs
+source: tests/lib.rs
 expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/display/body-display-none.dumplayout.html
 ---
 HTML BlockContainer at (0, 0) size 1920x0
 

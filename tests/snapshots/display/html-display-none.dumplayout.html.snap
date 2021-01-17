@@ -1,0 +1,6 @@
+---
+source: tests/lib.rs
+expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/display/html-display-none.dumplayout.html
+---
+empty box tree

@@ -2,9 +2,9 @@
 source: tests/layout/directional/mod.rs
 expression: dump_layout_cmd.stdout()
 ---
-HTML BlockContainer at (0, 0) size 1216x1080
-  BODY BlockContainer at (8, 8) size 1200x1064
-    DIV BlockContainer at (8, 8) size 400x200
-    DIV BlockContainer at (408, 8) size 400x200
-    DIV BlockContainer at (808, 8) size 400x200
+HTML BlockContainer at (0, 0) size 1006x1080
+  BODY BlockContainer at (8, 8) size 990x1064
+    DIV BlockContainer at (23, 23) size 300x200
+    DIV BlockContainer at (353, 23) size 300x200
+    DIV BlockContainer at (683, 23) size 300x200
 

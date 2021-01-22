@@ -517,8 +517,6 @@ fn compute_inline_start_coord(
             (containing_block.self_relative_inline_start_coord() + mbp_inline_start).px()
         }
         OriginRelativeProgression::TowardsOrigin => {
-            // TODO: I think this computation is mostly correct, but should be verified after
-            // box-painting is hooked up again.
             let containing_block_inline_end_coord = containing_block
                 .self_relative_inline_start_coord()
                 + containing_block.self_relative_inline_size();

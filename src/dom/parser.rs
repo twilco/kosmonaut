@@ -196,7 +196,7 @@ impl TreeSink for Sink {
 
     #[inline]
     fn mark_script_already_started(&mut self, _node: &NodeRef) {
-        // TODO: Is this useful outside of a browser?
+        unimplemented!("mark_script_already_started")
     }
 
     #[inline]

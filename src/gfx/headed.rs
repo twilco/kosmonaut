@@ -26,7 +26,7 @@ pub fn init_window_and_gl(
         ImageFormat::Png,
     )
     .unwrap()
-    .to_rgba();
+    .to_rgba8();
     let icon_dimensions = icon.dimensions();
     let wb = WindowBuilder::new()
         .with_title("Kosmonaut")

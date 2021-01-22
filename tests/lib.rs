@@ -143,7 +143,10 @@ fn dump_layout_insta_settings(
         _ if scale_factor != LAYOUT_DUMP_DEFAULT_SCALE_FACTOR => {
             format!("verbose-scaled-{}", scale_factor)
         }
-        _ => panic!("failure to create snapshot suffix with verbosity '{:?}' and scale_factor '{}'", verbosity, scale_factor)
+        _ => panic!(
+            "failure to create snapshot suffix with verbosity '{:?}' and scale_factor '{}'",
+            verbosity, scale_factor
+        ),
     };
     settings.set_snapshot_suffix(snapshot_suffix);
     let file_name = corpus_html_file_path.file_name().unwrap();

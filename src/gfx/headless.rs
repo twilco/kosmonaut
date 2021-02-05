@@ -154,7 +154,11 @@ fn build_context<T1: ContextCurrentState>(
 #[cfg(not(target_os = "linux"))]
 fn build_context<T1: ContextCurrentState>(
     cb: ContextBuilder<T1>,
+    log_gl_info: LogGlInfo,
 ) -> Result<(Context<NotCurrent>, EventLoop<()>), CreationError> {
+    if log_gl_info == LogGlInfo::Yes {
+        println!("Trying to build platform-default headless context")
+    }
     let el = EventLoop::new();
     build_context_headless(cb.clone(), &el).map(|ctx| (ctx, el))
 }

@@ -117,12 +117,10 @@ impl CommandUnderTest {
         let status = self.run();
         assert!(
             status.success(),
-            format!(
-                "expected command to succeed, but it failed.\nexit code: {}\nstdout: {}\nstderr:{}\n",
-                status.code().unwrap(),
-                self.stdout,
-                self.stderr,
-            )
+            "expected command to succeed, but it failed.\nexit code: {}\nstdout: {}\nstderr:{}\n",
+            status.code().unwrap(),
+            self.stdout,
+            self.stderr,
         );
         self
     }
@@ -134,7 +132,7 @@ impl CommandUnderTest {
         );
         assert!(
             self.stdout.is_empty(),
-            format!("expected no stdout, got {}", self.stdout)
+            "expected no stdout, got {}", self.stdout
         );
         self
     }
@@ -146,7 +144,7 @@ impl CommandUnderTest {
         );
         assert!(
             self.stderr.is_empty(),
-            format!("expected no stderr, got {}", self.stderr)
+            "expected no stderr, got {}", self.stderr
         );
         self
     }

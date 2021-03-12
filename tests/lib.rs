@@ -162,15 +162,15 @@ pub fn reftest_expect_similar<S: AsRef<str> + AsRef<OsStr>>(file_path_one: S, fi
     match run_similarity_cmd(file_path_one, file_path_two) {
         Ok(percent_similar) => {
             if percent_similar != 100.0f64 {
-                panic!(format!("reftest_expect_similar failure.  files '{}' and '{}' were only {}% similar (expected 100%)", file_path_one, file_path_two, percent_similar));
+                panic!("reftest_expect_similar failure.  files '{}' and '{}' were only {}% similar (expected 100%)", file_path_one, file_path_two, percent_similar);
             }
         }
-        Err(err) => panic!(format!(
+        Err(err) => panic!(
             "reftest_expect_similar *internal* failure (this is bad) with files '{}' and '{}'.  error message was: {}",
             file_path_one,
             file_path_two,
             err
-        )),
+        ),
     }
 }
 

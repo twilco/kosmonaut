@@ -42,13 +42,16 @@ impl CssValueParse for Display {
     fn parse<'i, 't>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, StyleParseErrorKind<'i>>> {
-        // FIXME: Parse multi-ident 'full display' values (e.g. "block flow", "block flow-root", ...) here.
         try_match_ident_ignore_ascii_case! { input,
             "none" => Ok(Display::new_none()),
             "block" => Ok(Display::new_full_display(OuterDisplay::Block, InnerDisplay::Flow)),
+            "block flow" => Ok(Display::new_full_display(OuterDisplay::Block, InnerDisplay::Flow)),
             "flow-root" => Ok(Display::new_full_display(OuterDisplay::Block, InnerDisplay::FlowRoot)),
+            "block flow-root" => Ok(Display::new_full_display(OuterDisplay::Block, InnerDisplay::FlowRoot)),
             "inline" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)),
+            "inline flow" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)),
             "inline-block" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::FlowRoot)),
+            "inline flow-root" => Ok(Display::new_full_display(OuterDisplay::Inline, InnerDisplay::FlowRoot)),
         }
     }
 }

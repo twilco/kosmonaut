@@ -132,7 +132,8 @@ impl CommandUnderTest {
         );
         assert!(
             self.stdout.is_empty(),
-            "expected no stdout, got {}", self.stdout
+            "expected no stdout, got {}",
+            self.stdout
         );
         self
     }
@@ -144,7 +145,8 @@ impl CommandUnderTest {
         );
         assert!(
             self.stderr.is_empty(),
-            "expected no stderr, got {}", self.stderr
+            "expected no stderr, got {}",
+            self.stderr
         );
         self
     }

@@ -1,4 +1,3 @@
-#![feature(or_patterns)]
 #![feature(type_name_of_val)]
 
 #[macro_use]

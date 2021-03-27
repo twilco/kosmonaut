@@ -29,8 +29,9 @@ url = "2.2"
 
 [dev-dependencies]
 insta = "1.7"
-datatest = "0.6.3"
-datatest-derive = "0.6.3"
+# This is a slightly modified fork of https://github.com/commure/datatest/pull/30 (at the time this comment was written).
+datatest = { git = "https://github.com/twilco/datatest", branch = "downgrade-version-check" }
+datatest-derive = { git = "https://github.com/twilco/datatest", branch = "downgrade-version-check" }
 
 [features]
 gl_debug = ["gl/debug"]

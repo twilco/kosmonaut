@@ -561,24 +561,23 @@ dependencies = [
 
 [[package]]
 name = "datatest"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8f692fd1a1d2e19fe7e88ff0e7c3c7dd74d86a7d6ff3daa08c796ac2e26a100"
+version = "0.6.4"
+source = "git+https://github.com/twilco/datatest?branch=downgrade-version-check#148a6ccfe12cc8c703b148c5ffd0fc0725e3f203"
 dependencies = [
  "ctor",
  "datatest-derive",
  "regex",
  "serde",
  "serde_yaml",
+ "version_check",
  "walkdir",
  "yaml-rust",
 ]
 
 [[package]]
 name = "datatest-derive"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7f6869fa6dc3d62b5bde5011ba43cdb760336269b3f87a94b9865983b037292"
+version = "0.6.4"
+source = "git+https://github.com/twilco/datatest?branch=downgrade-version-check#148a6ccfe12cc8c703b148c5ffd0fc0725e3f203"
 dependencies = [
  "proc-macro2",
  "quote",

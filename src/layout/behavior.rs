@@ -6,25 +6,20 @@ use crate::style::values::computed::ComputedValues;
 use accountable_refcell::Ref;
 use enum_dispatch::enum_dispatch;
 
+/// This trait allows boxes to handle how they apply the box sizing properties to their dimensions.
+///
+/// https://www.w3.org/TR/css-sizing-3/#sizing-properties
 #[enum_dispatch(LayoutBox, BlockLevelBox, InlineLevelBox)]
-pub trait ApplyPageRelativeProperties {
-    fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock);
-    fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock);
+pub trait ApplyBoxSizingProperties {
+    fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock);
 }
 
 #[macro_export]
-macro_rules! apply_page_relative_properties_base_box_passthrough_impls {
+macro_rules! apply_box_sizing_properties_base_box_passthrough_impls {
     () => {
         #[inline(always)]
-        fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-            self.base
-                .apply_block_page_relative_properties(containing_block);
-        }
-
-        #[inline(always)]
-        fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-            self.base
-                .apply_inline_page_relative_properties(containing_block);
+        fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock) {
+            self.base.apply_box_sizing_properties(containing_block);
         }
     };
 }

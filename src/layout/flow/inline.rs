@@ -1,6 +1,6 @@
-use crate::apply_page_relative_properties_base_box_passthrough_impls;
+use crate::apply_box_sizing_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
-use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
+use crate::layout::behavior::{ApplyBoxSizingProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
@@ -33,26 +33,12 @@ impl InlineLevelContent {
     }
 }
 
-impl ApplyPageRelativeProperties for InlineLevelContent {
-    fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => {
-                ilb.apply_block_page_relative_properties(containing_block)
-            }
-            // The underlying implementation of this method applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
-            InlineLevelContent::TextRun(_) => {}
-        }
-    }
-
-    fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-        match self {
-            InlineLevelContent::InlineLevelBox(ilb) => {
-                ilb.apply_inline_page_relative_properties(containing_block)
-            }
-            // The underlying implementation of this method applies computed values, which can't be targeted at text runs by authors.  So do nothing here.
-            InlineLevelContent::TextRun(_) => {}
-        }
-    }
+impl ApplyBoxSizingProperties for InlineLevelContent {
+    /// Per spec, none of the box-sizing properties apply to non-replaced inline boxes.  Also,
+    /// styles cannot be targeted at text runs.  So there is nothing to do for this method.
+    ///
+    /// https://www.w3.org/TR/css-sizing-3/#sizing-properties
+    fn apply_box_sizing_properties(&mut self, _containing_block: ContainingBlock) {}
 }
 
 impl Layout for InlineLevelContent {
@@ -142,8 +128,8 @@ impl BaseLayoutBoxBehavior for AnonymousInlineBox {
     layout_box_behavior_base_box_passthrough_impls!();
 }
 
-impl ApplyPageRelativeProperties for AnonymousInlineBox {
-    apply_page_relative_properties_base_box_passthrough_impls!();
+impl ApplyBoxSizingProperties for AnonymousInlineBox {
+    apply_box_sizing_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for AnonymousInlineBox {
@@ -177,8 +163,8 @@ impl BaseLayoutBoxBehavior for InlineBox {
     layout_box_behavior_base_box_passthrough_impls!();
 }
 
-impl ApplyPageRelativeProperties for InlineBox {
-    apply_page_relative_properties_base_box_passthrough_impls!();
+impl ApplyBoxSizingProperties for InlineBox {
+    apply_box_sizing_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for InlineBox {

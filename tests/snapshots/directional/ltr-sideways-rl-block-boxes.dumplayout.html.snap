@@ -1,0 +1,12 @@
+---
+source: tests/lib.rs
+expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/directional/ltr-sideways-rl-block-boxes.dumplayout.html
+
+---
+HTML BlockContainer at (914, 0) size 1006x1080
+  BODY BlockContainer at (922, 8) size 990x1064
+    DIV BlockContainer at (1597, 23) size 300x200
+    DIV BlockContainer at (1267, 23) size 300x200
+    DIV BlockContainer at (937, 23) size 300x200
+

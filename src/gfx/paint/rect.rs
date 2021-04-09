@@ -1,6 +1,6 @@
 use crate::gfx::ndc::{ndc_x, ndc_y};
 use crate::gfx::paint::{build_program, ToVertices};
-use crate::layout::rect::Rect;
+use crate::layout::rect::PositionedRect;
 use crate::layout::LayoutViewportDimensions;
 use cssparser::RGBA;
 use gl::buffer::vbo::VertexBufferObject;
@@ -60,7 +60,7 @@ impl RectPainter {
         assert!(vertices.len() <= i32::max_value() as usize);
 
         self.program.use_globally();
-        self.vao.store_vertex_data(&vertices[..]);
+        self.vao.store_vertex_data(vertices);
         unsafe {
             self.gl.BindVertexArray(self.vao.name());
             self.gl.DrawArrays(
@@ -90,13 +90,13 @@ fn build_triangle_program(gl: &Gl) -> Result<Program, String> {
     build_program(vertex_shader_src, frag_shader_src, gl)
 }
 
-impl ToVertices for (&RGBA, &Rect) {
+impl ToVertices for (&RGBA, &PositionedRect) {
     fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32> {
         (self.1, self.0).to_vertices(viewport, scale_factor)
     }
 }
 
-impl ToVertices for (&Rect, &RGBA) {
+impl ToVertices for (&PositionedRect, &RGBA) {
     fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32> {
         let rect = self.0.scaled_by(scale_factor);
         let rgba_vec = self.1.to_vertices(viewport, scale_factor);
@@ -114,13 +114,13 @@ impl ToVertices for (&Rect, &RGBA) {
         vertex_data.extend_from_slice(rect_colors);
 
         let top_right_vertex = &[
-            ndc_x((rect.start_x + rect.width).px(), viewport_width),
+            ndc_x((rect.start_x + rect.width()).px(), viewport_width),
             ndc_y(rect.start_y, viewport_height),
             0.0,
         ];
         let bottom_left_vertex = &[
             ndc_x(rect.start_x, viewport_width),
-            ndc_y((rect.start_y + rect.height).px(), viewport_height),
+            ndc_y((rect.start_y + rect.height()).px(), viewport_height),
             0.0,
         ];
         vertex_data.extend_from_slice(top_right_vertex);
@@ -135,8 +135,8 @@ impl ToVertices for (&Rect, &RGBA) {
         vertex_data.extend_from_slice(rect_colors);
         // Bottom-right vertex.
         vertex_data.extend_from_slice(&[
-            ndc_x((rect.start_x + rect.width).px(), viewport_width),
-            ndc_y((rect.start_y + rect.height).px(), viewport_height),
+            ndc_x((rect.start_x + rect.width()).px(), viewport_width),
+            ndc_y((rect.start_y + rect.height()).px(), viewport_height),
             0.0,
         ]);
         vertex_data.extend_from_slice(rect_colors);

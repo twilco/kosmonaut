@@ -69,7 +69,7 @@ impl MasterPainter {
         let inner_window_size = windowed_context.window().inner_size();
 
         self.paint_inner(
-            LayoutViewportDimensions::new_px(
+            LayoutViewportDimensions::from_px(
                 inner_window_size.width as f32,
                 inner_window_size.height as f32,
             ),

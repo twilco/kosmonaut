@@ -1,6 +1,6 @@
 use crate::cli::DumpLayoutVerbosity;
 use crate::dom::tree::{NodeData, NodeRef};
-use crate::layout::behavior::ApplyPageRelativeProperties;
+use crate::layout::behavior::ApplyBoxSizingProperties;
 use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
@@ -150,35 +150,20 @@ impl BaseBox {
         }
     }
 
-    pub fn apply_block_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-        if containing_block.writing_mode().is_horizontal() {
-            let height = self.computed_values().height.size;
-            if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
-                self.dimensions_mut()
-                    .set_height(lp.to_px(containing_block.rect().height));
-            }
-        } else {
-            let width = self.computed_values().width.size;
-            if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
-                self.dimensions_mut()
-                    .set_width(lp.to_px(containing_block.rect().width));
-            }
+    /// Apply all box sizing properties to this box's dimensions.
+    ///
+    /// https://www.w3.org/TR/css-sizing-3/#sizing-properties
+    pub fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock) {
+        let height = self.computed_values().height.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
+            self.dimensions_mut()
+                .set_height(lp.to_px(containing_block.height()));
         }
-    }
 
-    pub fn apply_inline_page_relative_properties(&mut self, containing_block: ContainingBlock) {
-        if containing_block.writing_mode().is_horizontal() {
-            let width = self.computed_values().width.size;
-            if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
-                self.dimensions_mut()
-                    .set_width(lp.to_px(containing_block.rect().width));
-            }
-        } else {
-            let height = self.computed_values().height.size;
-            if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
-                self.dimensions_mut()
-                    .set_height(lp.to_px(containing_block.rect().height));
-            }
+        let width = self.computed_values().width.size;
+        if let LengthPercentageOrAuto::LengthPercentage(lp) = width {
+            self.dimensions_mut()
+                .set_width(lp.to_px(containing_block.width()));
         }
     }
 
@@ -276,8 +261,8 @@ impl DumpLayout for LayoutBox {
             box_and_node_dump,
             dimensions.content.start_x.dump_layout_format(),
             dimensions.content.start_y.dump_layout_format(),
-            dimensions.content.width.dump_layout_format(),
-            dimensions.content.height.dump_layout_format(),
+            dimensions.content.width().dump_layout_format(),
+            dimensions.content.height().dump_layout_format(),
             verbose_str,
             indent_spaces = indent_spaces,
         )

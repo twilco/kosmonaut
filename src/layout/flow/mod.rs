@@ -1,9 +1,9 @@
 pub mod block;
 pub mod inline;
 
-use crate::apply_page_relative_properties_base_box_passthrough_impls;
+use crate::apply_box_sizing_properties_base_box_passthrough_impls;
 use crate::dom::tree::NodeRef;
-use crate::layout::behavior::{ApplyPageRelativeProperties, BaseLayoutBoxBehavior};
+use crate::layout::behavior::{ApplyBoxSizingProperties, BaseLayoutBoxBehavior};
 use crate::layout::containing_block::ContainingBlock;
 use crate::layout::dimensions::Dimensions;
 use crate::layout::formatting_context::FormattingContextRef;
@@ -51,8 +51,8 @@ impl BaseLayoutBoxBehavior for BlockContainer {
     layout_box_behavior_base_box_passthrough_impls!();
 }
 
-impl ApplyPageRelativeProperties for BlockContainer {
-    apply_page_relative_properties_base_box_passthrough_impls!();
+impl ApplyBoxSizingProperties for BlockContainer {
+    apply_box_sizing_properties_base_box_passthrough_impls!();
 }
 
 impl DumpLayoutFormat for BlockContainer {

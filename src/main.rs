@@ -1,3 +1,4 @@
+#![feature(destructuring_assignment)]
 #![feature(type_name_of_val)]
 
 #[macro_use]
@@ -100,7 +101,7 @@ impl CliCommand for DumpLayoutCmd {
             get_author_sheets(self.file_paths.clone()),
         );
 
-        let viewport = LayoutViewportDimensions::new_px(self.window_width, self.window_height);
+        let viewport = LayoutViewportDimensions::from_px(self.window_width, self.window_height);
         let write_to = &mut std::io::stdout();
         match build_box_tree(styled_dom, None) {
             Some(mut box_tree) => {
@@ -162,7 +163,7 @@ impl CliCommand for SimilarityCmd {
         );
         let (box_tree_one, box_tree_two) =
             (build_box_tree(dom_one, None), build_box_tree(dom_two, None));
-        let viewport = LayoutViewportDimensions::new_px(
+        let viewport = LayoutViewportDimensions::from_px(
             self.window_width
                 .unwrap_or(DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX),
             self.window_height

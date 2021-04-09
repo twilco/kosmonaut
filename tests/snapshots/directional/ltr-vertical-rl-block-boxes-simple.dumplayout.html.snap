@@ -1,0 +1,12 @@
+---
+source: tests/lib.rs
+expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/directional/ltr-vertical-rl-block-boxes-simple.dumplayout.html
+
+---
+HTML BlockContainer at (822, 0) size 1098x1080
+  BODY BlockContainer at (831, 9) size 1080x1062
+    DIV BlockContainer at (1581, 39) size 300x200
+    DIV BlockContainer at (1221, 39) size 300x200
+    DIV BlockContainer at (861, 39) size 300x200
+

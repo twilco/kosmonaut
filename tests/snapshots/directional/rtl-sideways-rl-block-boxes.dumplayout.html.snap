@@ -1,0 +1,17 @@
+---
+source: tests/lib.rs
+expression: dump_layout_cmd.stdout()
+input_file: tests/websrc/directional/rtl-sideways-rl-block-boxes.dumplayout.html
+
+---
+HTML BlockContainer at (854, 0) size 1066x1080
+  BODY BlockContainer at (862, 8) size 1050x1064
+    DIV BlockContainer at (1587, 837) size 300x200
+      DIV BlockContainer at (1562, 802) size 300x200
+        DIV BlockContainer at (1537, 767) size 300x200
+      DIV BlockContainer at (1212, 802) size 300x200
+    DIV BlockContainer at (1237, 837) size 300x200
+      DIV BlockContainer at (1212, 802) size 300x200
+        DIV BlockContainer at (1187, 767) size 300x200
+    DIV BlockContainer at (887, 837) size 300x200
+

@@ -1,7 +1,7 @@
 use crate::gfx::char::CharHandle;
 use crate::layout::behavior::BaseLayoutBoxBehavior;
 use crate::layout::layout_box::LayoutBox;
-use crate::layout::rect::Rect;
+use crate::layout::rect::{PositionedRect, Rect};
 use crate::style::values::computed::LineStyle;
 use crate::Side;
 use cssparser::RGBA;
@@ -53,7 +53,7 @@ pub type DisplayList = Vec<DisplayCommand>;
 #[derive(Clone, Debug)]
 pub enum DisplayCommand {
     Char(CharCommand),
-    RectSolidColor(RGBA, Rect),
+    RectSolidColor(RGBA, PositionedRect),
     /// This _could_ be represented as [`RectSolidColor`], but graphics APIs sometimes have a
     /// special background painting capabilities that are more idiomatic, such as OpenGL's
     /// `Clear(COLOR_BUFFER_BIT)` and `ClearColor(r, g, b, a)` APIs.
@@ -203,29 +203,37 @@ fn prepare_border(display_list: &mut DisplayList, layout_box: &LayoutBox, side: 
 
     let border_box = d.border_box();
     let rect = match side {
-        Side::Bottom => Rect {
+        Side::Bottom => PositionedRect {
             start_x: border_box.start_x,
-            start_y: (border_box.start_y + border_box.height - border_size_px).px(),
-            width: border_box.width,
-            height: border_size_px,
+            start_y: (border_box.start_y + border_box.height() - border_size_px).px(),
+            rect: Rect {
+                width: border_box.width(),
+                height: border_size_px,
+            },
         },
-        Side::Left => Rect {
-            start_x: border_box.start_x,
-            start_y: border_box.start_y,
-            width: border_size_px,
-            height: border_box.height,
-        },
-        Side::Right => Rect {
-            start_x: (border_box.start_x + border_box.width - border_size_px).px(),
-            start_y: border_box.start_y,
-            width: border_size_px,
-            height: border_box.height,
-        },
-        Side::Top => Rect {
+        Side::Left => PositionedRect {
             start_x: border_box.start_x,
             start_y: border_box.start_y,
-            width: border_box.width,
-            height: border_size_px,
+            rect: Rect {
+                width: border_size_px,
+                height: border_box.height(),
+            },
+        },
+        Side::Right => PositionedRect {
+            start_x: (border_box.start_x + border_box.width() - border_size_px).px(),
+            start_y: border_box.start_y,
+            rect: Rect {
+                width: border_size_px,
+                height: border_box.height(),
+            },
+        },
+        Side::Top => PositionedRect {
+            start_x: border_box.start_x,
+            start_y: border_box.start_y,
+            rect: Rect {
+                width: border_box.width(),
+                height: border_size_px,
+            },
         },
     };
     display_list.push(DisplayCommand::RectSolidColor(border_color_rgba, rect));

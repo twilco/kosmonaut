@@ -20,14 +20,14 @@ Here is a summary of things Kosmonaut can do, things I'm currently working on, a
 
 - [x] Parse HTML and small subset of CSS into DOM and rules, cascade CSS and apply to DOM
 - [x] Layout and paint of normal flow, non-replaced block-level boxes.
-    - [x] Partial support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
+    - [x] Support<sup id="a1">[1](#f1)</sup> for [abstract box layout](https://drafts.csswg.org/css-writing-modes-4/#abstract-layout) with `writing-mode` and `direction` properties
 - [x] [Layout-tree-dump snapshot-based testing](https://github.com/twilco/kosmonaut/blob/c1bcb1aa858309e387c6d33e2fa6a698d07839a5/tests/layout/directional/snapshots/lib__layout__directional__ltr_vertical_lr_block_boxes_top_left_right_mbp_applied_physically.snap#L5) and [auto-discovering ref-tests](https://github.com/twilco/kosmonaut/blob/master/tests/lib.rs#L13#L25)
 - [x] Support for arbitrary scale factors (e.g. high-DPI monitors)
 - [x] Text rendering (without actual integration into layout — see next item)
 - [ ] Layout of basic non-replaced inline-level content (such as text)
 
 <b id="f1">1:</b> Orthogonal flows ([see spec](https://drafts.csswg.org/css-writing-modes-4/#orthogonal-flows)) not supported. 
-Mixed `writing-mode` support in general (including parallel flows) is currently iffy — I recommend simply using `* { writing-mode: <val> }`.  `{ltr, rtl} + {sideways-rl, vertical-rl}` currently don't work . [↩](#a1)
+Mixed `writing-mode` support in general (including parallel flows) is currently iffy — I recommend simply using `* { writing-mode: <val> }`. [↩](#a1)
 
 ### Project goals
 

@@ -1,5 +1,5 @@
 use crate::layout::flow::FlowSide;
-use crate::layout::rect::{EdgeSizes, Rect};
+use crate::layout::rect::{EdgeSizes, PositionedRect};
 use crate::layout::BoxComponent;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::{Direction, WritingMode};
@@ -9,10 +9,9 @@ use crate::Side;
 /// https://www.w3.org/TR/2018/WD-css-box-3-20181218/#box-model
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Dimensions {
-    // Position of the content area relative to the document origin:
-    pub content: Rect,
-
-    // Surrounding edges:
+    /// Position and size of these dimensions.  This position is of the content area (i.e. not
+    /// including margin, border, or padding) relative to the document origin.
+    pub content: PositionedRect,
     pub padding: EdgeSizes,
     pub border: EdgeSizes,
     pub margin: EdgeSizes,
@@ -38,27 +37,27 @@ impl Dimensions {
     }
 
     /// The area covered by the content area plus padding and borders.
-    pub fn border_box(self) -> Rect {
+    pub fn border_box(self) -> PositionedRect {
         self.padding_box().expanded_by_edges(self.border)
     }
 
     /// The area covered by the content area plus its padding.
-    pub fn padding_box(self) -> Rect {
+    pub fn padding_box(self) -> PositionedRect {
         self.content.expanded_by_edges(self.padding)
     }
 
     /// The area covered by the content area plus padding, borders, and margin.
     // TODO: This will need to change when we implement margin collapsing: http://www.w3.org/TR/CSS2/box.html#collapsing-margins
-    pub fn margin_box(self) -> Rect {
+    pub fn margin_box(self) -> PositionedRect {
         self.border_box().expanded_by_edges(self.margin)
     }
 
     pub fn set_height(&mut self, val: CSSPixelLength) {
-        self.content.height = val;
+        self.content.set_height(val);
     }
 
     pub fn set_width(&mut self, val: CSSPixelLength) {
-        self.content.width = val;
+        self.content.set_width(val);
     }
 
     pub fn start_x(&self) -> CSSFloat {
@@ -161,19 +160,19 @@ impl Dimensions {
     ) -> CSSPixelLength {
         match writing_mode {
             WritingMode::HorizontalTb => match expanded_by {
-                None => self.content.height,
-                Some(BoxComponent::Padding) => self.padding_box().height,
-                Some(BoxComponent::Border) => self.border_box().height,
-                Some(BoxComponent::Margin) => self.margin_box().height,
+                None => self.content.height(),
+                Some(BoxComponent::Padding) => self.padding_box().height(),
+                Some(BoxComponent::Border) => self.border_box().height(),
+                Some(BoxComponent::Margin) => self.margin_box().height(),
             },
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
             | WritingMode::SidewaysLr => match expanded_by {
-                None => self.content.width,
-                Some(BoxComponent::Padding) => self.padding_box().width,
-                Some(BoxComponent::Border) => self.border_box().width,
-                Some(BoxComponent::Margin) => self.margin_box().width,
+                None => self.content.width(),
+                Some(BoxComponent::Padding) => self.padding_box().width(),
+                Some(BoxComponent::Border) => self.border_box().width(),
+                Some(BoxComponent::Margin) => self.margin_box().width(),
             },
         }
     }
@@ -185,11 +184,11 @@ impl Dimensions {
 
     pub fn set_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
         match writing_mode {
-            WritingMode::HorizontalTb => self.content.height = val,
+            WritingMode::HorizontalTb => self.content.set_height(val),
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.content.width = val,
+            | WritingMode::SidewaysLr => self.content.set_width(val),
         }
     }
 
@@ -209,30 +208,30 @@ impl Dimensions {
     ) -> CSSPixelLength {
         match writing_mode {
             WritingMode::HorizontalTb => match expanded_by {
-                None => self.content.width,
-                Some(BoxComponent::Padding) => self.padding_box().width,
-                Some(BoxComponent::Border) => self.border_box().width,
-                Some(BoxComponent::Margin) => self.margin_box().width,
+                None => self.content.width(),
+                Some(BoxComponent::Padding) => self.padding_box().width(),
+                Some(BoxComponent::Border) => self.border_box().width(),
+                Some(BoxComponent::Margin) => self.margin_box().width(),
             },
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
             | WritingMode::SidewaysLr => match expanded_by {
-                None => self.content.height,
-                Some(BoxComponent::Padding) => self.padding_box().height,
-                Some(BoxComponent::Border) => self.border_box().height,
-                Some(BoxComponent::Margin) => self.margin_box().height,
+                None => self.content.height(),
+                Some(BoxComponent::Padding) => self.padding_box().height(),
+                Some(BoxComponent::Border) => self.border_box().height(),
+                Some(BoxComponent::Margin) => self.margin_box().height(),
             },
         }
     }
 
     pub fn set_inline_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
         match writing_mode {
-            WritingMode::HorizontalTb => self.content.width = val,
+            WritingMode::HorizontalTb => self.content.set_width(val),
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.content.height = val,
+            | WritingMode::SidewaysLr => self.content.set_height(val),
         }
     }
 
@@ -327,13 +326,31 @@ impl Dimensions {
         self.set(side, BoxComponent::Margin, val, writing_mode, direction)
     }
 
+    pub fn get_margin_physical(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.margin.bottom,
+            Side::Left => self.margin.left,
+            Side::Right => self.margin.right,
+            Side::Top => self.margin.top,
+        }
+    }
+
     #[inline(always)]
-    pub fn set_margin_phys(&mut self, side: Side, val: CSSPixelLength) {
+    pub fn set_margin_physical(&mut self, side: Side, val: CSSPixelLength) {
         match side {
             Side::Bottom => self.margin.bottom = val,
             Side::Left => self.margin.left = val,
             Side::Right => self.margin.right = val,
             Side::Top => self.margin.top = val,
+        }
+    }
+
+    pub fn get_border_physical(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.border.bottom,
+            Side::Left => self.border.left,
+            Side::Right => self.border.right,
+            Side::Top => self.border.top,
         }
     }
 
@@ -349,12 +366,21 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_border_phys(&mut self, side: Side, val: CSSPixelLength) {
+    pub fn set_border_physical(&mut self, side: Side, val: CSSPixelLength) {
         match side {
             Side::Bottom => self.border.bottom = val,
             Side::Left => self.border.left = val,
             Side::Right => self.border.right = val,
             Side::Top => self.border.top = val,
+        }
+    }
+
+    pub fn get_padding_physical(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.padding.bottom,
+            Side::Left => self.padding.left,
+            Side::Right => self.padding.right,
+            Side::Top => self.padding.top,
         }
     }
 
@@ -370,7 +396,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_padding_phys(&mut self, side: Side, val: CSSPixelLength) {
+    pub fn set_padding_physical(&mut self, side: Side, val: CSSPixelLength) {
         match side {
             Side::Bottom => self.padding.bottom = val,
             Side::Left => self.padding.left = val,

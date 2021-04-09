@@ -17,8 +17,9 @@ use crate::layout::flow::inline::InlineLevelBox;
 use crate::layout::flow::inline::InlineLevelContent;
 use crate::layout::flow::OriginRelativeProgression;
 use crate::layout::layout_box::LayoutBox;
-use crate::layout::rect::Rect;
+use crate::layout::rect::{PositionedRect, Rect};
 use crate::style::values::computed::length::CSSPixelLength;
+use crate::style::values::computed::WritingMode;
 use crate::style::values::CSSFloat;
 use enum_dispatch::enum_dispatch;
 use glutin::dpi::PhysicalSize;
@@ -32,16 +33,22 @@ pub fn global_layout(
 ) {
     let writing_mode = layout_root_box.computed_values().writing_mode;
     let direction = layout_root_box.computed_values().direction;
-    layout_root_box.layout(LayoutContext::new(ContainingBlock::new(
-        Rect {
-            start_x: 0.0,
-            start_y: 0.0,
-            width: CSSPixelLength::new(viewport.width.px() / scale_factor),
-            height: CSSPixelLength::new(viewport.height.px() / scale_factor),
-        },
-        direction,
-        writing_mode,
-    )));
+    let layout_viewport_rect = Rect {
+        width: CSSPixelLength::new(viewport.width().px() / scale_factor),
+        height: CSSPixelLength::new(viewport.height().px() / scale_factor),
+    };
+    layout_root_box.layout(LayoutContext::new(
+        ContainingBlock::new(
+            PositionedRect {
+                start_x: 0.0,
+                start_y: 0.0,
+                rect: layout_viewport_rect,
+            },
+            direction,
+            writing_mode,
+        ),
+        LayoutViewportDimensions::new(layout_viewport_rect),
+    ));
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,11 +61,23 @@ pub enum BoxComponent {
 #[derive(Copy, Clone, Debug)]
 pub struct LayoutContext {
     containing_block: ContainingBlock,
+    layout_viewport: LayoutViewportDimensions,
 }
 
 impl LayoutContext {
-    pub fn new(containing_block: ContainingBlock) -> Self {
-        LayoutContext { containing_block }
+    pub fn new(
+        containing_block: ContainingBlock,
+        layout_viewport: LayoutViewportDimensions,
+    ) -> Self {
+        LayoutContext {
+            containing_block,
+            layout_viewport,
+        }
+    }
+
+    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+        self.containing_block
+            .block_start_origin_relative_progression()
     }
 
     pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
@@ -66,9 +85,25 @@ impl LayoutContext {
             .inline_start_origin_relative_progression()
     }
 
-    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
-        self.containing_block
-            .block_start_origin_relative_progression()
+    pub fn layout_viewport_block_size(
+        &self,
+        relative_to_writing_mode: WritingMode,
+    ) -> CSSPixelLength {
+        if relative_to_writing_mode.is_horizontal() {
+            self.layout_viewport_height()
+        } else {
+            self.layout_viewport_width()
+        }
+    }
+
+    #[inline(always)]
+    pub fn layout_viewport_width(&self) -> CSSPixelLength {
+        self.layout_viewport.width()
+    }
+
+    #[inline(always)]
+    pub fn layout_viewport_height(&self) -> CSSPixelLength {
+        self.layout_viewport.height()
     }
 }
 
@@ -79,38 +114,39 @@ impl LayoutContext {
 /// https://developer.mozilla.org/en-US/docs/Web/CSS/Viewport_concepts
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct LayoutViewportDimensions {
-    width: CSSPixelLength,
-    height: CSSPixelLength,
+    rect: Rect,
 }
 
 impl LayoutViewportDimensions {
-    pub fn new(width: CSSPixelLength, height: CSSPixelLength) -> Self {
-        LayoutViewportDimensions { width, height }
+    pub fn new(rect: Rect) -> Self {
+        LayoutViewportDimensions { rect }
     }
 
-    pub fn new_px(width: CSSFloat, height: CSSFloat) -> Self {
+    pub fn from_px(width: CSSFloat, height: CSSFloat) -> Self {
         LayoutViewportDimensions {
-            width: CSSPixelLength::new(width),
-            height: CSSPixelLength::new(height),
+            rect: Rect {
+                width: CSSPixelLength::new(width),
+                height: CSSPixelLength::new(height),
+            },
         }
     }
 
     pub fn width(&self) -> CSSPixelLength {
-        self.width
+        self.rect.width
     }
 
     pub fn height(&self) -> CSSPixelLength {
-        self.height
+        self.rect.height
     }
 
     pub fn width_height_px(&self) -> (CSSFloat, CSSFloat) {
-        (self.width.px(), self.height.px())
+        (self.rect.width.px(), self.rect.height.px())
     }
 }
 
 impl From<PhysicalSize<u32>> for LayoutViewportDimensions {
     fn from(size: PhysicalSize<u32>) -> Self {
-        LayoutViewportDimensions::new_px(size.width as f32, size.height as f32)
+        LayoutViewportDimensions::from_px(size.width as f32, size.height as f32)
     }
 }
 

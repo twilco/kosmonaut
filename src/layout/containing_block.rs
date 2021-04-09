@@ -1,5 +1,5 @@
 use crate::layout::flow::OriginRelativeProgression;
-use crate::layout::rect::Rect;
+use crate::layout::rect::PositionedRect;
 use crate::style::values::computed::length::CSSPixelLength;
 use crate::style::values::computed::{Direction, WritingMode};
 use crate::style::values::CSSFloat;
@@ -12,18 +12,38 @@ use crate::style::values::CSSFloat;
 /// https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
 #[derive(Copy, Clone, Debug)]
 pub struct ContainingBlock {
-    rect: Rect,
+    positioned_rect: PositionedRect,
     direction: Direction,
     writing_mode: WritingMode,
 }
 
 impl ContainingBlock {
-    pub fn new(rect: Rect, direction: Direction, writing_mode: WritingMode) -> Self {
+    pub fn new(
+        positioned_rect: PositionedRect,
+        direction: Direction,
+        writing_mode: WritingMode,
+    ) -> Self {
         Self {
-            rect,
+            positioned_rect,
             direction,
             writing_mode,
         }
+    }
+
+    pub fn positioned_rect(&self) -> &PositionedRect {
+        &self.positioned_rect
+    }
+
+    pub fn width(&self) -> CSSPixelLength {
+        self.positioned_rect.width()
+    }
+
+    pub fn height(&self) -> CSSPixelLength {
+        self.positioned_rect.height()
+    }
+
+    pub fn writing_mode(&self) -> WritingMode {
+        self.writing_mode
     }
 
     pub fn self_relative_block_size(&self) -> CSSPixelLength {
@@ -33,11 +53,11 @@ impl ContainingBlock {
     /// Gets the logical height of this rectangle (also called the block-size).
     pub fn block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         match writing_mode {
-            WritingMode::HorizontalTb => self.rect.height,
+            WritingMode::HorizontalTb => self.positioned_rect.height(),
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.rect.width,
+            | WritingMode::SidewaysLr => self.positioned_rect.width(),
         }
     }
 
@@ -48,11 +68,11 @@ impl ContainingBlock {
     /// Gets the block-direction start coordinate of this containing block.
     pub fn block_start_coord(&self, writing_mode: WritingMode) -> CSSFloat {
         match writing_mode {
-            WritingMode::HorizontalTb => self.rect.start_y,
+            WritingMode::HorizontalTb => self.positioned_rect.start_y,
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.rect.start_x,
+            | WritingMode::SidewaysLr => self.positioned_rect.start_x,
         }
     }
 
@@ -71,11 +91,11 @@ impl ContainingBlock {
     /// Gets the logical width of this rectangle (also called the inline-size).
     pub fn inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         match writing_mode {
-            WritingMode::HorizontalTb => self.rect.width,
+            WritingMode::HorizontalTb => self.positioned_rect.width(),
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.rect.height,
+            | WritingMode::SidewaysLr => self.positioned_rect.height(),
         }
     }
 
@@ -86,11 +106,11 @@ impl ContainingBlock {
     /// Gets the inline-direction start coordinate of this containing block.
     pub fn inline_start_coord(&self, writing_mode: WritingMode) -> CSSFloat {
         match writing_mode {
-            WritingMode::HorizontalTb => self.rect.start_x,
+            WritingMode::HorizontalTb => self.positioned_rect.start_x,
             WritingMode::VerticalRl
             | WritingMode::SidewaysRl
             | WritingMode::VerticalLr
-            | WritingMode::SidewaysLr => self.rect.start_y,
+            | WritingMode::SidewaysLr => self.positioned_rect.start_y,
         }
     }
 
@@ -99,13 +119,5 @@ impl ContainingBlock {
             self.writing_mode(),
             self.direction(),
         )
-    }
-
-    pub fn rect(&self) -> &Rect {
-        &self.rect
-    }
-
-    pub fn writing_mode(&self) -> WritingMode {
-        self.writing_mode
     }
 }

@@ -1,0 +1,13 @@
+
+    /// Like `new`, but allows you to pass physical available space values (width and height) and
+    /// a writing mode rather than abstract space values (inline and block).
+    ///
+    /// The `containing_block` can be the same that you would otherwise pass to `new`, as it is
+    /// inherently logically-dimensioned.
+    pub fn from_physical(containing_block: ContainingBlock, available_width: CSSPixelLength, available_height: CSSPixelLength, relative_to_writing_mode: WritingMode) -> Self {
+        LayoutContext {
+            containing_block,
+            available_block_space: if relative_to_writing_mode.is_horizontal() { available_height } else { available_width },
+            available_inline_space: if relative_to_writing_mode.is_horizontal() { available_width } else { available_height }
+        }
+    }

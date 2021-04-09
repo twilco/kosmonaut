@@ -19,6 +19,7 @@ use crate::layout::flow::OriginRelativeProgression;
 use crate::layout::layout_box::LayoutBox;
 use crate::layout::rect::Rect;
 use crate::style::values::computed::length::CSSPixelLength;
+use crate::style::values::computed::WritingMode;
 use crate::style::values::CSSFloat;
 use enum_dispatch::enum_dispatch;
 use glutin::dpi::PhysicalSize;
@@ -32,16 +33,22 @@ pub fn global_layout(
 ) {
     let writing_mode = layout_root_box.computed_values().writing_mode;
     let direction = layout_root_box.computed_values().direction;
-    layout_root_box.layout(LayoutContext::new(ContainingBlock::new(
-        Rect {
-            start_x: 0.0,
-            start_y: 0.0,
-            width: CSSPixelLength::new(viewport.width.px() / scale_factor),
-            height: CSSPixelLength::new(viewport.height.px() / scale_factor),
-        },
-        direction,
-        writing_mode,
-    )));
+    let viewport_width = CSSPixelLength::new(viewport.width.px() / scale_factor);
+    let viewport_height = CSSPixelLength::new(viewport.height.px() / scale_factor);
+    layout_root_box.layout(LayoutContext::new(
+        ContainingBlock::new(
+            Rect {
+                start_x: 0.0,
+                start_y: 0.0,
+                width: viewport_width,
+                height: viewport_height,
+            },
+            direction,
+            writing_mode,
+        ),
+        viewport_width,
+        viewport_height,
+    ));
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,11 +61,40 @@ pub enum BoxComponent {
 #[derive(Copy, Clone, Debug)]
 pub struct LayoutContext {
     containing_block: ContainingBlock,
+    // TODO: Make new PositionedRect struct?
+    // TODO: Turn available_* into a Rect?
+    // https://www.w3.org/TR/css-sizing-3/#available
+    available_width: CSSPixelLength,
+    available_height: CSSPixelLength,
 }
 
 impl LayoutContext {
-    pub fn new(containing_block: ContainingBlock) -> Self {
-        LayoutContext { containing_block }
+    pub fn new(
+        containing_block: ContainingBlock,
+        available_width: CSSPixelLength,
+        available_height: CSSPixelLength,
+    ) -> Self {
+        LayoutContext {
+            containing_block,
+            available_width,
+            available_height,
+        }
+    }
+
+    pub fn available_block_space(&self, relative_to_writing_mode: WritingMode) -> CSSPixelLength {
+        if relative_to_writing_mode.is_horizontal() {
+            self.available_height
+        } else {
+            self.available_width
+        }
+    }
+
+    pub fn available_inline_space(&self, relative_to_writing_mode: WritingMode) -> CSSPixelLength {
+        if relative_to_writing_mode.is_horizontal() {
+            self.available_width
+        } else {
+            self.available_height
+        }
     }
 
     pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {

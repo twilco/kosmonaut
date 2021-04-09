@@ -304,6 +304,11 @@ impl Dimensions {
         }
     }
 
+    /// Get the sum of the margin, border, and padding box components for the given `Side`.
+    pub fn get_mbp_phys(&self, side: Side) -> CSSPixelLength {
+        self.get_margin_phys(side) + self.get_border_phys(side) + self.get_padding_phys(side)
+    }
+
     /// Get the sum of the margin, border, and padding box components for the given `FlowSide`.
     pub fn get_mbp(
         &self,
@@ -327,6 +332,15 @@ impl Dimensions {
         self.set(side, BoxComponent::Margin, val, writing_mode, direction)
     }
 
+    pub fn get_margin_phys(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.margin.bottom,
+            Side::Left => self.margin.left,
+            Side::Right => self.margin.right,
+            Side::Top => self.margin.top,
+        }
+    }
+
     #[inline(always)]
     pub fn set_margin_phys(&mut self, side: Side, val: CSSPixelLength) {
         match side {
@@ -334,6 +348,15 @@ impl Dimensions {
             Side::Left => self.margin.left = val,
             Side::Right => self.margin.right = val,
             Side::Top => self.margin.top = val,
+        }
+    }
+
+    pub fn get_border_phys(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.border.bottom,
+            Side::Left => self.border.left,
+            Side::Right => self.border.right,
+            Side::Top => self.border.top,
         }
     }
 
@@ -355,6 +378,15 @@ impl Dimensions {
             Side::Left => self.border.left = val,
             Side::Right => self.border.right = val,
             Side::Top => self.border.top = val,
+        }
+    }
+
+    pub fn get_padding_phys(&self, side: Side) -> CSSPixelLength {
+        match side {
+            Side::Bottom => self.padding.bottom,
+            Side::Left => self.padding.left,
+            Side::Right => self.padding.right,
+            Side::Top => self.padding.top,
         }
     }
 

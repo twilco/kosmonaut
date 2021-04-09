@@ -67,7 +67,7 @@ impl BlockLevelBox {
         }
     }
 
-    fn layout_children(&mut self, containing_block: ContainingBlock) {
+    fn layout_children(&mut self, context: &LayoutContext) {
         let direction = self.computed_values().direction;
         let writing_mode = self.computed_values().writing_mode;
 
@@ -75,6 +75,12 @@ impl BlockLevelBox {
             BlockLevelBox::AnonymousBlock(abb) => (&mut abb.children, abb.base.dimensions_mut()),
             BlockLevelBox::BlockContainer(bc) => (&mut bc.children, bc.base.dimensions_mut()),
         };
+        let available_height = context.available_height
+            - self_dimensions.get_mbp_phys(Side::Bottom)
+            - self_dimensions.get_mbp_phys(Side::Top);
+        let available_width = context.available_width
+            - self_dimensions.get_mbp_phys(Side::Left)
+            - self_dimensions.get_mbp_phys(Side::Right);
         for child in children {
             // The rectangle selected as the containing block will need to change when we support other
             // `position` property types (e.g. some may want the content-box, others the margin-box, etc).
@@ -83,22 +89,23 @@ impl BlockLevelBox {
             // 10.1.2: For other [not-root] elements, if the element's position is 'relative' or
             // 'static', the containing block is formed by the content edge of the nearest block
             // container ancestor box.
-            child.layout(LayoutContext::new(ContainingBlock::new(
-                self_dimensions.content,
-                direction,
-                writing_mode,
-            )));
+            child.layout(LayoutContext::new(
+                ContainingBlock::new(self_dimensions.content, direction, writing_mode),
+                available_width,
+                available_height,
+            ));
 
             // Add this child's margin-box to our content box so the next child is laid out after
             // this one.
             self_dimensions.add_to_block_size(
                 child.dimensions().margin_box_block_size(writing_mode),
-                containing_block.writing_mode(),
+                context.containing_block.writing_mode(),
             );
         }
     }
 
-    pub fn solve_and_set_inline_level_properties(&mut self, containing_block: ContainingBlock) {
+    pub fn solve_and_set_inline_level_properties(&mut self, context: &LayoutContext) {
+        let containing_block = context.containing_block;
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
         let writing_mode = containing_block.writing_mode();
@@ -200,7 +207,8 @@ impl BlockLevelBox {
 
     /// Corresponds to CSS 2.1 section 10.6.3.  Currently no other sections are implemented.
     /// https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#normal-block
-    pub fn solve_and_set_block_level_properties(&mut self, containing_block: ContainingBlock) {
+    pub fn solve_and_set_block_level_properties(&mut self, context: &LayoutContext) {
+        let containing_block = context.containing_block;
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
         let writing_mode = containing_block.writing_mode();
@@ -282,7 +290,7 @@ impl BlockLevelBox {
         let block_start_coord = compute_block_start_coord(
             &self.dimensions(),
             preceeding_sibling_blockwise_space_consumed,
-            LayoutContext::new(containing_block),
+            context,
         );
         self.dimensions_mut()
             .set_block_start_coord(block_start_coord, containing_block.writing_mode());
@@ -296,13 +304,24 @@ impl Layout for BlockLevelBox {
     // [1] "self-relative" means the containing block evaluates abstract flow directions against its
     // own writing-mode, rather than that of it's own containing block.
     fn layout(&mut self, context: LayoutContext) {
-        let LayoutContext { containing_block } = context;
-        self.solve_and_set_inline_level_properties(containing_block);
-        self.solve_and_set_block_level_properties(containing_block);
-        self.layout_children(containing_block);
+        self.solve_and_set_inline_level_properties(&context);
+        self.solve_and_set_block_level_properties(&context);
+        self.layout_children(&context);
+        // After we've laid out our children, we have enough information (our intrinsic size) to flip our block-start
+        // coordinate if it's necessary.
+        let containing_block = context.containing_block;
+        if context.block_start_origin_relative_progression() == OriginRelativeProgression::TowardsOrigin {
+            let containing_writing_mode = containing_block.writing_mode();
+            let preferred_block_size = self.computed_values().block_size(containing_writing_mode);
+            let flipped_block_start_coord = context.available_block_space(containing_writing_mode)
+                // TODO: Explain why adding preferred size
+                - preferred_block_size.to_px(containing_block.self_relative_block_size())
+                - self.dimensions().get_block_start_coord(containing_writing_mode);
+            self.dimensions_mut().set_block_start_coord(flipped_block_start_coord.px(), containing_writing_mode);
+        }
 
         // After computing and applying values normally through layout, override these values with
-        // the author's specified page relative properties (if present).
+        // the author's preferred page relative properties (if present).
         self.apply_block_page_relative_properties(containing_block);
         self.apply_inline_page_relative_properties(containing_block);
     }
@@ -483,21 +502,14 @@ fn solve_block_level_inline_size_to_spec(input: SolveInlineSizeInput) -> SolveIn
 fn compute_block_start_coord(
     box_dimensions: &Dimensions,
     preceeding_sibling_blockwise_space_consumed: CSSPixelLength,
-    layout_context: LayoutContext,
+    layout_context: &LayoutContext,
 ) -> CSSFloat {
     let containing_block = layout_context.containing_block;
-    match layout_context.block_start_origin_relative_progression() {
-        OriginRelativeProgression::AwayFromOrigin => {
-            containing_block.self_relative_block_start_coord()
-                + preceeding_sibling_blockwise_space_consumed
-                // Since block_start_coord is the start of the box content, also factor in this boxes
-                // margin, border, and padding to the calculation.
-                + box_dimensions.get_mbp(FlowSide::BlockStart, containing_block.writing_mode(), containing_block.direction())
-        }
-        OriginRelativeProgression::TowardsOrigin => {
-            unimplemented!("towards origin block_start_coord computation")
-        }
-    }.px()
+    (containing_block.self_relative_block_start_coord()
+        + preceeding_sibling_blockwise_space_consumed
+        // Since block_start_coord is the start of the box content, also factor in this boxes
+        // margin, border, and padding to the calculation.
+        + box_dimensions.get_mbp(FlowSide::BlockStart, containing_block.writing_mode(), containing_block.direction())).px()
 }
 
 fn compute_inline_start_coord(

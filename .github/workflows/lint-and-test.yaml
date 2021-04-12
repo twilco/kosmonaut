@@ -7,16 +7,22 @@ jobs:
     name: Layout and unit tests
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get -y install xorg openbox
+      - run: sudo apt-get -y install xvfb fluxbox
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: nightly
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: Start XVFB and run tests
+        run: |
+          export DISPLAY=:1
+          Xvfb :1 -screen 0 1920x1080x24 &
+          fluxbox -display :1 &
+          cargo test --release
+      - name: Cleanup XVFB processes
+        if: always()
+        run: ./.github/scripts/cleanup-xvfb.sh
 
   fmt:
     name: Rustfmt

@@ -1,0 +1,10 @@
+[package]
+name = "cli"
+version = "0.1.0"
+description = "Kosmonaut's CLI"
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+clap = "2.33.0"

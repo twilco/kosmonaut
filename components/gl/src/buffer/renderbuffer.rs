@@ -34,15 +34,15 @@ pub struct RenderBuffer {
 /// https://www.khronos.org/opengl/wiki/GLAPI/glRenderbufferStorage
 #[derive(Clone, Debug)]
 pub enum RenderBufferFormat {
-    RGB8,
-    RGBA,
+    Rgb8,
+    Rgba,
 }
 
 impl RenderBufferFormat {
     pub fn to_gl_enum(&self) -> GLenum {
         match self {
-            RenderBufferFormat::RGB8 => RGB8,
-            RenderBufferFormat::RGBA => RGBA,
+            RenderBufferFormat::Rgb8 => RGB8,
+            RenderBufferFormat::Rgba => RGBA,
         }
     }
 }
@@ -58,7 +58,7 @@ impl RenderBuffer {
             gl: gl.clone(),
             height_px,
             id,
-            internal_format: RenderBufferFormat::RGBA,
+            internal_format: RenderBufferFormat::Rgba,
             storage_allocated: RefCell::new(false),
             width_px,
         }

@@ -1,0 +1,16 @@
+[package]
+name = "display_list"
+version = "0.1.0"
+description = "Kosmonaut's display list implementation."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+app_units = "0.7.1"
+cssparser = "0.27"
+gl = { path = "../gl" }
+layout = { path = "../layout" }
+style = { path = "../style" }
+pathfinder_geometry = "0.5.1"
+primitives = { path = "../primitives" }

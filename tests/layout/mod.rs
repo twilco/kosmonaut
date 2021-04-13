@@ -1,14 +1,12 @@
-pub use kosmonaut::cli::DumpLayoutVerbosity;
-
 pub mod directional;
 
 #[cfg(test)]
 mod tests {
-    use crate::layout::DumpLayoutVerbosity;
     use crate::{
         dump_layout_cmd, dump_layout_cmd_verbose_scaled, snapshot_dump_layout_cmd,
         snapshot_dump_layout_cmd_scaled,
     };
+    use cli::DumpLayoutVerbosity;
     use std::path::Path;
 
     #[test]

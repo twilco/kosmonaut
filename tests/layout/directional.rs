@@ -1,5 +1,5 @@
-use crate::layout::DumpLayoutVerbosity;
 use crate::{dump_layout_cmd, snapshot_dump_layout_cmd_verbose};
+use cli::DumpLayoutVerbosity;
 use std::path::PathBuf;
 
 const DIRECTIONAL_WEBSRC_DIR: &str = "tests/websrc/directional";

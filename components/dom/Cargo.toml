@@ -1,0 +1,17 @@
+[package]
+name = "dom"
+version = "0.1.0"
+description = "Kosmonaut's DOM module."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+accountable-refcell = "0.2.1"
+html5ever = "0.25.1"
+kosmonaut_selectors = { path = "../kosmonaut_selectors" }
+selectors = "0.22.0"
+style = { path = "../style" }
+
+[dev-dependencies]
+tempdir = "0.3.7"

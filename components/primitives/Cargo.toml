@@ -1,0 +1,10 @@
+[package]
+name = "primitives"
+version = "0.1.0"
+description = "Primitive building blocks to be shared across Kosmonaut's components."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+app_units = "0.7.1"

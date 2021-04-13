@@ -1,61 +1,39 @@
 #![feature(destructuring_assignment)]
 #![feature(type_name_of_val)]
 
-#[macro_use]
-extern crate cssparser;
-#[macro_use]
-extern crate html5ever;
-#[macro_use]
-extern crate matches;
-#[macro_use]
-extern crate strum_macros;
-#[macro_use]
-extern crate derive_builder;
-
 use std::fs::File;
 
-use crate::dom::parser::parse_html;
-use crate::dom::traits::TendrilSink;
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::EventLoop;
 
-use crate::dom::tree::NodeRef;
-use crate::layout::{global_layout, DumpLayout, LayoutViewportDimensions};
-
-pub mod cli;
-pub mod common;
-pub mod dom;
-pub mod gfx;
-pub mod layout;
-pub mod style;
-
-use crate::cli::{
-    get_command, setup_and_get_cli_args, CliCommand, Command, DumpLayoutCmd, RenderCmd,
-    SimilarityCmd,
-};
-use crate::gfx::char::CharHandle;
-use crate::gfx::display::{build_display_list, DisplayCommand, DisplayList};
-use crate::gfx::headed::init_window_and_gl;
-use crate::gfx::headless::init_framebuffer_and_gl;
-use crate::gfx::paint::MasterPainter;
-use crate::gfx::{
+use cli::commands::{get_command, Command, DumpLayoutCmd, RenderCmd, SimilarityCmd};
+use cli::setup_and_get_cli_args;
+use cssparser::RGBA;
+use display_list::{build_display_list, DisplayCommand, DisplayList};
+use dom::parser::parse_html;
+use dom::styling::{apply_styles, extract_embedded_styles};
+use dom::tree::NodeRef;
+use gfx::char::CharHandle;
+use gfx::headed::init_window_and_gl;
+use gfx::headless::init_framebuffer_and_gl;
+use gfx::paint::MasterPainter;
+use gfx::{
     resize_window, LogGlInfo, DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX, DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX,
 };
-use crate::layout::box_tree::build_box_tree;
-use crate::layout::layout_box::LayoutBox;
-use crate::style::dom_integration::{apply_styles, extract_embedded_styles};
-use crate::style::parse_css_to_rules;
-use crate::style::stylesheet::Stylesheet;
-pub use common::Side;
-use cssparser::RGBA;
 use gl::pixels::RgbaPixel;
 use gl::Gl;
 use glutin::event_loop::ControlFlow;
 use glutin::{PossiblyCurrent, WindowedContext};
+use html5ever::tendril::TendrilSink;
+use layout::box_tree::build_box_tree;
+use layout::layout_box::LayoutBox;
+use layout::{global_layout, DumpLayout, LayoutViewportDimensions};
 use std::cmp::{max, min};
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
+use style::parse_css_to_rules;
+use style::stylesheet::Stylesheet;
 use url::Url;
 
 const UA_STYLESHEET_STR: &str = include_str!("../web/useragent.css");
@@ -77,6 +55,11 @@ pub enum CommandReturn {
     DumpLayout(<DumpLayoutCmd as CliCommand>::RunReturn),
     Render(<RenderCmd as CliCommand>::RunReturn),
     Similarity(<SimilarityCmd as CliCommand>::RunReturn),
+}
+
+pub trait CliCommand {
+    type RunReturn;
+    fn run(&self) -> Result<Self::RunReturn, String>;
 }
 
 impl CliCommand for Command {
@@ -222,7 +205,7 @@ impl CliCommand for RenderCmd {
             .unwrap_or_default();
         let styled_dom = if let Some(files_or_urls) = self.files_or_urls.clone() {
             style_dom(
-                self.dom_from_file_or_url(files_or_urls.get(0).unwrap())?,
+                dom_from_file_or_url(files_or_urls.get(0).unwrap())?,
                 author_sheets,
             )
         } else {
@@ -241,48 +224,46 @@ impl CliCommand for RenderCmd {
     }
 }
 
-impl RenderCmd {
-    fn dom_from_file_or_url<S: AsRef<str>>(&self, file_or_url: S) -> Result<NodeRef, String> {
-        fn dom_from_readable<R: std::io::Read>(mut readable: R) -> Result<NodeRef, Box<dyn Error>> {
-            parse_html()
-                .from_utf8()
-                .read_from(&mut readable)
-                .map_err(|err| err.into())
-        }
-        let url_error = match Url::parse(file_or_url.as_ref()) {
-            Ok(url) => match isahc::get(url.as_str()) {
-                Ok(mut response) => {
-                    return dom_from_readable(response.body_mut()).map_err(|err| {
-                        format!(
-                            "failed to parse html with contents from url '{}': {}",
-                            url.as_str(),
-                            err
-                        )
-                    });
-                }
-                Err(err) => format!("{}", err),
-            },
-            Err(err) => format!("{}", err),
-        };
-        let file_error = match File::open(file_or_url.as_ref()) {
-            Ok(mut file) => {
-                return dom_from_readable(&mut file).map_err(|err| {
+fn dom_from_file_or_url<S: AsRef<str>>(file_or_url: S) -> Result<NodeRef, String> {
+    fn dom_from_readable<R: std::io::Read>(mut readable: R) -> Result<NodeRef, Box<dyn Error>> {
+        parse_html()
+            .from_utf8()
+            .read_from(&mut readable)
+            .map_err(|err| err.into())
+    }
+    let url_error = match Url::parse(file_or_url.as_ref()) {
+        Ok(url) => match isahc::get(url.as_str()) {
+            Ok(mut response) => {
+                return dom_from_readable(response.body_mut()).map_err(|err| {
                     format!(
-                        "failed to parse html with contents from file '{}': {}",
-                        file_or_url.as_ref(),
+                        "failed to parse html with contents from url '{}': {}",
+                        url.as_str(),
                         err
                     )
-                })
+                });
             }
-            Err(err) => err,
-        };
-        Err(format!(
-            "input '{}' was neither a valid file path nor valid url\n{}\n{}",
-            file_or_url.as_ref(),
-            url_error,
-            file_error.to_string()
-        ))
-    }
+            Err(err) => format!("{}", err),
+        },
+        Err(err) => format!("{}", err),
+    };
+    let file_error = match File::open(file_or_url.as_ref()) {
+        Ok(mut file) => {
+            return dom_from_readable(&mut file).map_err(|err| {
+                format!(
+                    "failed to parse html with contents from file '{}': {}",
+                    file_or_url.as_ref(),
+                    err
+                )
+            })
+        }
+        Err(err) => err,
+    };
+    Err(format!(
+        "input '{}' was neither a valid file path nor valid url\n{}\n{}",
+        file_or_url.as_ref(),
+        url_error,
+        file_error.to_string()
+    ))
 }
 
 fn html_file_path_from_files<S: AsRef<str>>(files: Vec<S>) -> Option<String> {
@@ -453,12 +434,12 @@ fn layout_and_paint_headless(
 fn display_list_from_box_tree(
     box_tree_opt: Option<LayoutBox>,
     viewport: LayoutViewportDimensions,
-    char_handle: &CharHandle,
+    _char_handle: &CharHandle,
     scale_factor: f32,
 ) -> DisplayList {
     if let Some(mut box_tree) = box_tree_opt {
         global_layout(&mut box_tree, viewport, scale_factor);
-        build_display_list(&box_tree, &char_handle, scale_factor)
+        build_display_list(&box_tree, scale_factor)
     } else {
         // There is no box tree to paint (e.g. in the case of `html { display: none }`, so paint
         // only the viewport background.

@@ -1,0 +1,18 @@
+[package]
+name = "style"
+version = "0.1.0"
+description = "Kosmonaut's CSS implementation."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+app_units = "0.7.1"
+cssparser = "0.27"
+derive_builder = "0.10.0"
+kosmonaut_selectors = { path = "../kosmonaut_selectors" }
+primitives = { path = "../primitives" }
+selectors = "0.22.0"
+smallbitvec = "2.5.0"
+strum = "0.20"
+strum_macros = "0.20"

@@ -245,6 +245,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -737,6 +744,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 
 [[package]]
+name = "display_list"
+version = "0.1.0"
+dependencies = [
+ "app_units",
+ "cssparser",
+ "gl",
+ "layout",
+ "pathfinder_geometry",
+ "primitives",
+ "style",
+]
+
+[[package]]
 name = "dlib"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -752,6 +772,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac1b7517328c04c2aa68422fc60a41b92208182142ed04a25879c26c8f878794"
 dependencies = [
  "libloading 0.7.0",
+]
+
+[[package]]
+name = "dom"
+version = "0.1.0"
+dependencies = [
+ "accountable-refcell",
+ "html5ever",
+ "kosmonaut_selectors",
+ "selectors",
+ "style",
+ "tempdir",
 ]
 
 [[package]]
@@ -1024,6 +1056,23 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "wasi 0.10.2+wasi-snapshot-preview1",
+]
+
+[[package]]
+name = "gfx"
+version = "0.1.0"
+dependencies = [
+ "accountable-refcell",
+ "app_units",
+ "cssparser",
+ "display_list",
+ "font-kit",
+ "gl",
+ "glutin",
+ "image",
+ "layout",
+ "pathfinder_geometry",
+ "primitives",
 ]
 
 [[package]]
@@ -1313,27 +1362,61 @@ dependencies = [
  "accountable-refcell",
  "app_units",
  "clap",
+ "cli",
  "cssparser",
  "datatest",
  "datatest-derive",
  "derive_builder",
+ "display_list",
+ "dom",
  "enum_dispatch",
  "font-kit",
+ "gfx",
  "gl",
  "glutin",
  "html5ever",
  "image",
  "insta",
  "isahc",
+ "kosmonaut_selectors",
+ "layout",
  "matches",
  "pathfinder_geometry",
+ "primitives",
  "rand 0.8.3",
  "selectors",
  "smallbitvec",
  "strum",
  "strum_macros",
+ "style",
  "tempdir",
  "url",
+]
+
+[[package]]
+name = "kosmonaut_selectors"
+version = "0.1.0"
+dependencies = [
+ "cssparser",
+ "html5ever",
+ "selectors",
+]
+
+[[package]]
+name = "layout"
+version = "0.1.0"
+dependencies = [
+ "accountable-refcell",
+ "app_units",
+ "cli",
+ "dom",
+ "enum_dispatch",
+ "glutin",
+ "html5ever",
+ "primitives",
+ "strum",
+ "strum_macros",
+ "style",
 ]
 
 [[package]]
@@ -1969,6 +2052,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
+name = "primitives"
+version = "0.1.0"
+dependencies = [
+ "app_units",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2550,6 +2640,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "style"
+version = "0.1.0"
+dependencies = [
+ "app_units",
+ "cssparser",
+ "derive_builder",
+ "kosmonaut_selectors",
+ "primitives",
+ "selectors",
+ "smallbitvec",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]

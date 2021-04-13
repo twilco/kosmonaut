@@ -10,7 +10,8 @@ pub mod types {
         non_camel_case_types,
         non_snake_case,
         dead_code,
-        missing_copy_implementations
+        missing_copy_implementations,
+        clippy::upper_case_acronyms
     )]
 
     // Common types from OpenGL 1.1
@@ -1853,7 +1854,12 @@ fn missing_fn_panic() -> ! {
     panic!("gl function was not loaded")
 }
 
-#[allow(non_camel_case_types, non_snake_case, dead_code)]
+#[allow(
+    non_camel_case_types,
+    non_snake_case,
+    dead_code,
+    clippy::manual_non_exhaustive
+)]
 #[derive(Clone)]
 pub struct Gl {
     /// Fallbacks: ActiveTextureARB

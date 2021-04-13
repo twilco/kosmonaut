@@ -1,0 +1,12 @@
+[package]
+name = "kosmonaut_selectors"
+version = "0.1.0"
+description = "Kosmonaut's implementation of the selectors crate."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+cssparser = "0.27"
+selectors = "0.22.0"
+html5ever = "0.25.1"

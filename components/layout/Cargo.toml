@@ -1,0 +1,20 @@
+[package]
+name = "layout"
+version = "0.1.0"
+description = "Kosmonaut's layout module."
+authors = ["Tyler Wilcock <twilco.o@protonmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+accountable-refcell = "0.2.1"
+app_units = "0.7.1"
+cli = { path = "../cli" }
+dom = { path = "../dom" }
+enum_dispatch = "0.3.5"
+html5ever = "0.25.1"
+glutin = "0.26.0"
+primitives = { path = "../primitives" }
+strum = "0.20.0"
+strum_macros = "0.20.1"
+style = { path = "../style" }

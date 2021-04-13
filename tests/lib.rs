@@ -1,8 +1,8 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(datatest::runner)]
 
-use crate::layout::DumpLayoutVerbosity;
 use crate::util::CommandUnderTest;
+use cli::DumpLayoutVerbosity;
 use insta::assert_snapshot;
 use std::ffi::OsStr;
 use std::path::Path;

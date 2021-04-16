@@ -23,7 +23,7 @@ pub fn parse_css_to_stylesheet(
 }
 
 #[derive(Debug)]
-pub enum StylesheetParseErr<'i> {
+enum StylesheetParseErr<'i> {
     Io(std::io::Error),
     Parse(ParseError<'i, StyleParseErrorKind<'i>>),
 }
@@ -49,11 +49,11 @@ pub struct Stylesheet {
 }
 
 impl Stylesheet {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Stylesheet::default()
     }
 
-    pub fn new_with_name(name: String) -> Self {
+    fn new_with_name(name: String) -> Self {
         Stylesheet {
             name,
             ..Default::default()
@@ -73,7 +73,7 @@ impl Stylesheet {
 
     /// Adds a new rule to the stylesheet, de-duplicating rules with the same selectors and
     /// conflicting `property: value`s.
-    pub fn add_rule(&mut self, new_rule: CssRule) {
+    fn add_rule(&mut self, new_rule: CssRule) {
         let mut obsolete_rule_indices = Vec::new();
         match &new_rule {
             CssRule::Style(new_style) => {

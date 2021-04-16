@@ -222,7 +222,7 @@ impl DoubleEndedIterator for Siblings {
 
 /// An iterator on ancestor nodes.
 #[derive(Debug, Clone)]
-pub struct Ancestors(Option<NodeRef>);
+struct Ancestors(Option<NodeRef>);
 
 impl Iterator for Ancestors {
     type Item = NodeRef;
@@ -238,7 +238,7 @@ impl Iterator for Ancestors {
 
 /// An iterator of references to a given node and its descendants, in tree order.
 #[derive(Debug, Clone)]
-pub struct Descendants(Traverse);
+pub(super) struct Descendants(Traverse);
 
 macro_rules! descendants_next {
     ($next: ident) => {
@@ -266,7 +266,7 @@ impl DoubleEndedIterator for Descendants {
 
 /// Marks either the start or the end of a node.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum NodeEdge<T> {
+enum NodeEdge<T> {
     /// Indicates that start of a node that has children.
     /// Yielded by `Traverse::next` before the node’s descendants.
     /// In HTML or XML, this corresponds to an opening tag like `<div>`
@@ -280,7 +280,7 @@ pub enum NodeEdge<T> {
 
 /// An iterator of the start and end edges of the nodes in a given subtree.
 #[derive(Debug, Clone)]
-pub struct Traverse(Option<State<NodeEdge<NodeRef>>>);
+struct Traverse(Option<State<NodeEdge<NodeRef>>>);
 
 macro_rules! traverse_next {
     ($next: ident, $next_back: ident, $first_child: ident, $next_sibling: ident, $Start: ident, $End: ident) => {
@@ -335,7 +335,7 @@ macro_rules! filter_map_like_iterator {
     (#[$doc: meta] $name: ident: $f: expr, $from: ty => $to: ty) => {
         #[$doc]
         #[derive(Debug, Clone)]
-        pub struct $name<I>(pub I);
+        pub struct $name<I>(I);
 
         impl<I> Iterator for $name<I>
         where
@@ -387,16 +387,16 @@ filter_map_like_iterator! {
 }
 
 /// An element iterator adaptor that yields elements maching given selectors.
-pub struct Select<I, S = Selectors>
+pub(super) struct Select<I, S = Selectors>
 where
     I: Iterator<Item = NodeDataRef<ElementData>>,
     S: Borrow<Selectors>,
 {
     /// The underlying iterator.
-    pub iter: I,
+    pub(super) iter: I,
 
     /// The selectors to be matched.
-    pub selectors: S,
+    pub(super) selectors: S,
 }
 
 impl<I, S> Iterator for Select<I, S>
@@ -434,7 +434,7 @@ where
 }
 
 /// Convenience methods for node iterators.
-pub trait NodeIterator: Sized + Iterator<Item = NodeRef> {
+pub(super) trait NodeIterator: Sized + Iterator<Item = NodeRef> {
     /// Filter this element iterator to elements.
     #[inline]
     fn elements(self) -> Elements<Self> {
@@ -467,7 +467,7 @@ pub trait NodeIterator: Sized + Iterator<Item = NodeRef> {
 }
 
 /// Convenience methods for element iterators.
-pub trait ElementIterator: Sized + Iterator<Item = NodeDataRef<ElementData>> {
+trait ElementIterator: Sized + Iterator<Item = NodeDataRef<ElementData>> {
     /// Filter this element iterator to elements matching the given selectors.
     #[inline]
     fn select(self, selectors: &Selectors) -> Select<Self> {

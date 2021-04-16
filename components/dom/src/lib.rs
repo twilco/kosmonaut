@@ -3,16 +3,16 @@
 /// Kuchiki doesn't expose some key structures, such as its implementation of `selectors::Parser`,
 /// that we need in Kosmonaut.  The authors of Kosmonaut will upstream any improvements back to
 /// Kuchiki where it makes sense.  Thanks to the authors of Kuchiki for their work.
-pub mod attributes;
-pub mod cell_extras;
-pub mod iter;
-pub mod node_data_ref;
+pub(crate) mod attributes;
+pub(crate) mod cell_extras;
+pub(crate) mod iter;
+pub(crate) mod node_data_ref;
 pub mod parser;
-pub mod selectors_integration;
-pub mod serializer;
+pub(crate) mod selectors_integration;
+pub(crate) mod serializer;
 pub mod styling;
 #[cfg(test)]
-pub mod tests;
+pub(crate) mod tests;
 pub mod tree;
 
 #[macro_use]

@@ -12,15 +12,15 @@ use primitives::units::CSSPixelLength;
 pub struct FontSize {
     /// The size.
     /// TODO: This should be a non-negative length.
-    pub size: CSSPixelLength,
+    size: CSSPixelLength,
     /// If derived from a keyword, the keyword size
     /// We may need more information here, such as the factor to multiply by.  See Servo's KeywordInfo
-    pub keyword_size: Option<KeywordSize>,
+    keyword_size: Option<KeywordSize>,
 }
 
 impl FontSize {
     #[inline]
-    pub fn medium() -> Self {
+    fn medium() -> Self {
         Self {
             size: Au::from_px(specified::FONT_MEDIUM_PX).into(),
             keyword_size: Some(KeywordSize::Medium),
@@ -70,7 +70,7 @@ impl ComputeValueWithContext for specified::FontSize {
 }
 
 /// The default font size.
-pub const FONT_MEDIUM_PX: i32 = 16;
+const FONT_MEDIUM_PX: i32 = 16;
 
 impl ComputeValueWithContext for KeywordSize {
     // TODO: This should be a NonNegativeLength

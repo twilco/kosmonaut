@@ -43,7 +43,7 @@ impl CharCommand {
         }
     }
 
-    pub fn advance(&self) -> Vector2F {
+    fn advance(&self) -> Vector2F {
         self.advance
     }
 
@@ -51,7 +51,7 @@ impl CharCommand {
         self.bearing
     }
 
-    pub fn ch(&self) -> char {
+    fn ch(&self) -> char {
         self.ch
     }
 

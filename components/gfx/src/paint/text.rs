@@ -10,7 +10,7 @@ use layout::LayoutViewportDimensions;
 use std::ffi::CString;
 
 /// Uses given OpenGL context handle to paint arbitrary text.
-pub struct TextPainter {
+pub(super) struct TextPainter {
     /// An instance of OpenGL.
     gl: Gl,
     /// The OpenGL program that will be used to paint text.
@@ -20,7 +20,7 @@ pub struct TextPainter {
 }
 
 impl TextPainter {
-    pub fn new(gl: &Gl) -> Result<TextPainter, String> {
+    pub(super) fn new(gl: &Gl) -> Result<TextPainter, String> {
         let vbo = VertexBufferObject::new(gl);
         let config_vao = |gl: &Gl| {
             unsafe {
@@ -57,7 +57,7 @@ impl TextPainter {
         })
     }
 
-    pub fn paint(&mut self, paintable_chars: &[CharPaintData]) {
+    pub(super) fn paint(&mut self, paintable_chars: &[CharPaintData]) {
         self.program.use_globally();
 
         let text_color_str =

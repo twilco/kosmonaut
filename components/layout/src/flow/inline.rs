@@ -25,7 +25,7 @@ pub enum InlineLevelContent {
 }
 
 impl InlineLevelContent {
-    pub fn is_anonymous_inline(&self) -> bool {
+    pub(crate) fn is_anonymous_inline(&self) -> bool {
         match self {
             InlineLevelContent::InlineLevelBox(ilb) => ilb.is_anonymous_inline(),
             InlineLevelContent::TextRun(_) => false,
@@ -77,21 +77,21 @@ pub enum InlineLevelBox {
 }
 
 impl InlineLevelBox {
-    pub fn add_child(&mut self, new_child: LayoutBox) {
+    pub(crate) fn add_child(&mut self, new_child: LayoutBox) {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children.push(new_child),
             InlineLevelBox::InlineBox(ib) => ib.children.push(new_child),
         }
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    pub(crate) fn children(&self) -> &Vec<LayoutBox> {
         match self {
             InlineLevelBox::AnonymousInline(aib) => aib.children(),
             InlineLevelBox::InlineBox(ib) => ib.children(),
         }
     }
 
-    pub fn is_anonymous_inline(&self) -> bool {
+    fn is_anonymous_inline(&self) -> bool {
         match self {
             InlineLevelBox::AnonymousInline(_) => true,
             InlineLevelBox::InlineBox(_) => false,
@@ -112,14 +112,14 @@ pub struct AnonymousInlineBox {
 }
 
 impl AnonymousInlineBox {
-    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+    pub(crate) fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
         }
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }
 }
@@ -147,7 +147,7 @@ pub struct InlineBox {
 }
 
 impl InlineBox {
-    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+    pub(crate) fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
@@ -192,14 +192,18 @@ pub struct TextRun {
 }
 
 impl TextRun {
-    pub fn new(node: NodeRef, formatting_context: FormattingContextRef, contents: String) -> Self {
+    pub(crate) fn new(
+        node: NodeRef,
+        formatting_context: FormattingContextRef,
+        contents: String,
+    ) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             contents,
         }
     }
 
-    pub fn contents(&self) -> String {
+    pub(crate) fn contents(&self) -> String {
         self.contents.clone()
     }
 }

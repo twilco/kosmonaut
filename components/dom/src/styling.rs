@@ -66,7 +66,7 @@ pub fn apply_styles(
 /// 2) Cascading — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#cascade
 /// 3) Defaulting to specified values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#specified-value
 /// 4) Resolving specified values to computed values — https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#computed
-pub fn cascade_and_compute(start_node: &NodeRef) {
+fn cascade_and_compute(start_node: &NodeRef) {
     start_node.inclusive_descendants().for_each(|node| {
         // Step 2
         node.contextual_decls_mut().cascade_sort();
@@ -108,7 +108,7 @@ pub fn extract_embedded_styles(node: NodeRef) -> String {
         })
 }
 
-pub fn apply_css_rules_to_node(node: &NodeRef, rules: &[CssRule], origin: CssOrigin) {
+fn apply_css_rules_to_node(node: &NodeRef, rules: &[CssRule], origin: CssOrigin) {
     rules.iter().for_each(|rule| {
         if let CssRule::Style(style_rule) = rule {
             node.select(&style_rule.selectors)

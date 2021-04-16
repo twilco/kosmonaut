@@ -3,10 +3,10 @@ use crate::{Gl, RGBA, UNSIGNED_BYTE};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct RgbaPixel {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
+    r: u8,
+    g: u8,
+    b: u8,
+    a: u8,
 }
 
 /// Reads all pixels rendered to this GL context into the given buffer via `glReadPixels`.

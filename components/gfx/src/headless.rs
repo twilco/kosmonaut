@@ -33,10 +33,7 @@ pub fn init_framebuffer_and_gl(
     HeadlessGfxContent::new(headless_context, framebuffer, gl)
 }
 
-pub fn load_and_config_headless_gl(
-    context: &Context<PossiblyCurrent>,
-    log_gl_info: LogGlInfo,
-) -> Gl {
+fn load_and_config_headless_gl(context: &Context<PossiblyCurrent>, log_gl_info: LogGlInfo) -> Gl {
     let gl = load_and_config_gl(context);
     if log_gl_info == LogGlInfo::Yes {
         print_gl_info(context, None, &gl);
@@ -54,7 +51,7 @@ pub struct HeadlessGfxContent<T: ContextCurrentState> {
 }
 
 impl<T: ContextCurrentState> HeadlessGfxContent<T> {
-    pub fn new(context: Context<T>, framebuffer: FrameBuffer, gl: Gl) -> HeadlessGfxContent<T> {
+    fn new(context: Context<T>, framebuffer: FrameBuffer, gl: Gl) -> HeadlessGfxContent<T> {
         HeadlessGfxContent {
             _context: context,
             framebuffer,

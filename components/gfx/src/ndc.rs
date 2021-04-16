@@ -40,13 +40,13 @@ fn distance_between_pixel_locations(relative_to_px: CSSFloat) -> f32 {
 ///      ndc_y(0.0, 800.0) === approx. 1.0, which is the  of the screen (right).
 /// ```
 #[inline(always)]
-pub fn ndc_y(px_len: CSSFloat, relative_to_height_px: CSSFloat) -> f32 {
+pub(super) fn ndc_y(px_len: CSSFloat, relative_to_height_px: CSSFloat) -> f32 {
     ndc(px_len, relative_to_height_px) * -1.0
 }
 
 /// Gets the NDC of an x-value.  The `ndc` function itself returns the correct value already from
 /// the perspective of the layout viewport, so this function simply calls `ndc` as-is.
 #[inline(always)]
-pub fn ndc_x(px_len: CSSFloat, relative_to_width_px: CSSFloat) -> f32 {
+pub(super) fn ndc_x(px_len: CSSFloat, relative_to_width_px: CSSFloat) -> f32 {
     ndc(px_len, relative_to_width_px)
 }

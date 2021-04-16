@@ -24,20 +24,11 @@ impl Color {
         Color::black()
     }
 
-    pub fn rgba(self) -> RGBA {
+    pub(super) fn rgba(self) -> RGBA {
         self.0
     }
 
-    pub fn white() -> Color {
-        Color(RGBA {
-            red: 255,
-            green: 255,
-            blue: 255,
-            alpha: 1,
-        })
-    }
-
-    pub fn black() -> Color {
+    fn black() -> Color {
         Color(RGBA {
             red: 0,
             green: 0,

@@ -8,7 +8,7 @@ const DUMP_LAYOUT_INPUT_ARG_NAME: &str = "FILES";
 const SIMILARITY_INPUT_ARG_NAME: &str = "FILES";
 
 pub mod commands;
-pub mod matches;
+pub(crate) mod matches;
 
 pub fn setup_and_get_cli_args<'a>() -> ArgMatches<'a> {
     let headed_or_headless_applicable =
@@ -142,7 +142,7 @@ impl DumpLayoutVerbosity {
     }
 }
 
-pub fn dump_layout_tree_verbose(
+pub(crate) fn dump_layout_tree_verbose(
     dump_layout_arg_matches: &ArgMatches,
 ) -> Option<DumpLayoutVerbosity> {
     try_get_bool(dump_layout_arg_matches, "verbose").map(|bool_verbose| match bool_verbose {

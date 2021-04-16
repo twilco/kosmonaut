@@ -35,7 +35,7 @@ pub enum LengthPercentage {
 }
 
 impl LengthPercentage {
-    pub fn new_len(px_len: f32) -> LengthPercentage {
+    pub(super) fn new_len(px_len: f32) -> LengthPercentage {
         LengthPercentage::Length(CSSPixelLength::new(px_len))
     }
 }

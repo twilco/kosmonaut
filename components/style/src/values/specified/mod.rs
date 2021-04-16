@@ -9,52 +9,52 @@
 ///
 /// https://developer.mozilla.org/en-US/docs/Web/CSS/specified_value
 /// https://www.w3.org/TR/CSS22/cascade.html#specified-value
-pub mod background;
-pub mod border;
-pub mod color;
-pub mod font;
-pub mod height;
-pub mod length;
-pub mod margin;
-pub mod padding;
-pub mod width;
+mod background;
+pub(crate) mod border;
+mod color;
+pub(super) mod font;
+mod height;
+pub(crate) mod length;
+pub(crate) mod margin;
+pub(crate) mod padding;
+mod width;
 
-pub use background::BackgroundColor;
+pub(crate) use background::BackgroundColor;
 
-pub use border::BorderBottomWidth;
-pub use border::BorderColor;
-pub use border::BorderLeftWidth;
-pub use border::BorderRightWidth;
-pub use border::BorderTopWidth;
+pub(crate) use border::BorderBottomWidth;
+pub(crate) use border::BorderColor;
+pub(crate) use border::BorderLeftWidth;
+pub(crate) use border::BorderRightWidth;
+pub(crate) use border::BorderTopWidth;
 
-pub use color::Color;
-pub use color::ColorUnit;
+pub(crate) use color::Color;
+pub(super) use color::ColorUnit;
 
-pub use font::FontSize;
-pub use font::FONT_MEDIUM_PX;
+pub(crate) use font::FontSize;
+pub(super) use font::FONT_MEDIUM_PX;
 
-pub use height::Height;
+pub(crate) use height::Height;
 
-pub use length::AbsoluteLength;
-pub use length::LengthPercentage;
-pub use length::LengthPercentageOrAuto;
-pub use length::NoCalcLength;
+pub(crate) use length::AbsoluteLength;
+pub(crate) use length::LengthPercentage;
+pub(super) use length::LengthPercentageOrAuto;
+pub(crate) use length::NoCalcLength;
 
-pub use margin::Margin;
-pub use padding::Padding;
+pub(crate) use margin::Margin;
+pub(crate) use padding::Padding;
 
 use crate::values::CssValueParse;
 use crate::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 use std::fmt::Debug;
-pub use width::Width;
+pub(crate) use width::Width;
 
 #[derive(Clone, Copy, Debug)]
-pub struct ParsedShorthandSides<T> {
-    pub top: T,
-    pub right: T,
-    pub bottom: T,
-    pub left: T,
+struct ParsedShorthandSides<T> {
+    top: T,
+    right: T,
+    bottom: T,
+    left: T,
 }
 
 /// Tries to parse shorthand values for the given `T`, returning the resulting parsed sides or a
@@ -63,7 +63,7 @@ pub struct ParsedShorthandSides<T> {
 /// The order of the parsed values is assigned to sides according to the typical pattern for
 /// shorthands.  See the margin shorthand for an example:
 /// https://drafts.csswg.org/css-box-3/#margin-shorthand
-pub fn parse_shorthand_sides<'i, 't, T: CssValueParse + Clone + Debug>(
+fn parse_shorthand_sides<'i, 't, T: CssValueParse + Clone + Debug>(
     input: &mut Parser<'i, 't>,
 ) -> Result<ParsedShorthandSides<T>, ParseError<'i, StyleParseErrorKind<'i>>> {
     let (first_val, second_val, third_val, fourth_val) = (

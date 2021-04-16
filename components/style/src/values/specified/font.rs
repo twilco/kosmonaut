@@ -5,7 +5,7 @@ use crate::values::specified::length::LengthPercentage;
 use crate::values::CssValueParse;
 
 /// The default font size.
-pub const FONT_MEDIUM_PX: i32 = 16;
+pub(crate) const FONT_MEDIUM_PX: i32 = 16;
 
 #[derive(Clone, Debug, PartialEq)]
 /// A specified font-size value

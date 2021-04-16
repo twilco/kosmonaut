@@ -10,8 +10,8 @@ use glutin::{PossiblyCurrent, WindowedContext};
 use layout::LayoutViewportDimensions;
 use std::ffi::CString;
 
-pub mod rect;
-pub mod text;
+mod rect;
+mod text;
 
 /// Wraps other painters to ensure they are only painting OpenGL vertex data (paint) that
 /// corresponds to their "bucket".  This is necessary because vertex data for a rectangle needs to
@@ -29,15 +29,15 @@ pub struct MasterPainter {
 
 /// Data necessary to paint a character with OpenGL.
 #[derive(Clone, Debug)]
-pub struct CharPaintData {
+struct CharPaintData {
     // TODO: It would probably be cleaner to handle colors like RectPainter does vs. passing it here
-    pub color: RGBA,
-    pub texture_id: TextureId,
-    pub vertices: Vec<f32>,
+    color: RGBA,
+    texture_id: TextureId,
+    vertices: Vec<f32>,
 }
 
 impl CharPaintData {
-    pub fn new(color: RGBA, texture_id: TextureId, vertices: Vec<f32>) -> Self {
+    fn new(color: RGBA, texture_id: TextureId, vertices: Vec<f32>) -> Self {
         CharPaintData {
             color,
             texture_id,
@@ -129,7 +129,7 @@ impl MasterPainter {
 }
 
 /// Represents the conversion from some entity to OpenGL vertex data.
-pub trait ToVertices {
+trait ToVertices {
     fn to_vertices(&self, viewport: LayoutViewportDimensions, scale_factor: f32) -> Vec<f32>;
 }
 
@@ -146,7 +146,7 @@ impl ToVertices for RGBA {
     }
 }
 
-pub fn build_program(
+fn build_program(
     vertex_shader_src: &CString,
     fragment_shader_src: &CString,
     gl: &Gl,

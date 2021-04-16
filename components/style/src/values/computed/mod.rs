@@ -1,21 +1,21 @@
 /// Some of this code was taken from Servo: https://github.com/servo/servo
 /// Kosmonaut complies with Servo's license, the Mozilla Public License 2.0.
-pub mod background;
-pub mod border;
-pub mod color;
-pub mod direction;
+mod background;
+mod border;
+mod color;
+pub(crate) mod direction;
 pub mod display;
-pub mod font;
-pub mod height;
+mod font;
+mod height;
 pub mod length;
-pub mod margin;
-pub mod padding;
-pub mod percentage;
-pub mod width;
+mod margin;
+mod padding;
+mod percentage;
+mod width;
 
 use crate::values::computed::height::Height;
-pub use crate::values::computed::margin::Margin;
-pub use crate::values::computed::padding::Padding;
+use crate::values::computed::margin::Margin;
+use crate::values::computed::padding::Padding;
 use crate::values::computed::width::Width;
 
 use crate::properties::id::LonghandId;
@@ -23,15 +23,15 @@ use crate::properties::{ContextualPropertyDeclarations, PropertyDeclaration};
 pub use crate::values::computed::direction::WritingMode;
 use crate::values::computed::length::{LengthPercentage, LengthPercentageOrAuto};
 use crate::values::specified;
-pub use background::BackgroundColor;
+use background::BackgroundColor;
 pub use border::LineStyle;
-pub use border::{border_side_initial_style, BorderColor, BorderWidth};
-pub use color::Color;
+use border::{border_side_initial_style, BorderColor, BorderWidth};
+use color::Color;
 use cssparser::RGBA;
 pub use direction::Direction;
 pub use display::Display;
-pub use font::FontSize;
-pub use percentage::Percentage;
+use font::FontSize;
+pub(super) use percentage::Percentage;
 use primitives::sides::FlowSide;
 use primitives::sides::PhysicalSide;
 use primitives::units::CSSPixelLength;
@@ -39,7 +39,7 @@ use strum::IntoEnumIterator;
 
 /// A trait to represent the conversion between computed and specified values where a context is
 /// required to properly compute the specified value.
-pub trait ComputeValueWithContext {
+trait ComputeValueWithContext {
     /// The computed value type we're going to be converted to.
     type ComputedValue;
 
@@ -52,7 +52,7 @@ pub trait ComputeValueWithContext {
 /// from `ComputeValueWithContext` in that this trait is only implemented for types that can go from
 /// specified value to computed value without the need for any `ComputeContext`, making this
 /// trait more convenient to use.
-pub trait ComputeValue {
+trait ComputeValue {
     /// The computed value type we're going to be converted to.
     type ComputedValue;
 
@@ -65,7 +65,7 @@ pub trait ComputeValue {
 /// provide one.
 ///
 /// https://www.w3.org/TR/2018/CR-css-cascade-3-20180828/#defaulting
-pub trait ValueDefault {
+pub(crate) trait ValueDefault {
     /// The computed value type resulting from default.
     type ComputedValue;
 
@@ -79,31 +79,31 @@ pub trait ValueDefault {
 #[derive(Debug, Clone, Builder)]
 pub struct ComputedValues {
     pub background_color: BackgroundColor,
-    pub border_bottom_color: BorderColor,
-    pub border_left_color: BorderColor,
-    pub border_right_color: BorderColor,
-    pub border_top_color: BorderColor,
-    pub border_bottom_style: LineStyle,
-    pub border_left_style: LineStyle,
-    pub border_right_style: LineStyle,
-    pub border_top_style: LineStyle,
-    pub border_bottom_width: BorderWidth,
-    pub border_left_width: BorderWidth,
-    pub border_right_width: BorderWidth,
-    pub border_top_width: BorderWidth,
-    pub color: Color,
+    border_bottom_color: BorderColor,
+    border_left_color: BorderColor,
+    border_right_color: BorderColor,
+    border_top_color: BorderColor,
+    border_bottom_style: LineStyle,
+    border_left_style: LineStyle,
+    border_right_style: LineStyle,
+    border_top_style: LineStyle,
+    border_bottom_width: BorderWidth,
+    border_left_width: BorderWidth,
+    border_right_width: BorderWidth,
+    border_top_width: BorderWidth,
+    color: Color,
     pub direction: Direction,
     pub display: Display,
-    pub font_size: FontSize,
+    font_size: FontSize,
     pub height: Height,
     pub margin_bottom: Margin,
     pub margin_left: Margin,
     pub margin_right: Margin,
     pub margin_top: Margin,
-    pub padding_bottom: Padding,
-    pub padding_left: Padding,
-    pub padding_right: Padding,
-    pub padding_top: Padding,
+    padding_bottom: Padding,
+    padding_left: Padding,
+    padding_right: Padding,
+    padding_top: Padding,
     pub width: Width,
     pub writing_mode: WritingMode,
 }
@@ -301,42 +301,41 @@ impl Default for ComputedValues {
 
 /// A `ComputeContext` is all the data a specified value could ever need to compute
 /// itself and be transformed to a computed value.
-pub struct ComputeContext<'a> {
-    // TODO: Viewport dimensions will be needed
+pub(crate) struct ComputeContext<'a> {
     /// The computed values of the parent for cases where inheritance is necessary.  If the current
     /// node has no parent (it is the root node), this is `ComputedValues::default()`.
-    pub parent_computed_values: &'a ComputedValues,
+    parent_computed_values: &'a ComputedValues,
 
     /// The computed value of the `color` property for the node being computed.  Some properties,
     /// such as `border-<side>-color` use the `currentColor` keyword, which refers to this value.
     ///
     /// `None` if `color` has not been computed yet.
-    pub computed_color: Option<Color>,
+    computed_color: Option<Color>,
 
     /// The computed value of the `border-<side>-style` properties for the node being computed.
     /// The computed values of `border-<side>-width` properties depend on the associated border
     /// style — namely, if the computed style is "none" or "hidden", then the border width is zero.
     ///
     /// `None` if these values haven't been computed yet.
-    pub computed_border_styles: Option<BorderSideStyleContext>,
+    computed_border_styles: Option<BorderSideStyleContext>,
 }
 
 impl ComputeContext<'_> {
-    pub fn color(&self) -> Color {
+    fn color(&self) -> Color {
         self.computed_color
             .expect("color property not yet computed and applied to compute context")
     }
 
-    pub fn border_bottom_style(&self) -> LineStyle {
+    fn border_bottom_style(&self) -> LineStyle {
         self.border_styles().bottom
     }
-    pub fn border_left_style(&self) -> LineStyle {
+    fn border_left_style(&self) -> LineStyle {
         self.border_styles().left
     }
-    pub fn border_right_style(&self) -> LineStyle {
+    fn border_right_style(&self) -> LineStyle {
         self.border_styles().right
     }
-    pub fn border_top_style(&self) -> LineStyle {
+    fn border_top_style(&self) -> LineStyle {
         self.border_styles().top
     }
 
@@ -348,11 +347,11 @@ impl ComputeContext<'_> {
 
 /// Container for computation context information about the `border-<side>-style` properties.
 #[derive(Clone, Copy, Debug)]
-pub struct BorderSideStyleContext {
-    pub bottom: LineStyle,
-    pub left: LineStyle,
-    pub right: LineStyle,
-    pub top: LineStyle,
+struct BorderSideStyleContext {
+    bottom: LineStyle,
+    left: LineStyle,
+    right: LineStyle,
+    top: LineStyle,
 }
 
 pub fn compute_values(

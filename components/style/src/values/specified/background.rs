@@ -14,7 +14,7 @@ impl BackgroundColor {
         BackgroundColor(ColorUnit::transparent())
     }
 
-    pub fn unit(self) -> ColorUnit {
+    pub(crate) fn unit(self) -> ColorUnit {
         self.0
     }
 }

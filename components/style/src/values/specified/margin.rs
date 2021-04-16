@@ -4,7 +4,7 @@ use crate::values::CssValueParse;
 use crate::StyleParseErrorKind;
 use cssparser::{ParseError, Parser};
 
-pub fn parse_margin_shorthand_into<'i, 't>(
+pub(crate) fn parse_margin_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
@@ -29,7 +29,7 @@ pub fn parse_margin_shorthand_into<'i, 't>(
 /// https://www.w3.org/TR/css-box-3/#margin-physical
 #[derive(Clone, Debug)]
 pub struct Margin {
-    pub lp_or_auto: LengthPercentageOrAuto,
+    pub(crate) lp_or_auto: LengthPercentageOrAuto,
 }
 
 impl CssValueParse for Margin {

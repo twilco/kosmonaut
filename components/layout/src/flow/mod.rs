@@ -1,5 +1,5 @@
-pub mod block;
-pub mod inline;
+pub(super) mod block;
+pub(super) mod inline;
 
 use crate::apply_box_sizing_properties_base_box_passthrough_impls;
 use crate::behavior::{ApplyBoxSizingProperties, BaseLayoutBoxBehavior};
@@ -27,22 +27,22 @@ pub struct BlockContainer {
 }
 
 impl BlockContainer {
-    pub fn new(node: NodeRef, fc: FormattingContextRef) -> Self {
+    fn new(node: NodeRef, fc: FormattingContextRef) -> Self {
         BlockContainer {
             base: BaseBox::new(node, fc),
             children: Vec::new(),
         }
     }
 
-    pub fn add_child(&mut self, new_child: LayoutBox) {
+    fn add_child(&mut self, new_child: LayoutBox) {
         self.children.push(new_child)
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }
 
-    pub fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
+    fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
         &mut self.children
     }
 }
@@ -71,7 +71,7 @@ impl DumpLayoutFormat for BlockContainer {
 ///
 /// https://drafts.csswg.org/css-writing-modes-4/#block-flow-direction
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum BlockFlowDirection {
+enum BlockFlowDirection {
     TopToBottom,
     RightToLeft,
     LeftToRight,
@@ -88,7 +88,7 @@ pub enum BlockFlowDirection {
 /// This table showing `writing-mode` and `direction` to logical and physical direction is relevant:
 /// https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum OriginRelativeProgression {
+pub(super) enum OriginRelativeProgression {
     AwayFromOrigin,
     TowardsOrigin,
 }
@@ -98,7 +98,7 @@ impl OriginRelativeProgression {
     /// `AwayFromOrigin` or `TowardsOrigin` progression for the inline-start direction.
     ///
     /// Maps to https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical.
-    pub fn inline_start_origin_relative_direction(
+    pub(super) fn inline_start_origin_relative_direction(
         writing_mode: WritingMode,
         direction: Direction,
     ) -> OriginRelativeProgression {
@@ -132,7 +132,7 @@ impl OriginRelativeProgression {
     /// the `writing-mode` and the `direction`.
     ///
     /// Maps to https://drafts.csswg.org/css-writing-modes-4/#logical-to-physical.
-    pub fn block_start_origin_relative_direction(
+    pub(super) fn block_start_origin_relative_direction(
         writing_mode: WritingMode,
     ) -> OriginRelativeProgression {
         match writing_mode {

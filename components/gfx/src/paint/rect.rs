@@ -11,7 +11,7 @@ use primitives::rect::PositionedRect;
 use std::ffi::CString;
 
 /// Uses given OpenGL context handle to paint arbitrary rectangles.
-pub struct RectPainter {
+pub(super) struct RectPainter {
     /// The OpenGL program that will be used to paint rectangles.
     program: Program,
     /// The VAO to use to paint rectangles.
@@ -21,7 +21,7 @@ pub struct RectPainter {
 }
 
 impl RectPainter {
-    pub fn new(gl: &Gl) -> Result<RectPainter, String> {
+    pub(super) fn new(gl: &Gl) -> Result<RectPainter, String> {
         let vbo = VertexBufferObject::new(gl);
         let config_rect_vao = |gl: &Gl| {
             unsafe {
@@ -55,7 +55,7 @@ impl RectPainter {
         })
     }
 
-    pub fn paint(&mut self, vertices: &[f32]) {
+    pub(super) fn paint(&mut self, vertices: &[f32]) {
         // Panic rather than truncate data.
         assert!(vertices.len() <= i32::max_value() as usize);
 

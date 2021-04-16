@@ -5,11 +5,11 @@
 use html5ever::{LocalName, Namespace, Prefix};
 use std::collections::btree_map::{BTreeMap, Entry};
 
-/// Convenience wrapper around a btreemap that adds method for attributes in the null namespace.
+/// Convenience wrapper around a BTreeMap that adds method for attributes in the null namespace.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Attributes {
+pub(super) struct Attributes {
     /// A map of attributes whose name can have namespaces.
-    pub map: BTreeMap<ExpandedName, Attribute>,
+    pub(super) map: BTreeMap<ExpandedName, Attribute>,
 }
 
 /// <https://www.w3.org/TR/REC-xml-names/#dt-expname>
@@ -28,19 +28,19 @@ pub struct Attributes {
 /// `ExpandedName` is different from a `QualifiedName`, in that a `QualifiedName` is a
 /// `prefix:localName` OR simply just a `localName`.  Prefixes can be bound to namespaces.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
-pub struct ExpandedName {
+pub(super) struct ExpandedName {
     /// Namespace URI
     /// Namespace is a map from prefixes (e.g. `edi`) to namespace URIs.
     /// <https://en.m.wikipedia.org/wiki/XML_namespace#Namespace_names>
-    pub ns: Namespace,
+    pub(super) ns: Namespace,
     /// "Local" part of the name
     /// e.g. `lineItem` in `edi:lineItem`
-    pub local: LocalName,
+    pub(super) local: LocalName,
 }
 
 impl ExpandedName {
     /// Trivial constructor
-    pub fn new<N: Into<Namespace>, L: Into<LocalName>>(ns: N, local: L) -> Self {
+    pub(super) fn new<N: Into<Namespace>, L: Into<LocalName>>(ns: N, local: L) -> Self {
         ExpandedName {
             ns: ns.into(),
             local: local.into(),
@@ -51,11 +51,11 @@ impl ExpandedName {
 /// The non-identifying parts of an attribute.
 /// Example: In `<Book metadata:pageCount="643">`, `metadata` is the _prefix_ and `643` is the _value_.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Attribute {
+pub(super) struct Attribute {
     /// The namespace prefix, if any
-    pub prefix: Option<Prefix>,
+    pub(super) prefix: Option<Prefix>,
     /// The attribute value
-    pub value: String,
+    pub(super) value: String,
 }
 
 impl Attributes {
@@ -84,11 +84,7 @@ impl Attributes {
     }
 
     /// Like BTreeMap::insert
-    pub fn insert<A: Into<LocalName>>(
-        &mut self,
-        local_name: A,
-        value: String,
-    ) -> Option<Attribute> {
+    pub fn insert<A: Into<LocalName>>(&mut self, local_name: A, value: String) -> Option<Attribute> {
         self.map.insert(
             ExpandedName::new(ns!(), local_name),
             Attribute {

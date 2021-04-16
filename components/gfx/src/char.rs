@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::os::raw::c_void;
 
 #[derive(Debug)]
-pub struct OpenglChar {
+struct OpenglChar {
     /// Offset to advance to next glyph.
     advance: Vector2F,
     /// Offset from baseline to left/top of glyph.
@@ -35,7 +35,7 @@ pub struct OpenglChar {
 }
 
 impl OpenglChar {
-    pub fn new(ch: char, size_px: i32, font: &Font, gl: &Gl) -> Result<OpenglChar, CharError> {
+    fn new(ch: char, size_px: i32, font: &Font, gl: &Gl) -> Result<OpenglChar, CharError> {
         let glyph_id = match font.glyph_for_char(ch) {
             Some(id) => id,
             None => return Err(CharError::NoIdForChar),
@@ -73,15 +73,15 @@ impl OpenglChar {
         })
     }
 
-    pub fn advance(&self) -> Vector2F {
+    fn advance(&self) -> Vector2F {
         self.advance
     }
 
-    pub fn bearing(&self) -> Vector2F {
+    fn bearing(&self) -> Vector2F {
         self.bearing
     }
 
-    pub fn size_px(&self) -> CSSFloat {
+    fn size_px(&self) -> CSSFloat {
         self.size_px
     }
 
@@ -114,7 +114,7 @@ impl OpenglChar {
 }
 
 #[derive(Debug)]
-pub enum CharError {
+enum CharError {
     Font(FontError),
     Loading(GlyphLoadingError),
     NoIdForChar,
@@ -145,12 +145,7 @@ impl CharHandle {
         }
     }
 
-    pub fn get_char(
-        &self,
-        font: &Font,
-        font_size: Au,
-        ch: char,
-    ) -> Result<Ref<OpenglChar>, CharError> {
+    fn get_char(&self, font: &Font, font_size: Au, ch: char) -> Result<Ref<OpenglChar>, CharError> {
         let postscript_name = font.postscript_name().unwrap_or_else(|| {
             panic!(
                 "couldn't get font postscript name for font with `full_name`: {}",
@@ -182,7 +177,7 @@ impl CharHandle {
 
 // TODO: It would be better if CharCommand wasn't OpenGL-specific (by storing an OpenGL texture ID).
 // Refactor to CharCommand<T>, where T holds any data specific to a certain painting context.
-pub fn prepare_opengl_char(
+fn prepare_opengl_char(
     display_list: &mut DisplayList,
     ch: char,
     opengl_char: Ref<OpenglChar>,
@@ -207,7 +202,7 @@ pub fn prepare_opengl_char(
     Ok(())
 }
 
-pub fn prepare_opengl_str(
+fn prepare_opengl_str(
     _display_list: &mut DisplayList,
     _color: RGBA,
     _font: &Font,

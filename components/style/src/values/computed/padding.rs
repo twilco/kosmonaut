@@ -8,7 +8,7 @@ use crate::values::specified;
 /// https://www.w3.org/TR/css-box-3/#padding-physical
 #[derive(Clone, Copy, Debug)]
 pub struct Padding {
-    pub size: LengthPercentage,
+    pub(super) size: LengthPercentage,
 }
 
 impl Padding {

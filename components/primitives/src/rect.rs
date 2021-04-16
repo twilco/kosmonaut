@@ -16,21 +16,21 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn expanded_by_edges(self, edge: EdgeSizes) -> Rect {
+    fn expanded_by_edges(self, edge: EdgeSizes) -> Rect {
         Rect {
             width: self.width + edge.left + edge.right,
             height: self.height + edge.top + edge.bottom,
         }
     }
 
-    pub fn expanded_by_rect(self, other: Rect) -> Rect {
+    fn expanded_by_rect(self, other: Rect) -> Rect {
         Rect {
             width: self.width + other.width,
             height: self.height + other.height,
         }
     }
 
-    pub fn scaled_by(&self, scale_factor: f32) -> Rect {
+    fn scaled_by(&self, scale_factor: f32) -> Rect {
         Rect {
             width: self.width * scale_factor,
             height: self.height * scale_factor,
@@ -92,13 +92,6 @@ pub struct EdgeSizes {
 }
 
 impl EdgeSizes {
-    pub fn scale_by(&mut self, scale_factor: f32) {
-        self.left *= scale_factor;
-        self.right *= scale_factor;
-        self.top *= scale_factor;
-        self.bottom *= scale_factor;
-    }
-
     pub fn expanded_by_edges(self, edges: EdgeSizes) -> EdgeSizes {
         EdgeSizes {
             left: self.left + edges.left,

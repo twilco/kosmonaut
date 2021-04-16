@@ -29,25 +29,28 @@ pub enum BlockLevelBox {
 
 impl BlockLevelBox {
     /// Creates a new block-level block container.
-    pub fn new_block_container(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+    pub(crate) fn new_block_container(
+        node: NodeRef,
+        formatting_context: FormattingContextRef,
+    ) -> Self {
         BlockLevelBox::BlockContainer(BlockContainer::new(node, formatting_context))
     }
 
-    pub fn add_child(&mut self, new_child: LayoutBox) {
+    pub(crate) fn add_child(&mut self, new_child: LayoutBox) {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.add_child(new_child),
             BlockLevelBox::BlockContainer(bc) => bc.add_child(new_child),
         }
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    pub(crate) fn children(&self) -> &Vec<LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(ab) => ab.children(),
             BlockLevelBox::BlockContainer(bc) => bc.children(),
         }
     }
 
-    pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
+    pub(crate) fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
         match self {
             BlockLevelBox::AnonymousBlock(abb) => {
                 get_anonymous_inline_layout_box(&mut abb.children)
@@ -127,7 +130,7 @@ impl BlockLevelBox {
         }
     }
 
-    pub fn solve_and_set_inline_level_properties(&mut self, context: &LayoutContext) {
+    fn solve_and_set_inline_level_properties(&mut self, context: &LayoutContext) {
         let containing_block = context.containing_block;
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
@@ -230,7 +233,7 @@ impl BlockLevelBox {
 
     /// Corresponds to CSS 2.1 section 10.6.3.  Currently no other sections are implemented.
     /// https://www.w3.org/TR/2011/REC-CSS2-20110607/visudet.html#normal-block
-    pub fn solve_and_set_block_level_properties(&mut self, context: &LayoutContext) {
+    fn solve_and_set_block_level_properties(&mut self, context: &LayoutContext) {
         let containing_block = context.containing_block;
         // Use the containing block's writing mode for resolving flow-relative directions.
         // https://drafts.csswg.org/css-writing-modes-4/#logical-direction-layout
@@ -357,22 +360,22 @@ pub struct AnonymousBlockBox {
 }
 
 impl AnonymousBlockBox {
-    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+    pub(crate) fn new(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
         Self {
             base: BaseBox::new(node, formatting_context),
             children: Vec::new(),
         }
     }
 
-    pub fn add_child(&mut self, child: LayoutBox) {
+    pub(crate) fn add_child(&mut self, child: LayoutBox) {
         self.children.push(child)
     }
 
-    pub fn children(&self) -> &Vec<LayoutBox> {
+    fn children(&self) -> &Vec<LayoutBox> {
         &self.children
     }
 
-    pub fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
+    fn children_mut(&mut self) -> &mut Vec<LayoutBox> {
         &mut self.children
     }
 }
@@ -394,27 +397,27 @@ impl DumpLayoutFormat for AnonymousBlockBox {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct SolveInlineSizeInput {
-    pub containing_block: ContainingBlock,
-    pub margin_inline_start: LengthPercentageOrAuto,
-    pub margin_inline_end: LengthPercentageOrAuto,
-    pub border_inline_start: CSSPixelLength,
-    pub border_inline_end: CSSPixelLength,
-    pub padding_inline_start: LengthPercentage,
-    pub padding_inline_end: LengthPercentage,
-    pub inline_size: LengthPercentageOrAuto,
+struct SolveInlineSizeInput {
+    containing_block: ContainingBlock,
+    margin_inline_start: LengthPercentageOrAuto,
+    margin_inline_end: LengthPercentageOrAuto,
+    border_inline_start: CSSPixelLength,
+    border_inline_end: CSSPixelLength,
+    padding_inline_start: LengthPercentage,
+    padding_inline_end: LengthPercentage,
+    inline_size: LengthPercentageOrAuto,
 }
 
-pub struct SolveInlineSizeOutput {
-    pub margin_inline_start: CSSPixelLength,
-    pub margin_inline_end: CSSPixelLength,
-    pub inline_size: CSSPixelLength,
+struct SolveInlineSizeOutput {
+    margin_inline_start: CSSPixelLength,
+    margin_inline_end: CSSPixelLength,
+    inline_size: CSSPixelLength,
 }
 
 /// While the spec _should_ be the correct way to calculate these inline properties, that is not
 /// reality.  If there are specified values for inline margin properties, they always override the
 /// values calculated by the spec formula.
-pub fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInlineSizeOutput {
+fn solve_block_level_inline_size(input: SolveInlineSizeInput) -> SolveInlineSizeOutput {
     let mut spec_inline_sizes = solve_block_level_inline_size_to_spec(input);
     if let LengthPercentageOrAuto::LengthPercentage(lp) = input.margin_inline_start {
         spec_inline_sizes.margin_inline_start =
@@ -535,15 +538,15 @@ fn compute_block_start_coord(
 }
 
 struct ComputeFlippedBlockStartCoordInput {
-    pub layout_viewport_block_size: CSSPixelLength,
-    pub containing_block_block_size: CSSPixelLength,
+    layout_viewport_block_size: CSSPixelLength,
+    containing_block_block_size: CSSPixelLength,
     /// The content size of the given box to flip.  The given box must have laid out its children
     /// in order to get this value.
-    pub content_box_block_size: CSSPixelLength,
-    pub preferred_block_size: LengthPercentageOrAuto,
+    content_box_block_size: CSSPixelLength,
+    preferred_block_size: LengthPercentageOrAuto,
     /// The block start coordinate that was computed for "normal" block progression
     /// (`OriginRelativeProgression::AwayFromOrigin`).
-    pub current_block_start_coord: CSSFloat,
+    current_block_start_coord: CSSFloat,
 }
 
 fn compute_flipped_block_start_coord(input: ComputeFlippedBlockStartCoordInput) -> CSSFloat {

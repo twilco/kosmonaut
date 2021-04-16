@@ -36,12 +36,15 @@ impl LayoutBox {
     /// Creates a root inline box (which is another name for an anonymous inline box).
     ///
     /// The given node should be that of the element generating root inline box.
-    pub fn create_root_inline_box(node: NodeRef, formatting_context: FormattingContextRef) -> Self {
+    pub(super) fn create_root_inline_box(
+        node: NodeRef,
+        formatting_context: FormattingContextRef,
+    ) -> Self {
         assert!(formatting_context.is_inline_formatting_context());
         AnonymousInlineBox::new(node, formatting_context).into()
     }
 
-    pub fn add_child(&mut self, child_box: LayoutBox) {
+    pub(super) fn add_child(&mut self, child_box: LayoutBox) {
         match self {
             LayoutBox::BlockLevel(blb) => blb.add_child(child_box),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => {
@@ -68,7 +71,7 @@ impl LayoutBox {
     /// Returns a box capable of containing inline children.  If `self` is already an inline-level
     /// box, this will be `self`.  In other cases, we may need to get and or create a child box
     /// capable of containing inline children.
-    pub fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
+    pub(super) fn get_mut_inline_container(&mut self) -> Option<&mut LayoutBox> {
         match self {
             LayoutBox::BlockLevel(blb) => blb.get_mut_inline_container(),
             LayoutBox::InlineLevel(InlineLevelContent::InlineLevelBox(ilb)) => Some(match ilb {
@@ -79,7 +82,7 @@ impl LayoutBox {
         }
     }
 
-    pub fn is_anonymous_inline(&self) -> bool {
+    fn is_anonymous_inline(&self) -> bool {
         match self {
             LayoutBox::BlockLevel(_) => false,
             LayoutBox::InlineLevel(ilc) => ilc.is_anonymous_inline(),
@@ -124,14 +127,16 @@ impl Layout for LayoutBox {
     }
 }
 
-pub fn get_anonymous_inline_layout_box(boxes: &mut Vec<LayoutBox>) -> Option<&mut LayoutBox> {
+pub(super) fn get_anonymous_inline_layout_box(
+    boxes: &mut Vec<LayoutBox>,
+) -> Option<&mut LayoutBox> {
     boxes.iter_mut().find(|child| child.is_anonymous_inline())
 }
 
 /// Base box containing state and behavior common to all boxes.  To be clear, this is an ease-of-use
 /// construct, not something that maps to spec-language.
 #[derive(Clone, Debug)]
-pub struct BaseBox {
+pub(super) struct BaseBox {
     dimensions: Dimensions,
     /// The formatting context this box participates in.
     formatting_context: FormattingContextRef,
@@ -143,7 +148,7 @@ pub struct BaseBox {
 }
 
 impl BaseBox {
-    pub fn new(node: NodeRef, formatting_context: FormattingContextRef) -> BaseBox {
+    pub(super) fn new(node: NodeRef, formatting_context: FormattingContextRef) -> BaseBox {
         BaseBox {
             dimensions: Dimensions::default(),
             formatting_context,
@@ -154,7 +159,7 @@ impl BaseBox {
     /// Apply all box sizing properties to this box's dimensions.
     ///
     /// https://www.w3.org/TR/css-sizing-3/#sizing-properties
-    pub fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock) {
+    pub(super) fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock) {
         let height = self.computed_values().height.size;
         if let LengthPercentageOrAuto::LengthPercentage(lp) = height {
             self.dimensions_mut()
@@ -169,24 +174,24 @@ impl BaseBox {
     }
 
     /// Retrieve the computed values of the node associated with this layout box.
-    pub fn computed_values(&self) -> Ref<ComputedValues> {
+    pub(super) fn computed_values(&self) -> Ref<ComputedValues> {
         self.node.computed_values()
     }
 
-    pub fn dimensions(&self) -> Dimensions {
+    pub(super) fn dimensions(&self) -> Dimensions {
         self.dimensions
     }
 
-    pub fn dimensions_mut(&mut self) -> &mut Dimensions {
+    pub(super) fn dimensions_mut(&mut self) -> &mut Dimensions {
         &mut self.dimensions
     }
 
-    pub fn formatting_context(&self) -> FormattingContextRef {
+    pub(super) fn formatting_context(&self) -> FormattingContextRef {
         self.formatting_context.clone()
     }
 
     /// Determines if this layout box is associated with the root DOM node (<html>).
-    pub fn is_root(&self) -> bool {
+    pub(super) fn is_root(&self) -> bool {
         let parent_node_is_document = if let Some(parent) = self.node.parent() {
             matches!(parent.data(), NodeData::Document(_))
         } else {
@@ -200,7 +205,7 @@ impl BaseBox {
             }
     }
 
-    pub fn node(&self) -> NodeRef {
+    pub(super) fn node(&self) -> NodeRef {
         self.node.clone()
     }
 }

@@ -1,11 +1,11 @@
 pub mod behavior;
 pub mod box_tree;
-pub mod containing_block;
-pub mod dimensions;
-pub mod flow;
-pub mod formatting_context;
+pub(crate) mod containing_block;
+pub(crate) mod dimensions;
+pub(crate) mod flow;
+pub(crate) mod formatting_context;
 pub mod layout_box;
-pub mod values;
+pub(crate) mod values;
 
 use crate::behavior::BaseLayoutBoxBehavior;
 use crate::containing_block::ContainingBlock;
@@ -54,20 +54,20 @@ pub fn global_layout(
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BoxComponent {
+pub(crate) enum BoxComponent {
     Border,
     Margin,
     Padding,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct LayoutContext {
+pub(crate) struct LayoutContext {
     containing_block: ContainingBlock,
     layout_viewport: LayoutViewportDimensions,
 }
 
 impl LayoutContext {
-    pub fn new(
+    pub(crate) fn new(
         containing_block: ContainingBlock,
         layout_viewport: LayoutViewportDimensions,
     ) -> Self {
@@ -77,17 +77,17 @@ impl LayoutContext {
         }
     }
 
-    pub fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+    pub(crate) fn block_start_origin_relative_progression(&self) -> OriginRelativeProgression {
         self.containing_block
             .block_start_origin_relative_progression()
     }
 
-    pub fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
+    pub(crate) fn inline_start_origin_relative_progression(&self) -> OriginRelativeProgression {
         self.containing_block
             .inline_start_origin_relative_progression()
     }
 
-    pub fn layout_viewport_block_size(
+    pub(crate) fn layout_viewport_block_size(
         &self,
         relative_to_writing_mode: WritingMode,
     ) -> CSSPixelLength {
@@ -99,12 +99,12 @@ impl LayoutContext {
     }
 
     #[inline(always)]
-    pub fn layout_viewport_width(&self) -> CSSPixelLength {
+    pub(crate) fn layout_viewport_width(&self) -> CSSPixelLength {
         self.layout_viewport.width()
     }
 
     #[inline(always)]
-    pub fn layout_viewport_height(&self) -> CSSPixelLength {
+    pub(crate) fn layout_viewport_height(&self) -> CSSPixelLength {
         self.layout_viewport.height()
     }
 }
@@ -120,7 +120,7 @@ pub struct LayoutViewportDimensions {
 }
 
 impl LayoutViewportDimensions {
-    pub fn new(rect: Rect) -> Self {
+    pub(crate) fn new(rect: Rect) -> Self {
         LayoutViewportDimensions { rect }
     }
 
@@ -133,11 +133,11 @@ impl LayoutViewportDimensions {
         }
     }
 
-    pub fn width(&self) -> CSSPixelLength {
+    pub(crate) fn width(&self) -> CSSPixelLength {
         self.rect.width
     }
 
-    pub fn height(&self) -> CSSPixelLength {
+    pub(crate) fn height(&self) -> CSSPixelLength {
         self.rect.height
     }
 
@@ -152,7 +152,7 @@ impl From<PhysicalSize<u32>> for LayoutViewportDimensions {
     }
 }
 
-pub trait Layout {
+pub(crate) trait Layout {
     fn layout(&mut self, context: LayoutContext);
 }
 
@@ -171,7 +171,7 @@ pub trait DumpLayout {
 /// Trait describing behavior necessary for formatting ones data in preparation for a layout tree
 /// dump.
 #[enum_dispatch(BlockLevelBox, InlineLevelBox, InlineLevelContent)]
-pub trait DumpLayoutFormat {
+pub(crate) trait DumpLayoutFormat {
     fn dump_layout_format(&self) -> String;
 }
 

@@ -7,7 +7,7 @@ use crate::values::{computed, specified};
 ///
 /// This, and substructures within this enum, taken from [Servo](https://github.com/servo/servo).
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum PropertyId {
+pub(super) enum PropertyId {
     /// A longhand property.
     Longhand(LonghandId),
     /// A shorthand property.
@@ -18,7 +18,7 @@ pub enum PropertyId {
 }
 
 impl PropertyId {
-    pub fn parse(prop_name: &str) -> Option<PropertyId> {
+    pub(super) fn parse(prop_name: &str) -> Option<PropertyId> {
         let id = match prop_name {
             // Longhands
             "background-color" => PropertyId::Longhand(LonghandId::BackgroundColor),
@@ -74,7 +74,7 @@ impl PropertyId {
 /// An identifier for a given longhand property.
 #[derive(Clone, Copy, Debug, EnumIter, Eq, Hash, PartialEq)]
 #[repr(u16)]
-pub enum LonghandId {
+pub(crate) enum LonghandId {
     //    /// align-content
     //    AlignContent = 0,
     //    /// align-items
@@ -433,7 +433,11 @@ pub enum LonghandId {
 
 impl LonghandId {
     #[allow(unreachable_patterns)]
-    pub fn value_default(self, cv_builder: &mut ComputedValuesBuilder, ctx: &ComputeContext) {
+    pub(crate) fn value_default(
+        self,
+        cv_builder: &mut ComputedValuesBuilder,
+        ctx: &ComputeContext,
+    ) {
         match self {
             LonghandId::BackgroundColor => {
                 cv_builder.background_color(specified::BackgroundColor::value_default(ctx));
@@ -583,7 +587,7 @@ impl From<ContextualPropertyDeclaration> for LonghandId {
 /// An identifier for a given shorthand property.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u16)]
-pub enum ShorthandId {
+pub(super) enum ShorthandId {
     /// background
     Background = 0,
     //    /// background-position

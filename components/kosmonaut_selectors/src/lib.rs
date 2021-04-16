@@ -33,7 +33,7 @@ impl SelectorImpl for KosmonautSelectors {
     type ExtraMatchingData = ();
 }
 
-pub struct KosmonautParser;
+pub(crate) struct KosmonautParser;
 
 impl<'i> Parser<'i> for KosmonautParser {
     type Impl = KosmonautSelectors;

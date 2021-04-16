@@ -15,21 +15,21 @@ pub enum Display {
 impl Display {
     /// Create a new `Display` equivalent to what one would get specifying `display: block` in a
     /// stylesheet.
-    pub fn new_block() -> Display {
+    pub(crate) fn new_block() -> Display {
         Display::new_full_display(OuterDisplay::Block, InnerDisplay::Flow)
     }
 
     /// Create a new `Display` equivalent to what one would get specifying `display: inline` in a
     /// stylesheet.
-    pub fn new_inline() -> Display {
+    pub(crate) fn new_inline() -> Display {
         Display::new_full_display(OuterDisplay::Inline, InnerDisplay::Flow)
     }
 
-    pub fn new_none() -> Display {
+    pub(crate) fn new_none() -> Display {
         Display::Box(DisplayBox::None)
     }
 
-    pub fn new_full_display(outer: OuterDisplay, inner: InnerDisplay) -> Display {
+    fn new_full_display(outer: OuterDisplay, inner: InnerDisplay) -> Display {
         Display::Full(FullDisplay::new(outer, inner))
     }
 
@@ -73,7 +73,7 @@ pub struct FullDisplay {
 }
 
 impl FullDisplay {
-    pub fn new(outer: OuterDisplay, inner: InnerDisplay) -> FullDisplay {
+    fn new(outer: OuterDisplay, inner: InnerDisplay) -> FullDisplay {
         FullDisplay { outer, inner }
     }
 

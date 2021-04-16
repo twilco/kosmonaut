@@ -8,8 +8,9 @@ use tempdir::TempDir;
 use crate::iter::NodeIterator;
 use crate::parser::parse_html;
 use crate::selectors_integration::filter_selectors;
+use crate::tree::{NodeData, NodeRef};
 use html5ever::tendril::TendrilSink;
-use kosmonaut_selectors::Selectors;
+use kosmonaut_selectors::{Selectors, Specificity};
 
 #[test]
 fn text_nodes() {
@@ -173,4 +174,41 @@ fn specificity() {
     assert_eq!(specificities[0], specificities[1]);
     assert!(specificities[0] > specificities[2]);
     assert!(specificities[1] > specificities[2]);
+}
+
+/// Returns a single <div></div> NodeRef.
+///   * classes - What would go inside <div class="HERE">.  Space-separated list of classnames.
+///   * text - Text to insert inside the div
+fn get_div(classes: &str, text: &str) -> NodeRef {
+    let div = format!(r#"<div class="{}">{}</div>"#, classes, text);
+    let mut ret: Option<NodeRef> = None;
+    parse_html()
+        .from_utf8()
+        .read_from(&mut div.as_bytes())
+        .unwrap()
+        .inclusive_descendants()
+        .for_each(|node| {
+            if let NodeData::Element(data) = node.data() {
+                if let local_name!("div") = data.name.local {
+                    ret = Some(node)
+                }
+            }
+        });
+    ret.expect("should've been able to get div from test_utils#get_div()")
+}
+
+#[test]
+fn match_most_specific_works() {
+    let selectors = Selectors::compile_str("div, div.specific, div.specific.even-more-specific")
+        .expect("should've been able to compile selectors in match_most_specific_works()");
+    let div = get_div("specific even-more-specific", "hello");
+    // specificity of most specific selector, `div.specific.even-more-specific`, is 2049
+    assert_eq!(
+        div.into_element_ref()
+            .expect("should be able to get element ref for canned node")
+            .most_specific_match(&selectors)
+            .expect("should've found a most-specific match")
+            .specificity(),
+        Specificity::new(2049)
+    )
 }

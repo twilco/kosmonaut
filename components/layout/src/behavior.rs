@@ -10,7 +10,7 @@ use style::values::computed::ComputedValues;
 ///
 /// https://www.w3.org/TR/css-sizing-3/#sizing-properties
 #[enum_dispatch(LayoutBox, BlockLevelBox, InlineLevelBox)]
-pub trait ApplyBoxSizingProperties {
+pub(super) trait ApplyBoxSizingProperties {
     fn apply_box_sizing_properties(&mut self, containing_block: ContainingBlock);
 }
 

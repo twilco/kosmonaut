@@ -52,7 +52,7 @@ impl AbsoluteLength {
 
     /// Convert this into a pixel value.
     #[inline]
-    pub fn to_px(self) -> CSSFloat {
+    pub(crate) fn to_px(self) -> CSSFloat {
         use std::f32;
 
         let pixel = match self {
@@ -70,7 +70,7 @@ impl AbsoluteLength {
 
 impl NoCalcLength {
     /// Parse a given absolute or relative dimension.
-    pub fn parse_dimension(value: CSSFloat, unit: &str) -> Result<Self, ()> {
+    pub(super) fn parse_dimension(value: CSSFloat, unit: &str) -> Result<Self, ()> {
         Ok(match_ignore_ascii_case! { unit,
             "px" => NoCalcLength::Absolute(AbsoluteLength::Px(value)),
             "in" => NoCalcLength::Absolute(AbsoluteLength::In(value)),

@@ -27,27 +27,6 @@ pub fn font_size_px_or_panic(prop_decl: &PropertyDeclaration) -> &f32 {
     }
 }
 
-// /// Returns a single <div></div> NodeRef.
-// ///   * classes - What would go inside <div class="HERE">.  Space-separated list of classnames.
-// ///   * text - Text to insert inside the div
-// pub fn get_div(classes: &str, text: &str) -> NodeRef {
-//     let div = format!(r#"<div class="{}">{}</div>"#, classes, text);
-//     let mut ret: Option<NodeRef> = None;
-//     parse_html()
-//         .from_utf8()
-//         .read_from(&mut div.as_bytes())
-//         .unwrap()
-//         .inclusive_descendants()
-//         .for_each(|node| {
-//             if let NodeData::Element(data) = node.data() {
-//                 if let local_name!("div") = data.name.local {
-//                     ret = Some(node)
-//                 }
-//             }
-//         });
-//     ret.expect("should've been able to get div from test_utils#get_div()")
-// }
-
 /// Method for creating a "default"-ish font-size contextual property declaration for tests.
 /// If you need to customize these arguments further, create a new method named something like:
 ///    font_size_px_origin(px: f32, origin: CssOrigin)

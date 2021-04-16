@@ -15,16 +15,6 @@ use accountable_refcell::{Ref, RefCell, RefMut};
 use style::properties::{ContextualPropertyDeclaration, ContextualPropertyDeclarations};
 use style::values::computed::ComputedValues;
 
-/// The type of DOM node.
-/// https://html.spec.whatwg.org/#a-quick-introduction-to-html
-pub enum NodeType {
-    Comment,
-    DocumentType,
-    Element,
-    ProcessingInstruction,
-    Text,
-}
-
 /// Node data specific to the node type.
 #[derive(Debug, PartialEq, Clone)]
 pub enum NodeData {
@@ -48,13 +38,13 @@ pub enum NodeData {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Doctype {
     /// The name of the doctype
-    pub name: String,
+    pub(super) name: String,
 
-    /// The public ID of the doctype
-    pub public_id: String,
+    /// The lic ID of the doctype
+    public_id: String,
 
     /// The system ID of the doctype
-    pub system_id: String,
+    system_id: String,
 }
 
 /// Data specific to element nodes.
@@ -75,7 +65,7 @@ pub struct ElementData {
 #[derive(Debug, PartialEq, Clone)]
 pub struct DocumentData {
     #[doc(hidden)]
-    pub _quirks_mode: Cell<QuirksMode>,
+    pub(super) _quirks_mode: Cell<QuirksMode>,
 }
 
 impl DocumentData {
@@ -108,7 +98,7 @@ impl DocumentData {
 /// programs typically hold a strong reference to the root of a document
 /// until they’re done with that document.
 #[derive(Clone, Debug)]
-pub struct NodeRef(pub Rc<Node>);
+pub struct NodeRef(Rc<Node>);
 
 impl Deref for NodeRef {
     type Target = Node;
@@ -223,7 +213,7 @@ impl Drop for Node {
 impl NodeRef {
     /// Create a new node.
     #[inline]
-    pub fn new(data: NodeData) -> NodeRef {
+    fn new(data: NodeData) -> NodeRef {
         NodeRef(Rc::new(Node {
             parent: Cell::new(None),
             first_child: Cell::new(None),
@@ -238,7 +228,7 @@ impl NodeRef {
 
     /// Create a new element node.
     #[inline]
-    pub fn new_element<I>(name: QualName, attributes: I) -> NodeRef
+    pub(super) fn new_element<I>(name: QualName, attributes: I) -> NodeRef
     where
         I: IntoIterator<Item = (ExpandedName, Attribute)>,
     {

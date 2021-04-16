@@ -1,6 +1,6 @@
 use primitives::units::CSSPixelLength;
 
-pub mod length;
+mod length;
 
 /// A trait to represent the conversion from computed property values to an absolute pixel length.
 ///

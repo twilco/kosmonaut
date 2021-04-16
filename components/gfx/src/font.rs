@@ -7,20 +7,20 @@ use std::collections::HashMap;
 /// Provides a handle for loading and caching fonts that abstracts over all different font loaders
 /// and sources.
 #[derive(Default)]
-pub struct FontHandle {
+struct FontHandle {
     cached_fonts: RefCell<HashMap<String, Font>>,
 }
 
-pub type PostscriptName = String;
+pub(super) type PostscriptName = String;
 
 impl FontHandle {
-    pub fn new() -> FontHandle {
+    fn new() -> FontHandle {
         FontHandle {
             cached_fonts: RefCell::new(HashMap::new()),
         }
     }
 
-    pub fn get_font(&self, postscript_name: &str) -> Result<Ref<Font>, FontError> {
+    fn get_font(&self, postscript_name: &str) -> Result<Ref<Font>, FontError> {
         let key = postscript_name.to_owned();
         {
             let mut cached_fonts = self.cached_fonts.borrow_mut();
@@ -43,7 +43,7 @@ fn load_font(postscript_name: &str) -> Result<Font, FontError> {
 
 // TODO: This error type seems a bit too general.  May want to refactor as this module evolves.
 #[derive(Debug)]
-pub enum FontError {
+pub(super) enum FontError {
     Loading(FontLoadingError),
     Selection(SelectionError),
 }

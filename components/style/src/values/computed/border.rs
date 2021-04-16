@@ -12,14 +12,11 @@ use primitives::units::CSSPixelLength;
 /// a struct and thus have nothing to `impl ValueDefault` for.
 ///
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#the-border-style
-pub fn border_side_initial_style() -> LineStyle {
+pub(super) fn border_side_initial_style() -> LineStyle {
     LineStyle::None
 }
 
-pub fn compute_border_side_color(
-    self_color: specified::ColorUnit,
-    context: &ComputeContext,
-) -> RGBA {
+fn compute_border_side_color(self_color: specified::ColorUnit, context: &ComputeContext) -> RGBA {
     match self_color {
         specified::ColorUnit::CurrentColor => context
             .computed_color
@@ -29,7 +26,7 @@ pub fn compute_border_side_color(
     }
 }
 
-pub fn compute_border_side_width(
+fn compute_border_side_width(
     self_line_width: LineWidth,
     computed_side_style: LineStyle,
 ) -> CSSPixelLength {
@@ -44,7 +41,7 @@ pub fn compute_border_side_width(
 /// https://www.w3.org/TR/css-backgrounds-3/#border-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderColor {
-    pub rgba: RGBA,
+    pub(super) rgba: RGBA,
 }
 
 impl BorderColor {
@@ -85,7 +82,7 @@ impl ValueDefault for specified::BorderColor {
 /// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderWidth {
-    pub size: CSSPixelLength,
+    pub(super) size: CSSPixelLength,
 }
 
 impl BorderWidth {

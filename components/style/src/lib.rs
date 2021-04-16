@@ -20,7 +20,7 @@ extern crate strum_macros;
 
 pub mod properties;
 pub mod stylesheet;
-pub mod test_utils;
+pub(crate) mod test_utils;
 pub mod values;
 
 // TODO: Servo supports many different types of rules, but we won't support those yet.  https://github.com/servo/servo/blob/d2856ce8aeca11e543bc4d9f869400d73451374e/components/style/stylesheets/mod.rs#L236
@@ -64,8 +64,8 @@ pub enum CascadeOrigin {
 
 #[derive(Clone, Debug)]
 pub struct StylesheetOrigin {
-    pub sheet_name: String,
-    pub cascade_origin: CascadeOrigin,
+    pub(crate) sheet_name: String,
+    pub(crate) cascade_origin: CascadeOrigin,
 }
 
 impl PartialEq for StylesheetOrigin {
@@ -75,7 +75,7 @@ impl PartialEq for StylesheetOrigin {
 }
 
 #[derive(Debug)]
-pub struct Color {
+pub(crate) struct Color {
     r: u8,
     g: u8,
     b: u8,
@@ -96,12 +96,12 @@ pub fn parse_css_to_rules(
 }
 
 /// Parser for top-level CSS rules.
-pub struct TopLevelRuleParser {}
+pub(crate) struct TopLevelRuleParser {}
 
 // TODO: Support @ rules
-pub enum AtRuleNonBlockPrelude {}
+pub(crate) enum AtRuleNonBlockPrelude {}
 
-pub enum AtRuleBlockPrelude {}
+pub(crate) enum AtRuleBlockPrelude {}
 
 /// Kosmonaut currently does not support @rules, so fall back to the default @rule error impl.
 impl<'i> AtRuleParser<'i> for TopLevelRuleParser {

@@ -63,7 +63,7 @@
 use std::cell::Cell;
 use std::rc::{Rc, Weak};
 
-pub trait CellOption {
+pub(super) trait CellOption {
     fn is_none(&self) -> bool;
 }
 
@@ -74,7 +74,7 @@ impl<T> CellOption for Cell<Option<T>> {
     }
 }
 
-pub trait CellOptionWeak<T> {
+pub(super) trait CellOptionWeak<T> {
     fn upgrade(&self) -> Option<Rc<T>>;
     fn clone_inner(&self) -> Option<Weak<T>>;
 }
@@ -91,7 +91,7 @@ impl<T> CellOptionWeak<T> for Cell<Option<Weak<T>>> {
     }
 }
 
-pub trait CellOptionRc<T> {
+pub(super) trait CellOptionRc<T> {
     /// Return `Some` if this `Rc` is the only strong reference count,
     /// even if there are weak references.
     fn take_if_unique_strong(&self) -> Option<Rc<T>>;

@@ -10,15 +10,15 @@ use crate::tree::NodeRef;
 
 /// Options for the HTML parser.
 #[derive(Default)]
-pub struct ParseOpts {
+struct ParseOpts {
     /// Options for the HTML tokenizer.
-    pub tokenizer: html5ever::tokenizer::TokenizerOpts,
+    tokenizer: html5ever::tokenizer::TokenizerOpts,
 
     /// Options for the HTML tree builder.
-    pub tree_builder: html5ever::tree_builder::TreeBuilderOpts,
+    tree_builder: html5ever::tree_builder::TreeBuilderOpts,
 
     /// A callback for HTML parse errors (which are never fatal).
-    pub on_parse_error: Option<Box<dyn FnMut(Cow<'static, str>)>>,
+    on_parse_error: Option<Box<dyn FnMut(Cow<'static, str>)>>,
 }
 
 /// Parse an HTML document with html5ever and the default configuration.
@@ -27,7 +27,7 @@ pub fn parse_html() -> html5ever::Parser<Sink> {
 }
 
 /// Parse an HTML document with html5ever with custom configuration.
-pub fn parse_html_with_options(opts: ParseOpts) -> html5ever::Parser<Sink> {
+fn parse_html_with_options(opts: ParseOpts) -> html5ever::Parser<Sink> {
     let sink = Sink {
         document_node: NodeRef::new_document(),
         on_parse_error: opts.on_parse_error,

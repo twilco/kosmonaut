@@ -5,17 +5,17 @@ use glutin::dpi::PhysicalSize;
 use glutin::{Context, GlProfile, PixelFormat, PossiblyCurrent, WindowedContext};
 
 pub mod char;
-pub mod font;
+pub(crate) mod font;
 pub mod headed;
 pub mod headless;
-pub mod ndc;
+pub(crate) mod ndc;
 pub mod paint;
 
 pub const DEFAULT_LAYOUT_VIEWPORT_WIDTH_PX: f32 = 1920.;
 pub const DEFAULT_LAYOUT_VIEWPORT_HEIGHT_PX: f32 = 1080.;
-pub const TARGETED_GL_PROFILE: GlProfile = GlProfile::Core;
+pub(crate) const TARGETED_GL_PROFILE: GlProfile = GlProfile::Core;
 
-pub fn load_and_config_gl(context: &Context<PossiblyCurrent>) -> Gl {
+pub(crate) fn load_and_config_gl(context: &Context<PossiblyCurrent>) -> Gl {
     let gl = Gl::load_with(|ptr| context.get_proc_address(ptr) as *const _);
     configure_gl_blend(&gl);
     gl
@@ -52,7 +52,7 @@ pub enum LogGlInfo {
 ///
 /// If you have a WindowedContext, you can also pass the the pixel format of the underlying frame
 /// buffer(s).
-pub fn print_gl_info(
+pub(crate) fn print_gl_info(
     context: &Context<PossiblyCurrent>,
     pixel_format: Option<PixelFormat>,
     gl: &Gl,

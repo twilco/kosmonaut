@@ -6,7 +6,7 @@ use crate::StyleParseErrorKind;
 use cssparser::{ParseError, Parser, Token};
 use primitives::sides::PhysicalSide;
 
-pub fn parse_border_side_shorthand_into<'i, 't>(
+pub(crate) fn parse_border_side_shorthand_into<'i, 't>(
     side: PhysicalSide,
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
@@ -47,7 +47,7 @@ pub fn parse_border_side_shorthand_into<'i, 't>(
 
 // TODO: According to the spec, the `border` shorthand also resets the `border-image` property
 // to its initial value. https://www.w3.org/TR/css-backgrounds-3/#border-shorthands
-pub fn parse_border_shorthand_into<'i, 't>(
+pub(crate) fn parse_border_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
@@ -83,7 +83,7 @@ pub fn parse_border_shorthand_into<'i, 't>(
     Ok(())
 }
 
-pub fn parse_border_color_shorthand_into<'i, 't>(
+pub(crate) fn parse_border_color_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
@@ -103,7 +103,7 @@ pub fn parse_border_color_shorthand_into<'i, 't>(
     Ok(())
 }
 
-pub fn parse_border_style_shorthand_into<'i, 't>(
+pub(crate) fn parse_border_style_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
@@ -115,7 +115,7 @@ pub fn parse_border_style_shorthand_into<'i, 't>(
     Ok(())
 }
 
-pub fn parse_border_width_shorthand_into<'i, 't>(
+pub(crate) fn parse_border_width_shorthand_into<'i, 't>(
     declarations: &mut Vec<PropertyDeclaration>,
     input: &mut Parser<'i, 't>,
 ) -> Result<(), ParseError<'i, StyleParseErrorKind<'i>>> {
@@ -178,7 +178,7 @@ fn parse_border_shorthand_inner<'i, 't>(
 /// https://www.w3.org/TR/css-backgrounds-3/#background-color
 #[derive(Clone, Copy, Debug)]
 pub struct BorderColor {
-    pub color: ColorUnit,
+    pub(crate) color: ColorUnit,
 }
 
 impl BorderColor {
@@ -210,7 +210,7 @@ fn parse_line_width<'i, 't>(
 /// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderBottomWidth {
-    pub line_width: LineWidth,
+    pub(crate) line_width: LineWidth,
 }
 
 impl BorderBottomWidth {
@@ -234,7 +234,7 @@ impl CssValueParse for BorderBottomWidth {
 /// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderLeftWidth {
-    pub line_width: LineWidth,
+    pub(crate) line_width: LineWidth,
 }
 
 impl BorderLeftWidth {
@@ -258,7 +258,7 @@ impl CssValueParse for BorderLeftWidth {
 /// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderTopWidth {
-    pub line_width: LineWidth,
+    pub(crate) line_width: LineWidth,
 }
 
 impl BorderTopWidth {
@@ -282,7 +282,7 @@ impl CssValueParse for BorderTopWidth {
 /// https://www.w3.org/TR/css-backgrounds-3/#border-width
 #[derive(Clone, Copy, Debug)]
 pub struct BorderRightWidth {
-    pub line_width: LineWidth,
+    pub(crate) line_width: LineWidth,
 }
 
 impl BorderRightWidth {
@@ -305,7 +305,7 @@ impl CssValueParse for BorderRightWidth {
 ///
 /// https://www.w3.org/TR/2017/CR-css-backgrounds-3-20171017/#typedef-line-width
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum LineWidth {
+pub(crate) enum LineWidth {
     Length(NoCalcLength),
     Thin,
     Medium,

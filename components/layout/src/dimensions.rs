@@ -10,14 +10,14 @@ use style::values::computed::{Direction, WritingMode};
 pub struct Dimensions {
     /// Position and size of these dimensions.  This position is of the content area (i.e. not
     /// including margin, border, or padding) relative to the document origin.
-    pub content: PositionedRect,
-    pub padding: EdgeSizes,
-    pub border: EdgeSizes,
-    pub margin: EdgeSizes,
+    pub(super) content: PositionedRect,
+    pub(super) padding: EdgeSizes,
+    pub(super) border: EdgeSizes,
+    pub(super) margin: EdgeSizes,
 }
 
 impl Dimensions {
-    pub fn expanded_by(self, other: Dimensions) -> Dimensions {
+    fn expanded_by(self, other: Dimensions) -> Dimensions {
         Dimensions {
             content: self.content.expanded_by_rect(other.content),
             padding: self.padding.expanded_by_edges(other.padding),
@@ -41,41 +41,41 @@ impl Dimensions {
     }
 
     /// The area covered by the content area plus its padding.
-    pub fn padding_box(self) -> PositionedRect {
+    fn padding_box(self) -> PositionedRect {
         self.content.expanded_by_edges(self.padding)
     }
 
     /// The area covered by the content area plus padding, borders, and margin.
     // TODO: This will need to change when we implement margin collapsing: http://www.w3.org/TR/CSS2/box.html#collapsing-margins
-    pub fn margin_box(self) -> PositionedRect {
+    fn margin_box(self) -> PositionedRect {
         self.border_box().expanded_by_edges(self.margin)
     }
 
-    pub fn set_height(&mut self, val: CSSPixelLength) {
+    pub(super) fn set_height(&mut self, val: CSSPixelLength) {
         self.content.set_height(val);
     }
 
-    pub fn set_width(&mut self, val: CSSPixelLength) {
+    pub(super) fn set_width(&mut self, val: CSSPixelLength) {
         self.content.set_width(val);
     }
 
-    pub fn start_x(&self) -> CSSFloat {
+    fn start_x(&self) -> CSSFloat {
         self.content.start_x
     }
 
-    pub fn set_start_x(&mut self, val: CSSFloat) {
+    fn set_start_x(&mut self, val: CSSFloat) {
         self.content.start_x = val;
     }
 
-    pub fn start_y(&self) -> CSSFloat {
+    fn start_y(&self) -> CSSFloat {
         self.content.start_y
     }
 
-    pub fn set_start_y(&mut self, val: CSSFloat) {
+    fn set_start_y(&mut self, val: CSSFloat) {
         self.content.start_y = val;
     }
 
-    pub fn get_block_start_coord(&mut self, writing_mode: WritingMode) -> CSSFloat {
+    pub(super) fn get_block_start_coord(&mut self, writing_mode: WritingMode) -> CSSFloat {
         match writing_mode {
             WritingMode::HorizontalTb => self.start_y(),
             WritingMode::VerticalRl
@@ -85,7 +85,7 @@ impl Dimensions {
         }
     }
 
-    pub fn set_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+    pub(super) fn set_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
         match writing_mode {
             WritingMode::HorizontalTb => self.set_start_y(val),
             WritingMode::VerticalRl
@@ -95,7 +95,7 @@ impl Dimensions {
         }
     }
 
-    pub fn add_to_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+    fn add_to_block_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
         let block_start_coord = self.get_block_start_coord(writing_mode);
         self.set_block_start_coord(val + block_start_coord, writing_mode)
     }
@@ -105,7 +105,7 @@ impl Dimensions {
     /// set `start_y` for them here.
     ///
     /// https://github.com/twilco/kosmonaut/blob/master/src/layout/dimensions.rs
-    pub fn set_inline_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
+    pub(super) fn set_inline_start_coord(&mut self, val: CSSFloat, writing_mode: WritingMode) {
         match writing_mode {
             WritingMode::HorizontalTb => self.set_start_x(val),
             WritingMode::VerticalRl
@@ -115,31 +115,31 @@ impl Dimensions {
         }
     }
 
-    pub fn content_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    pub(super) fn content_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(None, writing_mode)
     }
 
-    pub fn padding_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    fn padding_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(Some(BoxComponent::Padding), writing_mode)
     }
 
-    pub fn padding_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    fn padding_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_inline_size(Some(BoxComponent::Padding), writing_mode)
     }
 
-    pub fn border_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    fn border_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(Some(BoxComponent::Border), writing_mode)
     }
 
-    pub fn border_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    pub(super) fn border_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_inline_size(Some(BoxComponent::Border), writing_mode)
     }
 
-    pub fn margin_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    pub(super) fn margin_box_block_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_block_size(Some(BoxComponent::Margin), writing_mode)
     }
 
-    pub fn margin_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
+    fn margin_box_inline_size(&self, writing_mode: WritingMode) -> CSSPixelLength {
         self.get_inline_size(Some(BoxComponent::Margin), writing_mode)
     }
 
@@ -176,12 +176,12 @@ impl Dimensions {
         }
     }
 
-    pub fn add_to_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
+    pub(super) fn add_to_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
         let current_block_size = self.get_block_size(None, writing_mode);
         self.set_block_size(current_block_size + val, writing_mode)
     }
 
-    pub fn set_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
+    fn set_block_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
         match writing_mode {
             WritingMode::HorizontalTb => self.content.set_height(val),
             WritingMode::VerticalRl
@@ -200,7 +200,7 @@ impl Dimensions {
     /// If `None`, only the inline-size of the box content will be returned.
     ///
     /// Note that the inline-size is also referred to as the logical width.
-    pub fn get_inline_size(
+    fn get_inline_size(
         &self,
         expanded_by: Option<BoxComponent>,
         writing_mode: WritingMode,
@@ -224,7 +224,7 @@ impl Dimensions {
         }
     }
 
-    pub fn set_inline_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
+    pub(super) fn set_inline_size(&mut self, val: CSSPixelLength, writing_mode: WritingMode) {
         match writing_mode {
             WritingMode::HorizontalTb => self.content.set_width(val),
             WritingMode::VerticalRl
@@ -236,7 +236,7 @@ impl Dimensions {
 
     // Make sure the `get` and `set` tables stay in sync.  There's probably a better way to share
     // the lookup logic between get and set operations, but copy-paste will do for now.
-    pub fn get(
+    pub(super) fn get(
         &self,
         side: FlowSide,
         box_component: BoxComponent,
@@ -303,7 +303,7 @@ impl Dimensions {
     }
 
     /// Get the sum of the margin, border, and padding box components for the given `FlowSide`.
-    pub fn get_mbp(
+    pub(super) fn get_mbp(
         &self,
         side: FlowSide,
         writing_mode: WritingMode,
@@ -315,7 +315,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_margin(
+    pub(super) fn set_margin(
         &mut self,
         side: FlowSide,
         val: CSSPixelLength,
@@ -325,7 +325,7 @@ impl Dimensions {
         self.set(side, BoxComponent::Margin, val, writing_mode, direction)
     }
 
-    pub fn get_margin_physical(&self, side: PhysicalSide) -> CSSPixelLength {
+    fn get_margin_physical(&self, side: PhysicalSide) -> CSSPixelLength {
         match side {
             PhysicalSide::Bottom => self.margin.bottom,
             PhysicalSide::Left => self.margin.left,
@@ -335,7 +335,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_margin_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
+    pub(super) fn set_margin_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
         match side {
             PhysicalSide::Bottom => self.margin.bottom = val,
             PhysicalSide::Left => self.margin.left = val,
@@ -344,7 +344,7 @@ impl Dimensions {
         }
     }
 
-    pub fn get_border_physical(&self, side: PhysicalSide) -> CSSPixelLength {
+    fn get_border_physical(&self, side: PhysicalSide) -> CSSPixelLength {
         match side {
             PhysicalSide::Bottom => self.border.bottom,
             PhysicalSide::Left => self.border.left,
@@ -354,7 +354,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_border(
+    pub(super) fn set_border(
         &mut self,
         side: FlowSide,
         val: CSSPixelLength,
@@ -365,7 +365,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_border_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
+    fn set_border_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
         match side {
             PhysicalSide::Bottom => self.border.bottom = val,
             PhysicalSide::Left => self.border.left = val,
@@ -374,7 +374,7 @@ impl Dimensions {
         }
     }
 
-    pub fn get_padding_physical(&self, side: PhysicalSide) -> CSSPixelLength {
+    fn get_padding_physical(&self, side: PhysicalSide) -> CSSPixelLength {
         match side {
             PhysicalSide::Bottom => self.padding.bottom,
             PhysicalSide::Left => self.padding.left,
@@ -384,7 +384,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_padding(
+    pub(super) fn set_padding(
         &mut self,
         side: FlowSide,
         val: CSSPixelLength,
@@ -395,7 +395,7 @@ impl Dimensions {
     }
 
     #[inline(always)]
-    pub fn set_padding_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
+    fn set_padding_physical(&mut self, side: PhysicalSide, val: CSSPixelLength) {
         match side {
             PhysicalSide::Bottom => self.padding.bottom = val,
             PhysicalSide::Left => self.padding.left = val,
@@ -404,7 +404,7 @@ impl Dimensions {
         }
     }
 
-    pub fn set(
+    fn set(
         &mut self,
         side: FlowSide,
         box_component: BoxComponent,

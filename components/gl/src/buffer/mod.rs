@@ -13,6 +13,6 @@ pub trait Buffer {
 /// Unbinds whatever buffer is currently bound to the specified OpenGL context.
 ///
 /// https://khronos.org/registry/OpenGL-Refpages/gl4/
-pub(crate) fn unbind_array_buffer_globally(gl: &Gl) {
+pub(super) fn unbind_array_buffer_globally(gl: &Gl) {
     unsafe { gl.BindBuffer(ARRAY_BUFFER, 0) }
 }

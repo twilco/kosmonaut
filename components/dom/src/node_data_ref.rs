@@ -39,7 +39,7 @@ impl NodeRef {
 
 /// Holds a strong reference to a node, but dereferences to some component inside of it.
 #[derive(Eq)]
-pub struct NodeDataRef<T> {
+pub(super) struct NodeDataRef<T> {
     _keep_alive: NodeRef,
     _reference: *const T,
 }

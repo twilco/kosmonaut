@@ -239,7 +239,7 @@ impl NodeDataRef<ElementData> {
 
 /// Filter an element iterator, yielding those matching the given list of selectors.
 #[inline]
-pub fn filter_selectors<I>(iter: I, selectors: &Selectors) -> Select<I, &Selectors>
+pub(super) fn filter_selectors<I>(iter: I, selectors: &Selectors) -> Select<I, &Selectors>
 where
     I: Iterator<Item = NodeDataRef<ElementData>>,
 {

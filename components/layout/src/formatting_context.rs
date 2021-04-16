@@ -6,7 +6,7 @@ use std::rc::Rc;
 /// to the same formatting context.  Comparing the underlying `QualifiedFormattingContext` for
 /// determining formatting context membership will _not_ do what you want.
 #[derive(Clone, Debug)]
-pub struct FormattingContextRef(pub Rc<QualifiedFormattingContext>);
+pub struct FormattingContextRef(Rc<QualifiedFormattingContext>);
 
 impl Deref for FormattingContextRef {
     type Target = QualifiedFormattingContext;
@@ -24,19 +24,19 @@ impl PartialEq for FormattingContextRef {
 }
 
 impl FormattingContextRef {
-    pub fn new_independent_inline() -> Self {
+    pub(super) fn new_independent_inline() -> Self {
         FormattingContextRef(Rc::new(QualifiedFormattingContext::Independent(
             FormattingContext::Inline,
         )))
     }
 
-    pub fn new_independent_block() -> Self {
+    pub(super) fn new_independent_block() -> Self {
         FormattingContextRef(Rc::new(QualifiedFormattingContext::Independent(
             FormattingContext::Inline,
         )))
     }
 
-    pub fn is_inline_formatting_context(&self) -> bool {
+    pub(super) fn is_inline_formatting_context(&self) -> bool {
         match *self.0 {
             QualifiedFormattingContext::Independent(fc)
             | QualifiedFormattingContext::Dependent(fc) => fc == FormattingContext::Inline,
@@ -55,7 +55,7 @@ pub enum FormattingContext {
 }
 
 /// A formatting context can contain sub-formatting-contexts and boxes.
-pub enum FormattingContextContent {
+enum FormattingContextContent {
     SubContext(QualifiedFormattingContext),
     /// The root of some amount of boxes.
     Box(LayoutBox),

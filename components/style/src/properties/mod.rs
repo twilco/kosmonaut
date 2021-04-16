@@ -26,10 +26,10 @@ use crate::{CssOrigin, StyleParseErrorKind};
 use kosmonaut_selectors::Specificity;
 use primitives::sides::PhysicalSide;
 
-pub mod id;
+pub(super) mod id;
 
 /// Parses raw parser input into a block of property declarations.
-pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclarationBlock {
+pub(super) fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclarationBlock {
     let mut block = PropertyDeclarationBlock::new();
     let prop_parser = PropertyDeclarationParser {
         declarations: Vec::new(),
@@ -53,7 +53,7 @@ pub fn parse_property_declaration_list(input: &mut Parser) -> PropertyDeclaratio
 }
 
 /// A struct to parse property declarations.
-pub struct PropertyDeclarationParser {
+struct PropertyDeclarationParser {
     declarations: Vec<PropertyDeclaration>,
     //    /// The last parsed property id (if any).
     //    last_parsed_property_id: Option<PropertyId>,
@@ -111,11 +111,7 @@ pub struct PropertyDeclarationBlock {
 impl PropertyDeclarationBlock {
     /// Adds a new declaration to the block, de-duping with any existing property declarations
     /// of the same type.
-    pub fn add_declaration(
-        &mut self,
-        mut new_decl: PropertyDeclaration,
-        new_importance: Importance,
-    ) {
+    fn add_declaration(&mut self, mut new_decl: PropertyDeclaration, new_importance: Importance) {
         let mut swap_index = None;
         for (i, existing_decl) in self.declarations.iter().enumerate() {
             if mem::discriminant(existing_decl) == mem::discriminant(&new_decl) {
@@ -138,7 +134,7 @@ impl PropertyDeclarationBlock {
 }
 
 impl PropertyDeclarationBlock {
-    pub fn new() -> PropertyDeclarationBlock {
+    fn new() -> PropertyDeclarationBlock {
         Self::default()
     }
 
@@ -146,7 +142,7 @@ impl PropertyDeclarationBlock {
         &self.declarations
     }
 
-    pub fn remove_decl(&mut self, index: usize) {
+    pub(super) fn remove_decl(&mut self, index: usize) {
         self.declarations.remove(index);
     }
 
@@ -156,7 +152,7 @@ impl PropertyDeclarationBlock {
 }
 
 impl PropertyDeclaration {
-    pub fn parse_into<'i, 't>(
+    fn parse_into<'i, 't>(
         declarations: &mut Vec<PropertyDeclaration>,
         id: PropertyId,
         input: &mut Parser<'i, 't>,
@@ -332,8 +328,6 @@ pub enum PropertyDeclaration {
     WritingMode(crate::values::computed::WritingMode),
 }
 
-pub struct ComputedPropertyDeclarations {}
-
 /// A property declaration with contextual information, such as its importance, specificity,
 /// origin, and source location, all of which likely deriving from its parent style rule.
 #[derive(Clone, Debug)]
@@ -382,13 +376,16 @@ impl ContextualPropertyDeclarations {
     }
 
     #[inline]
-    pub fn contains(&self, longhand: LonghandId) -> bool {
+    fn contains(&self, longhand: LonghandId) -> bool {
         self.longhands.contains(&longhand)
     }
 
     /// Finds the first matching `ContextualPropertyDeclaration` by `LonghandId`.
     #[inline]
-    pub fn get_by_longhand(&self, longhand: LonghandId) -> Option<&ContextualPropertyDeclaration> {
+    pub(super) fn get_by_longhand(
+        &self,
+        longhand: LonghandId,
+    ) -> Option<&ContextualPropertyDeclaration> {
         if !self.contains(longhand) {
             None
         } else {
@@ -528,7 +525,7 @@ impl PartialEq for ContextualPropertyDeclaration {
 ///
 /// [importance]: https://drafts.csswg.org/css-cascade/#importance
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum Importance {
+enum Importance {
     /// Indicates a declaration without `!important`.
     Normal,
 
@@ -538,7 +535,7 @@ pub enum Importance {
 
 impl Importance {
     /// Return whether this is an important declaration.
-    pub fn important(self) -> bool {
+    fn important(self) -> bool {
         match self {
             Importance::Normal => false,
             Importance::Important => true,

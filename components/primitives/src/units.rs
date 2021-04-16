@@ -197,9 +197,4 @@ impl CSSPixelLength {
     pub fn max(self, other: Self) -> Self {
         CSSPixelLength::new(self.0.max(other.0))
     }
-
-    /// Sets `self` to the maximum between `self` and `other`.
-    pub fn max_assign(&mut self, other: Self) {
-        *self = self.max(other);
-    }
 }

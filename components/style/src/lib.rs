@@ -19,7 +19,6 @@ mod macros;
 extern crate strum_macros;
 
 pub mod properties;
-pub mod select;
 pub mod stylesheet;
 pub mod test_utils;
 pub mod values;

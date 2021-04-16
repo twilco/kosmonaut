@@ -15,16 +15,6 @@ use accountable_refcell::{Ref, RefCell, RefMut};
 use style::properties::{ContextualPropertyDeclaration, ContextualPropertyDeclarations};
 use style::values::computed::ComputedValues;
 
-/// The type of DOM node.
-/// https://html.spec.whatwg.org/#a-quick-introduction-to-html
-pub enum NodeType {
-    Comment,
-    DocumentType,
-    Element,
-    ProcessingInstruction,
-    Text,
-}
-
 /// Node data specific to the node type.
 #[derive(Debug, PartialEq, Clone)]
 pub enum NodeData {

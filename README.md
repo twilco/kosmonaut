@@ -60,7 +60,7 @@ or a URL:
 
 To run the tests, both unit and layout, execute:
 
-`cargo test`
+`cargo test --all`
 
 For layout tests, Kosmonaut transforms the given HTML and CSS into a box tree, lays it out, and dumps it as text.  Those text snapshots are verified with [insta](https://docs.rs/insta/latest/insta/index.html).
 

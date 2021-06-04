@@ -14,7 +14,7 @@ gl = { path = "components/gl" }
 glutin = "0.26"
 html5ever = "0.25.1"
 image = "0.23"
-isahc = "1.3.0"
+isahc = "1.4.0"
 kosmonaut_selectors = { path = "components/kosmonaut_selectors" }
 layout = { path = "components/layout" }
 primitives = { path = "components/primitives" }

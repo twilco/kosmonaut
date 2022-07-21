@@ -11,12 +11,11 @@ pub fn bool_from_glint(glint: GLint) -> bool {
 }
 
 pub fn opengl_version(gl: &Gl) -> String {
-    unsafe {
-        let data = CStr::from_ptr(gl.GetString(VERSION) as *const _)
+    
+        let data = unsafe { CStr::from_ptr(gl.GetString(VERSION) as *const _)
             .to_bytes()
-            .to_vec();
+            .to_vec() };
         String::from_utf8(data).unwrap()
-    }
 }
 
 pub(crate) fn create_whitespace_cstring(len: usize) -> CString {

@@ -38,7 +38,7 @@ pub fn resize_window(
     windowed_context: &WindowedContext<PossiblyCurrent>,
     new_size: &PhysicalSize<u32>,
 ) {
-    resize_viewport(gl, new_size.width, new_size.height);
+    unsafe { resize_viewport(gl, new_size.width, new_size.height) };
     windowed_context.resize(*new_size);
 }
 

@@ -29,7 +29,7 @@ pub fn init_framebuffer_and_gl(
         RenderBuffer::new(&gl, size.width as _, size.height as _),
         &gl,
     );
-    resize_viewport(&gl, size.width as _, size.height as _);
+    unsafe { resize_viewport(&gl, size.width as _, size.height as _) };
     HeadlessGfxContent::new(headless_context, framebuffer, gl)
 }
 

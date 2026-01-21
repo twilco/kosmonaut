@@ -92,9 +92,9 @@ impl Drop for FrameBuffer {
 
 impl Buffer for FrameBuffer {
     fn bind_to(&self, gl: &Gl) {
+        // First make sure our associated render buffer is bound to RENDERBUFFER.
+        self.render_buffer.bind_to(&self.gl);
         unsafe {
-            // First make sure our associated render buffer is bound to RENDERBUFFER.
-            self.render_buffer.bind_to(&self.gl);
 
             // Now bind ourselves.
             gl.BindFramebuffer(FRAMEBUFFER, self.id);

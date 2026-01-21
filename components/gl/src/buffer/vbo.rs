@@ -32,16 +32,16 @@ impl VertexBufferObject {
 
     /// Stores new vertex data, overwriting any that might already exist in this VBO.
     pub fn store_vertex_data(&mut self, data: &[f32]) {
+        self.bind_to(&self.gl);
         unsafe {
-            self.bind_to(&self.gl);
             self.gl.BufferData(
                 ARRAY_BUFFER,                                            // target
                 (data.len() * std::mem::size_of::<f32>()) as GLsizeiptr, // size of data in bytes
                 data.as_ptr() as *const GLvoid,                          // pointer to data
                 STATIC_DRAW,                                             // usage
             );
-            unbind_array_buffer_globally(&self.gl);
         }
+        unbind_array_buffer_globally(&self.gl);
     }
 }
 
